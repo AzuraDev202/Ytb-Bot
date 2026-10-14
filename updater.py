@@ -115,7 +115,8 @@ def install_update(staged):
     digest = hashlib.sha256(staged.read_bytes()).hexdigest()
     config = staged.parent / "install.json"
     config.write_text(json.dumps({"target": str(target), "staged": str(staged),
-                                  "pid": os.getpid(), "sha256": digest}), encoding="utf-8")
+                                  "pid": os.getpid(), "sha256": digest,
+                                  "interactive": True}), encoding="utf-8")
     helper = staged.parent / "install.ps1"
     helper.write_text(_INSTALL_SCRIPT, encoding="utf-8-sig")
     powershell = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32/WindowsPowerShell/v1.0/powershell.exe"
@@ -136,6 +137,11 @@ $stagedPath = [IO.Path]::GetFullPath($updateConfig.staged)
 $backupPath = $targetPath + '.previous'
 $candidatePath = $targetPath + '.incoming'
 $replaced = $false
+$exitCode = 0
+$maxReplaceAttempts = 30
+if ($null -ne $updateConfig.maxReplaceAttempts) {
+    $maxReplaceAttempts = [Math]::Max(1, [Math]::Min(30, [int]$updateConfig.maxReplaceAttempts))
+}
 try {
     $oldProcess = Get-Process -Id $updateConfig.pid -ErrorAction SilentlyContinue
     if ($oldProcess -and -not $oldProcess.WaitForExit(120000)) {
@@ -145,28 +151,37 @@ try {
     if ($actualHash -ne $updateConfig.sha256) { throw 'Checksum mismatch.' }
     Copy-Item -LiteralPath $stagedPath -Destination $candidatePath -Force
     # PyInstaller's parent bootloader may briefly keep the EXE locked.
-    for ($attempt = 0; $attempt -lt 30; $attempt++) {
+    for ($attempt = 0; $attempt -lt $maxReplaceAttempts; $attempt++) {
         try {
             if (Test-Path -LiteralPath $backupPath) { Remove-Item -LiteralPath $backupPath -Force }
             [IO.File]::Replace($candidatePath, $targetPath, $backupPath)
             $replaced = $true
             break
         } catch {
-            if ($attempt -eq 29) { throw }
+            # Only retry Windows sharing/lock violations, not permanent errors.
+            $replaceError = $_.Exception
+            while ($replaceError.InnerException) { $replaceError = $replaceError.InnerException }
+            $win32Error = $replaceError.HResult -band 0xffff
+            if (($win32Error -notin @(32, 33)) -or ($attempt -eq ($maxReplaceAttempts - 1))) { throw }
             Start-Sleep -Seconds 1
         }
     }
     Start-Process -FilePath $targetPath -WorkingDirectory ([IO.Path]::GetDirectoryName($targetPath)) -WindowStyle Hidden
 } catch {
+    $exitCode = 1
     $failure = $_.ToString()
     if ($replaced -and (Test-Path -LiteralPath $backupPath)) {
         Copy-Item -LiteralPath $backupPath -Destination $targetPath -Force
     }
-    $failure | Set-Content -LiteralPath (Join-Path ([IO.Path]::GetDirectoryName($stagedPath)) 'update-error.log')
-    Add-Type -AssemblyName System.Windows.Forms
-    [System.Windows.Forms.MessageBox]::Show("Cap nhat that bai. Ban cu duoc giu lai.`n$failure", 'Ytb-Bot') | Out-Null
+    $failure | Set-Content -LiteralPath (Join-Path ([IO.Path]::GetDirectoryName($stagedPath)) 'update-error.log') -Encoding UTF8
+    [Console]::Error.WriteLine($failure)
+    if ($updateConfig.interactive -eq $true) {
+        Add-Type -AssemblyName System.Windows.Forms
+        [System.Windows.Forms.MessageBox]::Show("Cap nhat that bai. Ban cu duoc giu lai.`n$failure", 'Ytb-Bot') | Out-Null
+    }
 } finally {
     if (Test-Path -LiteralPath $candidatePath) { Remove-Item -LiteralPath $candidatePath -Force }
     if (Test-Path -LiteralPath $stagedPath) { Remove-Item -LiteralPath $stagedPath -Force }
 }
+exit $exitCode
 '''

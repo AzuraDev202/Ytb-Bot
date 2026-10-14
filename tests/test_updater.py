@@ -80,26 +80,49 @@ class UpdaterTests(unittest.TestCase):
 
     @unittest.skipUnless(os.name == "nt", "Windows helper")
     def test_windows_helper_replaces_file_and_keeps_backup(self):
+        self.run_windows_helper()
+
+    @unittest.skipUnless(os.name == "nt", "Windows helper")
+    def test_windows_helper_checksum_failure_exits_without_dialog(self):
+        self.run_windows_helper(checksum="0" * 64, expected_error="Checksum mismatch")
+
+    @unittest.skipUnless(os.name == "nt", "Windows helper")
+    def test_windows_helper_missing_target_fails_without_long_retry(self):
+        self.run_windows_helper(target_exists=False, expected_error="Replace", max_attempts=30)
+
+    def run_windows_helper(self, checksum=None, expected_error=None, target_exists=True, max_attempts=1):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             target = root / "installed.exe"
             staged = root / "gui_app.exe"
-            target.write_bytes(b"MZold")
+            if target_exists:
+                target.write_bytes(b"MZold")
             staged.write_bytes(b"MZnew")
             config = root / "install.json"
             config.write_text(json.dumps({"target": str(target), "staged": str(staged),
                                           "pid": 2147483647,
-                                          "sha256": hashlib.sha256(b"MZnew").hexdigest()}))
+                                          "sha256": checksum or hashlib.sha256(b"MZnew").hexdigest(),
+                                          "interactive": False, "maxReplaceAttempts": max_attempts}))
             # Exercise actual PowerShell file replacement without launching a fake EXE.
             script = root / "test.ps1"
             script.write_text("param([string]$ConfigPath)\nfunction Start-Process { param($FilePath, $WorkingDirectory, $WindowStyle) }\n"
                               + "$ErrorActionPreference" + updater._INSTALL_SCRIPT.split("$ErrorActionPreference", 1)[1],
                               encoding="utf-8-sig")
-            subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
-                            "-File", str(script), "-ConfigPath", str(config)], check=True, timeout=20,
-                           capture_output=True)
-            self.assertEqual(target.read_bytes(), b"MZnew")
-            self.assertEqual(Path(str(target) + ".previous").read_bytes(), b"MZold")
+            result = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
+                                     "-File", str(script), "-ConfigPath", str(config)], timeout=20,
+                                    capture_output=True, text=True)
+            if expected_error:
+                self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertIn(expected_error, result.stderr)
+                if target_exists:
+                    self.assertEqual(target.read_bytes(), b"MZold")
+                else:
+                    self.assertFalse(target.exists())
+                self.assertIn(expected_error, (root / "update-error.log").read_text(encoding="utf-8-sig"))
+            else:
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertEqual(target.read_bytes(), b"MZnew")
+                self.assertEqual(Path(str(target) + ".previous").read_bytes(), b"MZold")
             self.assertFalse(staged.exists())
 
 
