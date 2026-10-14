@@ -105,7 +105,10 @@ class UpdaterTests(unittest.TestCase):
                                           "interactive": False, "maxReplaceAttempts": max_attempts}))
             # Exercise actual PowerShell file replacement without launching a fake EXE.
             script = root / "test.ps1"
-            script.write_text("param([string]$ConfigPath)\nfunction Start-Process { param($FilePath, $WorkingDirectory, $WindowStyle) }\n"
+            script.write_text("param([string]$ConfigPath)\nImport-Module Microsoft.PowerShell.Utility, Microsoft.PowerShell.Management\n"
+                              + "function Start-Process { param($FilePath, $WorkingDirectory, $WindowStyle) }\n"
+                              # Reproduce the GitHub runner where Get-FileHash is unavailable.
+                              + "function Get-FileHash { throw 'Get-FileHash is unavailable in this environment' }\n"
                               + "$ErrorActionPreference" + updater._INSTALL_SCRIPT.split("$ErrorActionPreference", 1)[1],
                               encoding="utf-8-sig")
             result = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",

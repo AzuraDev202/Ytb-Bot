@@ -147,7 +147,16 @@ try {
     if ($oldProcess -and -not $oldProcess.WaitForExit(120000)) {
         throw 'App did not close within 120 seconds.'
     }
-    $actualHash = (Get-FileHash -LiteralPath $stagedPath -Algorithm SHA256).Hash
+    # Use .NET directly: Get-FileHash may be unavailable when launched from pwsh/CI.
+    $hashAlgorithm = [Security.Cryptography.SHA256]::Create()
+    $hashStream = $null
+    try {
+        $hashStream = [IO.File]::OpenRead($stagedPath)
+        $actualHash = [BitConverter]::ToString($hashAlgorithm.ComputeHash($hashStream)).Replace('-', '').ToLowerInvariant()
+    } finally {
+        if ($null -ne $hashStream) { $hashStream.Dispose() }
+        $hashAlgorithm.Dispose()
+    }
     if ($actualHash -ne $updateConfig.sha256) { throw 'Checksum mismatch.' }
     Copy-Item -LiteralPath $stagedPath -Destination $candidatePath -Force
     # PyInstaller's parent bootloader may briefly keep the EXE locked.
