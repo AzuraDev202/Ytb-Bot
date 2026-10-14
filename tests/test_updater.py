@@ -1,0 +1,107 @@
+import hashlib
+import io
+from pathlib import Path
+import tempfile
+import unittest
+from unittest.mock import patch
+import json
+import os
+import subprocess
+
+import updater
+
+
+class UpdaterTests(unittest.TestCase):
+    def release_data(self, version="v1.1.0"):
+        base = f"https://github.com/{updater.UPDATE_REPOSITORY}/releases/download/{version}/"
+        return {"tag_name": version, "assets": [
+            {"name": "gui_app.exe", "size": 10, "browser_download_url": base + "gui_app.exe"},
+            {"name": "gui_app.exe.sha256", "browser_download_url": base + "gui_app.exe.sha256"}]}
+
+    def check(self, data):
+        with patch.object(updater, "urlopen", return_value=io.BytesIO(json.dumps(data).encode())):
+            return updater.check_for_update("1.0.0")
+
+    def test_newer_release_and_numeric_version_order(self):
+        self.assertEqual(self.check(self.release_data()).version, "1.1.0")
+        self.assertGreater(updater.version_tuple("1.10.0"), updater.version_tuple("1.9.0"))
+
+    def test_old_and_prerelease_are_ignored(self):
+        self.assertIsNone(self.check(self.release_data("v0.9.0")))
+        data = self.release_data()
+        data["prerelease"] = True
+        self.assertIsNone(self.check(data))
+
+    def test_missing_asset_and_untrusted_download_rejected(self):
+        data = self.release_data()
+        data["assets"].pop()
+        with self.assertRaises(updater.UpdateError):
+            self.check(data)
+        data = self.release_data()
+        data["assets"][0]["browser_download_url"] = "https://example.com/malware.exe"
+        with self.assertRaises(updater.UpdateError):
+            self.check(data)
+
+    def download(self, content, expected, size=None):
+        release = updater.Release("1.1.0", "https://github.com/a", "https://github.com/b",
+                                  len(content) if size is None else size)
+        responses = [io.BytesIO(expected.encode()), io.BytesIO(content)]
+        with patch.object(updater, "urlopen", side_effect=responses):
+            return updater.download_update(release)
+
+    def test_verified_download(self):
+        content = b"MZtest-executable"
+        target = self.download(content, hashlib.sha256(content).hexdigest())
+        try:
+            self.assertEqual(target.read_bytes(), content)
+        finally:
+            target.unlink()
+            target.parent.rmdir()
+
+    def test_corrupt_truncated_and_non_executable_downloads_rejected(self):
+        content = b"MZtest-executable"
+        with tempfile.TemporaryDirectory() as directory:
+            stage = Path(directory) / "stage"
+            for data, checksum, size in [
+                (content, "0" * 64, len(content)),
+                (content, hashlib.sha256(content).hexdigest(), len(content) + 1),
+                (b"bad", hashlib.sha256(b"bad").hexdigest(), 3),
+            ]:
+                stage.mkdir()
+                with patch.object(updater.tempfile, "mkdtemp", return_value=str(stage)):
+                    with self.assertRaises(updater.UpdateError):
+                        self.download(data, checksum, size)
+                self.assertFalse(stage.exists())
+
+    def test_source_mode_cannot_replace_running_python(self):
+        with patch.object(updater.sys, "frozen", False, create=True):
+            with self.assertRaises(updater.UpdateError):
+                updater.install_update("unused.exe")
+
+    @unittest.skipUnless(os.name == "nt", "Windows helper")
+    def test_windows_helper_replaces_file_and_keeps_backup(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            target = root / "installed.exe"
+            staged = root / "gui_app.exe"
+            target.write_bytes(b"MZold")
+            staged.write_bytes(b"MZnew")
+            config = root / "install.json"
+            config.write_text(json.dumps({"target": str(target), "staged": str(staged),
+                                          "pid": 2147483647,
+                                          "sha256": hashlib.sha256(b"MZnew").hexdigest()}))
+            # Exercise actual PowerShell file replacement without launching a fake EXE.
+            script = root / "test.ps1"
+            script.write_text("param([string]$ConfigPath)\nfunction Start-Process { param($FilePath, $WorkingDirectory, $WindowStyle) }\n"
+                              + "$ErrorActionPreference" + updater._INSTALL_SCRIPT.split("$ErrorActionPreference", 1)[1],
+                              encoding="utf-8-sig")
+            subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
+                            "-File", str(script), "-ConfigPath", str(config)], check=True, timeout=20,
+                           capture_output=True)
+            self.assertEqual(target.read_bytes(), b"MZnew")
+            self.assertEqual(Path(str(target) + ".previous").read_bytes(), b"MZold")
+            self.assertFalse(staged.exists())
+
+
+if __name__ == "__main__":
+    unittest.main()

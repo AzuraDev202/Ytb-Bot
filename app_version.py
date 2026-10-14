@@ -1,0 +1,3 @@
+APP_VERSION = "1.0.0"
+UPDATE_REPOSITORY = "AzuraDev202/Ytb-Bot"
+UPDATE_ASSET = "gui_app.exe"
