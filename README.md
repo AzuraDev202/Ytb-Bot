@@ -2,6 +2,14 @@
 
 Ứng dụng Windows tìm kênh YouTube mới theo từ khóa, tuổi kênh và lượt xem; xuất kết quả Excel.
 
+## Tải app cho laptop Windows
+
+**[Tải bản desktop mới nhất](https://github.com/AzuraDev202/Ytb-Bot/releases/latest/download/gui_app.exe)**
+
+[Xem các phiên bản và ghi chú cập nhật](https://github.com/AzuraDev202/Ytb-Bot/releases/latest) · [Tải SHA-256](https://github.com/AzuraDev202/Ytb-Bot/releases/latest/download/gui_app.exe.sha256)
+
+Link tải cố định luôn trỏ tới EXE trong Release mới nhất. Link chỉ hoạt động sau khi GitHub Actions phát hành thành công bản đầu tiên. Tải EXE vào thư mục riêng có quyền ghi rồi mở trực tiếp, không cần cài Python. Bản desktop/build cũ được bỏ khỏi cây mã nguồn; file tải được lưu ở GitHub Releases.
+
 ## Chạy và build
 
 ```powershell
@@ -27,15 +35,17 @@ Updater giữ bản cũ thành `gui_app.exe.previous` (hoặc `<tên EXE hiện 
 Repo và Releases cần công khai để app tải được mà không lưu GitHub token trong EXE.
 
 1. Sửa `APP_VERSION` trong `app_version.py`, ví dụ `1.0.1`; chỉ dùng `X.Y.Z`.
-2. Commit và push code, gồm workflow `.github/workflows/release.yml`.
-3. Tạo và push tag khớp phiên bản:
+2. Commit và push code lên `main`, gồm workflow `.github/workflows/release.yml`:
 
    ```powershell
-   git tag v1.0.1
-   git push origin v1.0.1
+   git add -A
+   git commit -m "Release v1.0.1"
+   git push origin main
    ```
 
-GitHub Actions chạy test, build Windows EXE và phát hành Release với cả EXE lẫn checksum. Chỉ phát hành stable; updater bỏ qua draft/prerelease và phiên bản cũ. Khi phát hành thủ công, upload cả hai file trên vào cùng Release có tag khớp `APP_VERSION`. Push code thông thường không tạo bản cập nhật desktop.
+GitHub Actions chạy test, build Windows EXE, tự tạo tag tại commit được push và phát hành Release với EXE và checksum. Link tải ở đầu README tự trỏ sang phiên bản mới. Nếu phiên bản chưa tăng so với Release mới nhất, workflow bỏ qua phát hành; hãy tăng `APP_VERSION` cho mỗi bản cập nhật. Có thể chạy workflow thủ công ở tab Actions hoặc push tag khớp phiên bản. Lần đầu, chỉ cần push workflow này lên `main` để phát hành `1.0.0` nếu chưa có Release.
+
+Chỉ phát hành stable; updater bỏ qua draft/prerelease và phiên bản cũ. Khi phát hành thủ công, upload cả EXE và checksum vào cùng Release có tag khớp `APP_VERSION`. Không commit `build/`, `dist/` hoặc `.release-build/`; chúng được tạo lại khi build. Việc xóa file build khỏi cây mã nguồn không xóa chúng khỏi lịch sử Git cũ.
 
 ## Kiểm thử
 

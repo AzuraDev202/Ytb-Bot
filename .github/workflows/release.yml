@@ -1,10 +1,16 @@
 name: Build desktop release
-on:
+"on":
   push:
+    branches:
+      - main
     tags:
       - 'v*'
+  workflow_dispatch:
 permissions:
   contents: write
+concurrency:
+  group: desktop-release
+  cancel-in-progress: false
 jobs:
   release:
     runs-on: windows-latest
@@ -13,16 +19,26 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install build dependencies
-        run: python -m pip install -r requirements.txt pyinstaller
-      - name: Test updater
-        run: python -m unittest discover -s tests -v
-      - name: Build and verify version
-        env:
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: python scripts/build_release.py $env:RELEASE_TAG
-      - name: Publish complete release
+      - name: Check release version
+        id: version
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: gh release create $env:RELEASE_TAG dist/gui_app.exe dist/gui_app.exe.sha256 --verify-tag --generate-notes --title "Ytb-Bot $env:RELEASE_TAG"
+        run: python scripts/prepare_release.py
+      - name: Install build dependencies
+        if: steps.version.outputs.publish == 'true'
+        run: python -m pip install -r requirements.txt pyinstaller
+      - name: Test updater
+        if: steps.version.outputs.publish == 'true'
+        run: python -m unittest discover -s tests -v
+      - name: Build and verify version
+        if: steps.version.outputs.publish == 'true'
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: python scripts/build_release.py $env:RELEASE_TAG
+      - name: Publish complete release
+        if: steps.version.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          RELEASE_COMMIT: ${{ github.sha }}
+        run: gh release create $env:RELEASE_TAG dist/gui_app.exe dist/gui_app.exe.sha256 --target $env:RELEASE_COMMIT --generate-notes --latest --title "Ytb-Bot $env:RELEASE_TAG"
