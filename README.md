@@ -18,7 +18,7 @@ python gui_app.py
 python scripts/build_release.py
 ```
 
-Build tạo `dist/gui_app.exe` và `dist/gui_app.exe.sha256`. Không đóng gói `.env` hay API Key vào EXE.
+Build tạo `dist/gui_app.exe`, `dist/gui_app.exe.sha256` và `dist/build-info.json`. Mã build (commit + thời gian build UTC) xuất hiện trên titlebar và cạnh thông tin phiên bản để phân biệt các file cùng version. Không đóng gói `.env` hay API Key vào EXE.
 
 ## Cấu trúc thư mục
 
@@ -42,7 +42,7 @@ dist/                    EXE/checksum sinh ra khi build, không commit
 
 Có thể chạy desktop bằng `python -m ytb_bot` hoặc `python gui_app.py`. Giữ `.env` tại thư mục gốc khi chạy mã nguồn; bản desktop tiếp tục dùng `.env` và Excel cạnh EXE.
 
-Chỉ tăng version khi có thay đổi lớn về cấu trúc chính. Các chỉnh sửa nhỏ về UI, sửa lỗi hoặc sắp xếp file giữ nguyên version trừ khi có yêu cầu phát hành phiên bản mới. Việc sắp xếp thư mục này giữ nguyên `1.0.2`.
+Chỉ tăng version khi có thay đổi lớn về cấu trúc chính. Các chỉnh sửa nhỏ về UI, sửa lỗi hoặc sắp xếp file giữ nguyên version trừ khi có yêu cầu phát hành phiên bản mới. Workflow vẫn build và thay file tải của Release cùng version khi push lên `main`, sau khi test và kiểm tra cửa sổ EXE đạt.
 
 ## Xem và nhập Excel trong app
 
@@ -61,9 +61,9 @@ Bảng dùng để xem và nhập dữ liệu, chưa hỗ trợ sửa ô hoặc 
 
 ## Cập nhật desktop
 
-App kiểm tra GitHub Releases của `AzuraDev202/Ytb-Bot` sau khi mở, sau mỗi 6 giờ và khi nhấn **Kiểm tra cập nhật**. Khi có bản mới, sidebar và nhật ký thông báo; nhấn **Cập nhật ngay** và xác nhận để tải, kiểm tra SHA-256, tự thay EXE và mở lại. App không cập nhật giữa một lượt quét. Không có mạng hoặc GitHub giới hạn truy cập thì app vẫn dùng được; kiểm tra lại sau.
+App kiểm tra GitHub Releases của `AzuraDev202/Ytb-Bot` sau khi mở, sau mỗi 6 giờ và khi nhấn **Kiểm tra cập nhật**. Bản desktop cũng so sánh SHA-256 khi Release có cùng version: file khác nghĩa là có bản build khác; file giống thì không báo lại. Bản chạy mã nguồn không so hash của Python. Khi có bản mới, sidebar và nhật ký thông báo; nhấn **Cập nhật ngay** và xác nhận để tải, kiểm tra SHA-256, tự thay EXE và mở lại. App không cập nhật giữa một lượt quét. Không có mạng hoặc GitHub giới hạn truy cập thì app vẫn dùng được; kiểm tra lại sau.
 
-**EXE cũ chưa có updater cần thay thủ công một lần bằng bản mới.** Không có cách thêm updater vào một EXE đang được người dùng giữ mà không thay bản đó trước.
+**EXE cũ chưa có updater hoặc chưa so hash cùng version cần thay thủ công một lần bằng bản mới.** Nếu bản cũ đang chạy ngầm, End Task tiến trình cũ, đợi workflow phát hành hoàn tất rồi tải và chạy lại file mới. Chỉ sửa code mà không cập nhật asset trên Releases không thay đổi file người dùng tải.
 
 EXE phải nằm trong thư mục người dùng có quyền ghi (ví dụ thư mục riêng trong Downloads), không nên đặt trong Program Files. `.env` và kết quả Excel được đọc/ghi cạnh EXE và không bị bước cập nhật thay thế. Nếu chưa có `.env` cạnh EXE, lần đầu app có thể đọc `.env` từ thư mục khởi chạy rồi lưu cạnh EXE khi quét. Chuyển file Excel cũ sang thư mục cạnh EXE nếu trước đây bạn chạy từ thư mục khác.
 
@@ -82,7 +82,7 @@ Repo và Releases cần công khai để app tải được mà không lưu GitH
    git push origin main
    ```
 
-GitHub Actions chạy test, build Windows EXE, tự tạo tag tại commit được push và phát hành Release với EXE và checksum. Link tải ở đầu README tự trỏ sang phiên bản mới. Nếu phiên bản chưa tăng so với Release mới nhất, workflow bỏ qua phát hành; chỉnh sửa nhỏ giữ nguyên version sẽ chỉ cập nhật mã nguồn, không thay bản desktop trên GitHub Releases. Có thể chạy workflow thủ công ở tab Actions hoặc push tag khớp phiên bản. Khi chưa có Release, workflow phát hành phiên bản đang đặt trong `ytb_bot/version.py`.
+GitHub Actions chạy test, build EXE và kiểm tra cửa sổ hiện thật trước khi cập nhật link tải. Khi version tăng, workflow tạo Release mới. Khi version bằng Release mới nhất và nguồn chạy là `main`, workflow thay EXE/checksum/build-info của Release hiện tại; không tạo version mới. Push lại tag bằng version hiện tại không ghi đè bản từ `main`; version thấp hơn không được phát hành. Có thể chạy workflow thủ công trên `main` ở tab Actions. Khi chưa có Release, workflow phát hành phiên bản đang đặt trong `ytb_bot/version.py`.
 
 Chỉ phát hành stable; updater bỏ qua draft/prerelease và phiên bản cũ. Khi phát hành thủ công, upload cả EXE và checksum vào cùng Release có tag khớp `APP_VERSION`. Không commit `build/`, `dist/` hoặc `.release-build/`; chúng được tạo lại khi build. Việc xóa file build khỏi cây mã nguồn không xóa chúng khỏi lịch sử Git cũ.
 

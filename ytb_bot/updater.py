@@ -57,7 +57,10 @@ def check_for_update(current=APP_VERSION):
     if data.get("draft") or data.get("prerelease"):
         return None
     version = data.get("tag_name", "")
-    if version_tuple(version) <= version_tuple(current):
+    same_version = version_tuple(version) == version_tuple(current)
+    if version_tuple(version) < version_tuple(current):
+        return None
+    if same_version and not getattr(sys, "frozen", False):
         return None
     assets = {item["name"]: item for item in data.get("assets", [])}
     if UPDATE_ASSET not in assets or f"{UPDATE_ASSET}.sha256" not in assets:
@@ -66,6 +69,14 @@ def check_for_update(current=APP_VERSION):
     size = exe.get("size", 0)
     if not isinstance(size, int) or not 0 < size <= 512 * 1024 * 1024:
         raise UpdateError("Kích thước bản cập nhật không hợp lệ.")
+    if same_version:
+        remote_digest = exe.get("digest", "") or ""
+        if not re.fullmatch(r"sha256:[0-9a-fA-F]{64}", remote_digest):
+            raise UpdateError("Không xác minh được bản build cùng phiên bản: GitHub thiếu SHA-256.")
+        with open(sys.executable, "rb") as installed:
+            local_digest = hashlib.file_digest(installed, "sha256").hexdigest()
+        if local_digest == remote_digest.split(":", 1)[1].lower():
+            return None
     return Release(version.removeprefix("v"), _asset_url(exe["browser_download_url"]),
                    _asset_url(assets[f"{UPDATE_ASSET}.sha256"]["browser_download_url"]), size)
 

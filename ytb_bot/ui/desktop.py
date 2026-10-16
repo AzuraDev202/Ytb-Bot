@@ -13,6 +13,7 @@ from dotenv import load_dotenv, set_key
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from ytb_bot.version import APP_VERSION
+from ytb_bot.build_info import build_id
 from ytb_bot.updater import check_for_update, download_update, install_update
 from ytb_bot.paths import APP_DIR, ENV_FILE
 from ytb_bot.ui.dashboard import StudioDashboard
@@ -33,7 +34,7 @@ class YtbBotApp(ctk.CTk):
         super().__init__()
         self.withdraw()
 
-        self.title(f"Ytb-Bot · v{APP_VERSION}")
+        self.title(f"Ytb-Bot · v{APP_VERSION} · {build_id()}")
         self._startup_layout = fit_window(screen_work_area(self), self._get_window_scaling(),
                                            frame=(round(20 * self._get_window_scaling()),
                                                   round(44 * self._get_window_scaling())))
@@ -120,10 +121,10 @@ class YtbBotApp(ctk.CTk):
             self.view.update_label.configure(text="Chưa kiểm tra được cập nhật")
             self.log(f"[Cập nhật] {error}")
         elif release:
-            self.view.update_label.configure(text=f"Có phiên bản mới: v{release.version}")
-            self.log(f"[Cập nhật] Có v{release.version}. Chọn Cập nhật ngay để tải và khởi động lại.")
+            self.view.update_label.configure(text=f"Có bản cập nhật: v{release.version}")
+            self.log(f"[Cập nhật] Có bản build mới của v{release.version}. Chọn Cập nhật ngay để tải và khởi động lại.")
         else:
-            self.view.update_label.configure(text=f"Phiên bản hiện tại: v{APP_VERSION}")
+            self.view.update_label.configure(text=f"v{APP_VERSION}\nBuild: {build_id()}")
 
     def update_action(self):
         if not self.available_release:

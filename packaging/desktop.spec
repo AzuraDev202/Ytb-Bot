@@ -7,7 +7,7 @@ a = Analysis(
     [str(ROOT / 'gui_app.py')],
     pathex=[str(ROOT)],
     binaries=[],
-    datas=[],
+    datas=[(str(ROOT / '.release-build' / 'build-info.json'), 'ytb_bot')],
     hiddenimports=['openpyxl', 'xlrd'],
     hookspath=[],
     hooksconfig={},

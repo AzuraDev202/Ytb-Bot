@@ -32,6 +32,25 @@ class UpdaterTests(unittest.TestCase):
         data["prerelease"] = True
         self.assertIsNone(self.check(data))
 
+    def test_same_version_packaged_build_detects_new_binary_by_digest(self):
+        data = self.release_data("v1.0.0")
+        with tempfile.TemporaryDirectory() as directory:
+            installed = Path(directory) / "installed.exe"
+            installed.write_bytes(b"MZ-installed-build")
+            with patch.object(updater.sys, "frozen", True, create=True), \
+                    patch.object(updater.sys, "executable", str(installed)):
+                data["assets"][0]["digest"] = "sha256:" + hashlib.sha256(installed.read_bytes()).hexdigest()
+                self.assertIsNone(self.check(data))
+                data["assets"][0]["digest"] = "sha256:" + hashlib.sha256(b"MZ-new-build").hexdigest()
+                self.assertEqual(self.check(data).version, "1.0.0")
+                data["assets"][0]["digest"] = None
+                with self.assertRaises(updater.UpdateError):
+                    self.check(data)
+
+    def test_same_version_source_run_does_not_replace_python(self):
+        with patch.object(updater.sys, "frozen", False, create=True):
+            self.assertIsNone(self.check(self.release_data("v1.0.0")))
+
     def test_missing_asset_and_untrusted_download_rejected(self):
         data = self.release_data()
         data["assets"].pop()

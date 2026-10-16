@@ -1,4 +1,4 @@
-"""Publish only a newer version; network/auth errors must fail the workflow."""
+"""Publish new versions or refresh the same version from main."""
 import json
 import os
 from pathlib import Path
@@ -28,7 +28,9 @@ except HTTPError as error:
         raise
     latest = None
 
-publish = latest is None or version_tuple(APP_VERSION) > version_tuple(latest)
+same_version = latest is not None and version_tuple(APP_VERSION) == version_tuple(latest)
+refresh = same_version and os.environ.get("GITHUB_REF") == "refs/heads/main"
+publish = latest is None or version_tuple(APP_VERSION) > version_tuple(latest) or refresh
 with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
-    output.write(f"tag={tag}\npublish={str(publish).lower()}\n")
-print(f"Version {tag}: {'ready to publish' if publish else 'already released or older; skipped'}")
+    output.write(f"tag={tag}\npublish={str(publish).lower()}\nrefresh={str(refresh).lower()}\n")
+print(f"Version {tag}: {'refresh existing release assets' if refresh else 'ready to publish' if publish else 'older or unchanged tag; skipped'}")

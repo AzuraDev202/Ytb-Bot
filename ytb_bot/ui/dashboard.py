@@ -6,6 +6,7 @@ import customtkinter as ctk
 from ytb_bot.ui import theme as t
 from ytb_bot.ui.excel_viewer import ExcelViewer
 from ytb_bot.version import APP_VERSION
+from ytb_bot.build_info import build_id
 
 
 def system_motion_enabled():
@@ -192,7 +193,7 @@ class StudioDashboard(ctk.CTkFrame):
             progress_color=t.color("accent"), text_color=t.color("text"), font=ctk.CTkFont(size=11),
             command=self._motion_changed)
         self.motion_switch.grid(row=17, column=0, padx=14, pady=(0, 22), sticky="ew")
-        self.update_label = t.label(self.sidebar, f"v{APP_VERSION} · Desktop", size=11, muted=True, wraplength=190, justify="left")
+        self.update_label = t.label(self.sidebar, f"v{APP_VERSION}\nBuild: {build_id()}", size=11, muted=True, wraplength=190, justify="left")
         self.update_label.grid(row=18, column=0, padx=14, sticky="ew")
         self.update_button = t.button(self.sidebar, "Kiểm tra cập nhật", on_update)
         self.update_button.grid(row=19, column=0, padx=14, pady=(10, 20), sticky="ew")
