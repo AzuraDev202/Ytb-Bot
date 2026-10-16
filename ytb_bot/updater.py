@@ -12,7 +12,7 @@ from urllib.error import HTTPError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
-from app_version import APP_VERSION, UPDATE_REPOSITORY, UPDATE_ASSET
+from ytb_bot.version import APP_VERSION, UPDATE_REPOSITORY, UPDATE_ASSET
 
 
 class UpdateError(Exception):

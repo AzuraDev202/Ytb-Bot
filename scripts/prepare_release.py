@@ -7,8 +7,8 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from app_version import APP_VERSION
-from updater import version_tuple
+from ytb_bot.version import APP_VERSION
+from ytb_bot.updater import version_tuple
 
 version_tuple(APP_VERSION)
 tag = f"v{APP_VERSION}"

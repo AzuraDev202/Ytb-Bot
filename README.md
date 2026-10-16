@@ -20,6 +20,30 @@ python scripts/build_release.py
 
 Build tạo `dist/gui_app.exe` và `dist/gui_app.exe.sha256`. Không đóng gói `.env` hay API Key vào EXE.
 
+## Cấu trúc thư mục
+
+```text
+ytb_bot/                 Mã nguồn ứng dụng
+  ui/                    Giao diện desktop, Excel và bố cục cửa sổ
+  scanner.py             Bộ quét chạy từ dòng lệnh
+  updater.py             Kiểm tra, tải và cài bản cập nhật
+  paths.py               Đường dẫn .env và dữ liệu lúc chạy
+  version.py             Phiên bản và nguồn cập nhật
+  __main__.py            Điểm khởi chạy desktop
+packaging/desktop.spec   Cấu hình PyInstaller
+scripts/                 Các lệnh build và chuẩn bị Release
+tests/                   Kiểm thử
+.github/workflows/       Quy trình GitHub Actions
+gui_app.py               Lệnh chạy desktop tương thích cách cũ
+bot.py                   Lệnh chạy scanner tương thích cách cũ
+dist/                    EXE/checksum sinh ra khi build, không commit
+.release-build/          File build tạm, không commit
+```
+
+Có thể chạy desktop bằng `python -m ytb_bot` hoặc `python gui_app.py`. Giữ `.env` tại thư mục gốc khi chạy mã nguồn; bản desktop tiếp tục dùng `.env` và Excel cạnh EXE.
+
+Chỉ tăng version khi có thay đổi lớn về cấu trúc chính. Các chỉnh sửa nhỏ về UI, sửa lỗi hoặc sắp xếp file giữ nguyên version trừ khi có yêu cầu phát hành phiên bản mới. Việc sắp xếp thư mục này giữ nguyên `1.0.2`.
+
 ## Xem và nhập Excel trong app
 
 Từ phiên bản 1.0.2, cửa sổ tự căn giữa vùng làm việc của màn hình chính, tính cả Windows DPI scaling và chừa chỗ cho taskbar/viền cửa sổ. Trên màn hình nhỏ, nội dung chính và bộ lọc có thể cuộn để các nút không bị khuất. Bạn vẫn có thể kéo giãn hoặc phóng to cửa sổ.
@@ -45,16 +69,16 @@ Updater giữ bản cũ thành `gui_app.exe.previous` (hoặc `<tên EXE hiện 
 
 Repo và Releases cần công khai để app tải được mà không lưu GitHub token trong EXE.
 
-1. Sửa `APP_VERSION` trong `app_version.py`, ví dụ `1.0.1`; chỉ dùng `X.Y.Z`.
+1. Khi cần phát hành phiên bản mới, sửa `APP_VERSION` trong `ytb_bot/version.py`, ví dụ `1.1.0`; chỉ dùng `X.Y.Z`.
 2. Commit và push code lên `main`, gồm workflow `.github/workflows/release.yml`:
 
    ```powershell
    git add -A
-   git commit -m "Release v1.0.1"
+   git commit -m "Release v1.1.0"
    git push origin main
    ```
 
-GitHub Actions chạy test, build Windows EXE, tự tạo tag tại commit được push và phát hành Release với EXE và checksum. Link tải ở đầu README tự trỏ sang phiên bản mới. Nếu phiên bản chưa tăng so với Release mới nhất, workflow bỏ qua phát hành; hãy tăng `APP_VERSION` cho mỗi bản cập nhật. Có thể chạy workflow thủ công ở tab Actions hoặc push tag khớp phiên bản. Lần đầu, chỉ cần push workflow này lên `main` để phát hành `1.0.0` nếu chưa có Release.
+GitHub Actions chạy test, build Windows EXE, tự tạo tag tại commit được push và phát hành Release với EXE và checksum. Link tải ở đầu README tự trỏ sang phiên bản mới. Nếu phiên bản chưa tăng so với Release mới nhất, workflow bỏ qua phát hành; chỉnh sửa nhỏ giữ nguyên version sẽ chỉ cập nhật mã nguồn, không thay bản desktop trên GitHub Releases. Có thể chạy workflow thủ công ở tab Actions hoặc push tag khớp phiên bản. Khi chưa có Release, workflow phát hành phiên bản đang đặt trong `ytb_bot/version.py`.
 
 Chỉ phát hành stable; updater bỏ qua draft/prerelease và phiên bản cũ. Khi phát hành thủ công, upload cả EXE và checksum vào cùng Release có tag khớp `APP_VERSION`. Không commit `build/`, `dist/` hoặc `.release-build/`; chúng được tạo lại khi build. Việc xóa file build khỏi cây mã nguồn không xóa chúng khỏi lịch sử Git cũ.
 

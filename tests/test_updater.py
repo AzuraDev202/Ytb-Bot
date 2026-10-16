@@ -8,7 +8,7 @@ import json
 import os
 import subprocess
 
-import updater
+from ytb_bot import updater
 
 
 class UpdaterTests(unittest.TestCase):

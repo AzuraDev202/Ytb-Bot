@@ -9,7 +9,7 @@ from unittest.mock import patch
 import pandas as pd
 import customtkinter as ctk
 
-from gui_app import YtbBotApp
+from ytb_bot.ui.desktop import YtbBotApp
 
 
 @unittest.skipUnless(os.name == "nt", "Windows desktop GUI")
@@ -24,7 +24,7 @@ class ExcelViewerTests(unittest.TestCase):
 
     def test_startup_centers_and_uses_scrolling_on_small_screens(self):
         for area in [(0, 0, 1366, 728), (0, 48, 1920, 1080)]:
-            with self.subTest(area=area), patch("gui_app.screen_work_area", return_value=area), \
+            with self.subTest(area=area), patch("ytb_bot.ui.desktop.screen_work_area", return_value=area), \
                     patch.object(YtbBotApp, "check_updates"):
                 app = YtbBotApp()
                 try:
@@ -73,11 +73,11 @@ class ExcelViewerTests(unittest.TestCase):
                     viewer._move_page(1)
                     self.assertEqual(len(viewer.table.get_children()), 5)
                     self.assertEqual(viewer.next.cget("state"), "disabled")
-                    with patch("excel_viewer.messagebox.askyesno", return_value=False):
+                    with patch("ytb_bot.ui.excel_viewer.messagebox.askyesno", return_value=False):
                         before = app.kw_textbox.get("1.0", "end")
                         viewer.import_keywords()
                         self.assertEqual(app.kw_textbox.get("1.0", "end"), before)
-                    with patch("excel_viewer.messagebox.askyesno", return_value=True):
+                    with patch("ytb_bot.ui.excel_viewer.messagebox.askyesno", return_value=True):
                         viewer.import_keywords()
                     imported = app.kw_textbox.get("1.0", "end").strip().splitlines()
                     self.assertEqual(len(imported), 403)
@@ -89,7 +89,7 @@ class ExcelViewerTests(unittest.TestCase):
                     self.assertEqual(len(viewer.table.get_children()), 0)
                     broken = Path(directory) / "broken.xlsx"
                     broken.write_text("not an Excel file")
-                    with patch("excel_viewer.messagebox.showerror") as error:
+                    with patch("ytb_bot.ui.excel_viewer.messagebox.showerror") as error:
                         viewer.open_file(broken)
                         deadline = time.monotonic() + 10
                         while not error.called and time.monotonic() < deadline:

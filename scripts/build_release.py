@@ -6,13 +6,13 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from app_version import APP_VERSION
-from updater import version_tuple
+from ytb_bot.version import APP_VERSION
+from ytb_bot.updater import version_tuple
 
 version_tuple(APP_VERSION)
 if len(sys.argv) > 1 and sys.argv[1] != f"v{APP_VERSION}":
-    raise SystemExit("Git tag must match APP_VERSION in app_version.py")
-subprocess.run([sys.executable, "-m", "PyInstaller", "--noconfirm", "--workpath", ".release-build", "gui_app.spec"],
+    raise SystemExit("Git tag must match APP_VERSION in ytb_bot/version.py")
+subprocess.run([sys.executable, "-m", "PyInstaller", "--noconfirm", "--workpath", ".release-build", "packaging/desktop.spec"],
                cwd=ROOT, check=True)
 exe = ROOT / "dist" / "gui_app.exe"
 checksum = hashlib.sha256(exe.read_bytes()).hexdigest()

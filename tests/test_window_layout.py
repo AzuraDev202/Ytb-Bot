@@ -1,6 +1,6 @@
 import unittest
 
-from window_layout import fit_window
+from ytb_bot.ui.window_layout import fit_window
 
 
 class WindowLayoutTests(unittest.TestCase):

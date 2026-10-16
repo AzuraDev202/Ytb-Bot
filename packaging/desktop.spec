@@ -1,9 +1,11 @@
 # -*- mode: python ; coding: utf-8 -*-
+from pathlib import Path
 
+ROOT = Path(SPECPATH).resolve().parent
 
 a = Analysis(
-    ['gui_app.py'],
-    pathex=[],
+    [str(ROOT / 'gui_app.py')],
+    pathex=[str(ROOT)],
     binaries=[],
     datas=[],
     hiddenimports=['openpyxl', 'xlrd'],
