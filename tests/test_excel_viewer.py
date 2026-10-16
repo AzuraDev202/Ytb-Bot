@@ -7,12 +7,37 @@ import unittest
 from unittest.mock import patch
 
 import pandas as pd
+import customtkinter as ctk
 
 from gui_app import YtbBotApp
 
 
 @unittest.skipUnless(os.name == "nt", "Windows desktop GUI")
 class ExcelViewerTests(unittest.TestCase):
+    @staticmethod
+    def close_app(app):
+        # Tests create several Tcl interpreters; cancel pending widget timers
+        # before destroying each root so they cannot fire during the next test.
+        for timer in app.tk.splitlist(app.tk.call("after", "info")):
+            app.tk.call("after", "cancel", timer)
+        app.destroy()
+
+    def test_startup_centers_and_uses_scrolling_on_small_screens(self):
+        for area in [(0, 0, 1366, 728), (0, 48, 1920, 1080)]:
+            with self.subTest(area=area), patch("gui_app.screen_work_area", return_value=area), \
+                    patch.object(YtbBotApp, "check_updates"):
+                app = YtbBotApp()
+                try:
+                    app.update()
+                    self.assertGreaterEqual(app.winfo_rootx(), area[0])
+                    self.assertGreaterEqual(app.winfo_rooty(), area[1])
+                    self.assertLessEqual(app.winfo_rootx() + app.winfo_width(), area[2])
+                    self.assertLessEqual(app.winfo_rooty() + app.winfo_height(), area[3])
+                    if app._compact:
+                        self.assertIsInstance(app.main_frame, ctk.CTkScrollableFrame)
+                finally:
+                    self.close_app(app)
+
     def test_preview_sheet_selection_paging_and_full_column_import(self):
         with tempfile.TemporaryDirectory() as directory:
             workbook = Path(directory) / "keywords.xlsx"
@@ -73,4 +98,4 @@ class ExcelViewerTests(unittest.TestCase):
                         error.assert_called_once()
                     self.assertEqual(viewer.import_button.cget("state"), "disabled")
                 finally:
-                    app.destroy()
+                    self.close_app(app)

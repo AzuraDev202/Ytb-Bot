@@ -14,6 +14,7 @@ from googleapiclient.errors import HttpError
 from app_version import APP_VERSION
 from updater import check_for_update, download_update, install_update
 from excel_viewer import ExcelViewer
+from window_layout import fit_window, screen_work_area
 
 # Cấu hình giao diện chung
 ctk.set_appearance_mode("Dark")  # "Dark", "Light", hoặc "System"
@@ -29,10 +30,18 @@ if not os.path.exists(ENV_FILE):
 class YtbBotApp(ctk.CTk):
     def __init__(self):
         super().__init__()
+        self.withdraw()
 
         self.title(f"Ytb-Bot · v{APP_VERSION}")
-        self.geometry("1180x900")
-        self.minsize(1020, 800)
+        self._startup_layout = fit_window(screen_work_area(self), self._get_window_scaling(),
+                                           frame=(round(20 * self._get_window_scaling()),
+                                                  round(44 * self._get_window_scaling())))
+        layout = self._startup_layout
+        self._compact = layout.compact
+        self._sidebar_width = 220 if self._compact else 265
+        self._content_width = max(300, layout.width - self._sidebar_width - 70)
+        self.minsize(min(900, layout.width), min(580, layout.height))
+        self.geometry(f"{layout.width}x{layout.height}+{layout.x}+{layout.y}")
 
         self.excel_keyword_path = ""
         self.is_scanning = False
@@ -46,6 +55,8 @@ class YtbBotApp(ctk.CTk):
 
         self._build_sidebar()
         self._build_main_area()
+        self.update_idletasks()
+        self.deiconify()
         self.after(100, self._process_ui_events)
         self.after(2000, self.check_updates)
         self.after(6 * 60 * 60 * 1000, self._scheduled_update_check)
@@ -135,12 +146,12 @@ class YtbBotApp(ctk.CTk):
         messagebox.showerror("Cập nhật", error)
 
     def _build_sidebar(self):
-        self.sidebar = ctk.CTkScrollableFrame(self, width=265, corner_radius=0,
+        self.sidebar = ctk.CTkScrollableFrame(self, width=self._sidebar_width, corner_radius=0,
                                              fg_color=("#eef2f7", "#111827"))
         self.sidebar.grid(row=0, column=0, sticky="nsew")
         self.sidebar.grid_columnconfigure(0, weight=1)
         ctk.CTkLabel(self.sidebar, text="YTB / SCANNER", anchor="w",
-                     font=ctk.CTkFont(size=23, weight="bold")).grid(
+                     font=ctk.CTkFont(size=20 if self._compact else 23, weight="bold")).grid(
                          row=0, column=0, padx=18, pady=(26, 4), sticky="ew")
         ctk.CTkLabel(self.sidebar, text="Khám phá kênh YouTube mới", anchor="w",
                      text_color=("#64748b", "#94a3b8")).grid(
@@ -188,14 +199,16 @@ class YtbBotApp(ctk.CTk):
         self.update_button.grid(row=18, column=0, padx=18, pady=(0, 20), sticky="ew")
 
     def _build_main_area(self):
-        self.main_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.main_frame.grid(row=0, column=1, padx=24, pady=24, sticky="nsew")
+        main_frame_type = ctk.CTkScrollableFrame if self._compact else ctk.CTkFrame
+        self.main_frame = main_frame_type(self, fg_color="transparent")
+        self.main_frame.grid(row=0, column=1, padx=12 if self._compact else 24,
+                             pady=12 if self._compact else 24, sticky="nsew")
         self.main_frame.grid_columnconfigure(0, weight=1)
         self.main_frame.grid_rowconfigure(4, weight=1)
         ctk.CTkLabel(self.main_frame, text="Khám phá kênh tiềm năng", anchor="w",
-                     font=ctk.CTkFont(size=27, weight="bold")).grid(row=0, column=0, sticky="ew")
+                     font=ctk.CTkFont(size=23 if self._compact else 27, weight="bold")).grid(row=0, column=0, sticky="ew")
         ctk.CTkLabel(self.main_frame, text="Nhập từ khóa, chọn bộ lọc và tìm những kênh mới đang tăng trưởng.",
-                     anchor="w", text_color=("#64748b", "#94a3b8"), wraplength=650,
+                     anchor="w", text_color=("#64748b", "#94a3b8"), wraplength=min(650, self._content_width),
                      justify="left").grid(row=1, column=0, pady=(6, 20), sticky="ew")
         kw_frame = ctk.CTkFrame(self.main_frame, corner_radius=14,
                                fg_color=("#ffffff", "#182233"))
@@ -208,9 +221,9 @@ class YtbBotApp(ctk.CTk):
                       command=self.load_keywords_excel).grid(
                           row=0, column=1, padx=18, pady=(16, 4))
         ctk.CTkLabel(kw_frame, text="Mỗi dòng một từ khóa. Nhập Excel để xem sheet và chọn cột từ khóa.",
-                     anchor="w", text_color=("#64748b", "#94a3b8"), wraplength=600,
+                     anchor="w", text_color=("#64748b", "#94a3b8"), wraplength=min(600, self._content_width - 36),
                      justify="left").grid(row=1, column=0, columnspan=2, padx=18, sticky="ew")
-        self.kw_textbox = ctk.CTkTextbox(kw_frame, height=110, corner_radius=8,
+        self.kw_textbox = ctk.CTkTextbox(kw_frame, height=75 if self._compact else 110, corner_radius=8,
                                         border_width=1, border_color=("#e2e8f0", "#334155"))
         self.kw_textbox.grid(row=2, column=0, columnspan=2, padx=18, pady=(12, 18), sticky="ew")
         self.kw_textbox.insert("0.0", "AI Automation\nAI Agent\ntạo video bằng AI")
@@ -227,7 +240,7 @@ class YtbBotApp(ctk.CTk):
                                              hover_color=("#cbd5e1", "#475569"),
                                              command=self.open_output_excel)
         self.open_output_btn.grid(row=0, column=1, sticky="ew")
-        self.content_tabs = ctk.CTkTabview(self.main_frame)
+        self.content_tabs = ctk.CTkTabview(self.main_frame, height=350)
         self.content_tabs.grid(row=4, column=0, sticky="nsew")
         activity_tab = self.content_tabs.add("Hoạt động")
         excel_tab = self.content_tabs.add("Excel")

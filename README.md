@@ -22,6 +22,8 @@ Build tạo `dist/gui_app.exe` và `dist/gui_app.exe.sha256`. Không đóng gói
 
 ## Xem và nhập Excel trong app
 
+Từ phiên bản 1.0.2, cửa sổ tự căn giữa vùng làm việc của màn hình chính, tính cả Windows DPI scaling và chừa chỗ cho taskbar/viền cửa sổ. Trên màn hình nhỏ, nội dung chính và bộ lọc có thể cuộn để các nút không bị khuất. Bạn vẫn có thể kéo giãn hoặc phóng to cửa sổ.
+
 - Nhấn **Nhập Excel** hoặc vào tab **Excel → Mở file Excel**, chọn `.xlsx` hoặc `.xls`.
 - Chọn sheet để xem bảng; bảng có thanh cuộn ngang/dọc và phân trang 200 dòng. Dữ liệu được đọc ở nền để cửa sổ vẫn phản hồi.
 - Chọn cột rồi nhấn **Dùng cột làm từ khóa**. App lấy toàn bộ cột, bỏ ô trống và từ khóa trùng, rồi hỏi trước khi thay danh sách hiện tại. Cột `Keyword` được chọn mặc định nếu có.
