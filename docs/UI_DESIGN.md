@@ -40,3 +40,5 @@ python scripts/preview_ui.py --excel --output artifacts/ui/excel-dark.png
 Ảnh được chụp từ cửa sổ thật; file Excel trong preview là dữ liệu minh họa có tên rõ ràng. `artifacts/` không được commit. Script này không gọi YouTube API.
 
 Kiểm tra trên Windows với cửa sổ thường/nhỏ, cả hai theme, chế độ giảm chuyển động, preset, lỗi nhập liệu, clipboard, Excel nhiều sheet và dừng có kết quả một phần. CustomTkinter không cung cấp đầy đủ ngữ nghĩa Windows UI Automation như các framework native chuyên dụng; không coi kiểm thử bàn phím là chứng nhận hỗ trợ screen reader.
+
+Kiểm tra khởi động phải đi qua `CTk.mainloop()` thật. Windows titlebar initialization có thể bơm sự kiện rồi khôi phục trạng thái `withdrawn`; cửa sổ chỉ được hiện khi CustomTkinter hoàn tất khởi tạo. Không thay test startup bằng `update()` hoặc tự gọi `deiconify()` trong script chụp ảnh, vì chúng có thể che lỗi chạy ngầm. Regression test kiểm tra cả lần vào mainloop đầu tiên và đổi theme; `scripts/smoke_desktop.ps1` kiểm tra chính EXE sau build.

@@ -68,10 +68,22 @@ class YtbBotApp(ctk.CTk):
         self.bind("<Escape>", lambda event: self.stop_scan())
         self.protocol("WM_DELETE_WINDOW", self._close_window)
         self.update_idletasks()
-        self.deiconify()
+        # CTk refreshes the Windows titlebar on the first mainloop(). Reveal
+        # after that initialization, so it cannot restore the withdrawn state.
+        self.after(0, self._show_window)
         self.after(100, self._process_ui_events)
         self.after(2000, self.check_updates)
         self.after(6 * 60 * 60 * 1000, self._scheduled_update_check)
+
+    def _show_window(self):
+        # CTk's titlebar setup itself pumps pending events with update(). An
+        # after(0) callback can therefore run before the first mainloop is ready.
+        # Wait for CTk's initialization flag; do not mutate its internal flags.
+        if not self._window_exists:
+            self.after(10, self._show_window)
+            return
+        self.deiconify()
+        self.lift()
 
     def _process_ui_events(self):
         try:

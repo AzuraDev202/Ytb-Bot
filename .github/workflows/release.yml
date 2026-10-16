@@ -35,6 +35,9 @@ jobs:
         env:
           RELEASE_TAG: ${{ steps.version.outputs.tag }}
         run: python scripts/build_release.py $env:RELEASE_TAG
+      - name: Verify desktop window appears
+        if: steps.version.outputs.publish == 'true'
+        run: ./scripts/smoke_desktop.ps1
       - name: Publish complete release
         if: steps.version.outputs.publish == 'true'
         env:

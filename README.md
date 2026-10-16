@@ -92,4 +92,6 @@ Chỉ phát hành stable; updater bỏ qua draft/prerelease và phiên bản cũ
 python -m unittest discover -s tests -v
 ```
 
+Sau khi build, kiểm tra trực tiếp cửa sổ EXE trên Windows bằng `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/smoke_desktop.ps1`. Bài kiểm tra tự chạy EXE, yêu cầu cửa sổ chính hiện liên tục ít nhất 2 giây rồi đóng đúng tiến trình vừa tạo. Workflow cũng chạy bước này trước khi phát hành để tránh trường hợp EXE chỉ chạy ngầm.
+
 Trước khi phân phối, kiểm tra trên máy Windows: mở bản cũ có updater, phát hành bản cao hơn, chọn cập nhật, xác nhận app mở lại đúng phiên bản và `.env`/Excel vẫn còn. Test tự động dùng dữ liệu giả và helper thay file thử nghiệm, không thay EXE đang sử dụng.

@@ -1,5 +1,6 @@
 """Exercise actual workbook reading and desktop import without YouTube calls."""
 import os
+import gc
 from pathlib import Path
 import tempfile
 import time
@@ -14,6 +15,9 @@ from ytb_bot.ui.desktop import YtbBotApp
 
 @unittest.skipUnless(os.name == "nt", "Windows desktop GUI")
 class ExcelViewerTests(unittest.TestCase):
+    def setUp(self):
+        gc.collect()
+
     @staticmethod
     def close_app(app):
         # Tests create several Tcl interpreters; cancel pending widget timers

@@ -1,5 +1,6 @@
 """Desktop interactions and cancellation with deterministic YouTube responses."""
 import datetime
+import gc
 import os
 from pathlib import Path
 import tempfile
@@ -24,7 +25,27 @@ class DashboardTests(unittest.TestCase):
         for timer in self.app.tk.splitlist(self.app.tk.call("after", "info")):
             self.app.tk.call("after", "cancel", timer)
         self.app.destroy()
+        self.app = None
         self.check_patch.stop()
+        gc.collect()  # Finalize Tcl variables on the GUI thread, not a later Excel worker.
+
+    def test_first_mainloop_shows_window_and_theme_change_keeps_it_visible(self):
+        observations = []
+
+        def change_theme():
+            observations.append((self.app.state(), self.app.winfo_viewable()))
+            self.app.view.change_theme("Sáng")
+            self.app.after(250, finish)
+
+        def finish():
+            observations.append((self.app.state(), self.app.winfo_viewable()))
+            self.app.quit()
+
+        self.app.after(300, change_theme)
+        self.app.after(3000, self.app.quit)
+        # Do not call update() or deiconify(): those mask CTk's first-mainloop path.
+        self.app.mainloop()
+        self.assertEqual(observations, [("normal", 1), ("normal", 1)])
 
     def test_presets_counter_theme_and_inline_validation(self):
         view = self.app.view
