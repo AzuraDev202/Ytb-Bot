@@ -5,14 +5,15 @@ import queue
 import sys
 from pathlib import Path
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import messagebox
 import customtkinter as ctk
 import pandas as pd
-from dotenv import load_dotenv, set_key
+from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from app_version import APP_VERSION
 from updater import check_for_update, download_update, install_update
+from excel_viewer import ExcelViewer
 
 # Cấu hình giao diện chung
 ctk.set_appearance_mode("Dark")  # "Dark", "Light", hoặc "System"
@@ -30,8 +31,8 @@ class YtbBotApp(ctk.CTk):
         super().__init__()
 
         self.title(f"Ytb-Bot · v{APP_VERSION}")
-        self.geometry("1120x780")
-        self.minsize(960, 720)
+        self.geometry("1180x900")
+        self.minsize(1020, 800)
 
         self.excel_keyword_path = ""
         self.is_scanning = False
@@ -206,7 +207,7 @@ class YtbBotApp(ctk.CTk):
         ctk.CTkButton(kw_frame, text="Nhập Excel", width=120, height=34,
                       command=self.load_keywords_excel).grid(
                           row=0, column=1, padx=18, pady=(16, 4))
-        ctk.CTkLabel(kw_frame, text="Mỗi dòng một từ khóa. File Excel dùng cột Keyword hoặc cột đầu tiên.",
+        ctk.CTkLabel(kw_frame, text="Mỗi dòng một từ khóa. Nhập Excel để xem sheet và chọn cột từ khóa.",
                      anchor="w", text_color=("#64748b", "#94a3b8"), wraplength=600,
                      justify="left").grid(row=1, column=0, columnspan=2, padx=18, sticky="ew")
         self.kw_textbox = ctk.CTkTextbox(kw_frame, height=110, corner_radius=8,
@@ -220,15 +221,24 @@ class YtbBotApp(ctk.CTk):
                                        font=ctk.CTkFont(size=15, weight="bold"),
                                        command=self.start_scan_thread)
         self.start_btn.grid(row=0, column=0, padx=(0, 12), sticky="ew")
-        self.open_output_btn = ctk.CTkButton(action_frame, text="Mở kết quả Excel", height=44,
+        self.open_output_btn = ctk.CTkButton(action_frame, text="Xem kết quả Excel", height=44,
                                              fg_color=("#dbe4ef", "#334155"),
                                              text_color=("#1e293b", "#e2e8f0"),
                                              hover_color=("#cbd5e1", "#475569"),
                                              command=self.open_output_excel)
         self.open_output_btn.grid(row=0, column=1, sticky="ew")
-        activity = ctk.CTkFrame(self.main_frame, corner_radius=14,
+        self.content_tabs = ctk.CTkTabview(self.main_frame)
+        self.content_tabs.grid(row=4, column=0, sticky="nsew")
+        activity_tab = self.content_tabs.add("Hoạt động")
+        excel_tab = self.content_tabs.add("Excel")
+        for tab in (activity_tab, excel_tab):
+            tab.grid_columnconfigure(0, weight=1)
+            tab.grid_rowconfigure(0, weight=1)
+        self.excel_viewer = ExcelViewer(excel_tab, on_import=self._import_excel_keywords)
+        self.excel_viewer.grid(row=0, column=0, sticky="nsew")
+        activity = ctk.CTkFrame(activity_tab, corner_radius=14,
                                fg_color=("#ffffff", "#182233"))
-        activity.grid(row=4, column=0, sticky="nsew")
+        activity.grid(row=0, column=0, sticky="nsew")
         activity.grid_columnconfigure(0, weight=1)
         activity.grid_rowconfigure(3, weight=1)
         ctk.CTkLabel(activity, text="02  /  Hoạt động quét", anchor="w",
@@ -255,28 +265,26 @@ class YtbBotApp(ctk.CTk):
         self.log_box.configure(state="disabled")
 
     def load_keywords_excel(self):
-        file_path = filedialog.askopenfilename(
-            title="Chọn file Excel chứa từ khóa",
-            filetypes=[("Excel files", "*.xlsx *.xls")]
-        )
-        if not file_path:
-            return
-        try:
-            df = pd.read_excel(file_path)
-            col = "Keyword" if "Keyword" in df.columns else df.columns[0]
-            keywords = [str(k).strip() for k in df[col].dropna() if str(k).strip()]
-            self.kw_textbox.delete("0.0", tk.END)
-            self.kw_textbox.insert("0.0", "\n".join(keywords))
-            self.log(f"[+] Đã nạp {len(keywords)} từ khóa từ file: {os.path.basename(file_path)}")
-        except Exception as e:
-            messagebox.showerror("Lỗi đọc file Excel", f"Không thể đọc file:\n{e}")
+        self.content_tabs.set("Excel")
+        self.excel_viewer.open_file()
+
+    def _import_excel_keywords(self, keywords, file_path):
+        self.excel_keyword_path = file_path
+        self.kw_textbox.delete("0.0", tk.END)
+        self.kw_textbox.insert("0.0", "\n".join(keywords))
+        self.log(f"[+] Đã nạp {len(keywords)} từ khóa từ file: {os.path.basename(file_path)}")
+        self.excel_viewer.status.configure(text=f"Đã nhập {len(keywords)} từ khóa vào danh sách phía trên.")
 
     def open_output_excel(self):
         output_file = str(APP_DIR / "danh_sach_kenh_viral_moi.xlsx")
         if os.path.exists(output_file):
-            os.startfile(output_file)
+            self._show_excel(output_file)
         else:
             messagebox.showinfo("Thông báo", "Chưa có file kết quả. Hãy chạy quét kênh trước!")
+
+    def _show_excel(self, path):
+        self.content_tabs.set("Excel")
+        self.excel_viewer.open_file(path)
 
     def start_scan_thread(self):
         if self.is_scanning or self.update_busy:
@@ -305,6 +313,7 @@ class YtbBotApp(ctk.CTk):
             return
 
         self.is_scanning = True
+        self.content_tabs.set("Hoạt động")
         self.start_btn.configure(state="disabled", text="Đang quét…")
         self.progress_bar.set(0)
         self.log_box.configure(state="normal")
@@ -409,6 +418,7 @@ class YtbBotApp(ctk.CTk):
                     df.to_excel(writer, sheet_name="Kênh Mới Viral", index=False)
 
                 self.log(f"\n🎉 HOÀN TẤT! Đã lưu {len(results)} kênh vào '{output_excel}'.")
+                self.ui_events.put((self._show_excel, (output_excel,)))
                 self.ui_events.put((messagebox.showinfo, ("Thành công", f"Đã tìm thấy {len(results)} kênh mới và lưu vào file Excel!")))
             else:
                 self.log("\n[-] Không tìm thấy kênh nào thỏa mãn điều kiện.")

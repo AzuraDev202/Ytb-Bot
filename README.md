@@ -20,6 +20,15 @@ python scripts/build_release.py
 
 Build tạo `dist/gui_app.exe` và `dist/gui_app.exe.sha256`. Không đóng gói `.env` hay API Key vào EXE.
 
+## Xem và nhập Excel trong app
+
+- Nhấn **Nhập Excel** hoặc vào tab **Excel → Mở file Excel**, chọn `.xlsx` hoặc `.xls`.
+- Chọn sheet để xem bảng; bảng có thanh cuộn ngang/dọc và phân trang 200 dòng. Dữ liệu được đọc ở nền để cửa sổ vẫn phản hồi.
+- Chọn cột rồi nhấn **Dùng cột làm từ khóa**. App lấy toàn bộ cột, bỏ ô trống và từ khóa trùng, rồi hỏi trước khi thay danh sách hiện tại. Cột `Keyword` được chọn mặc định nếu có.
+- Nhấn **Xem kết quả Excel** để xem file kết quả ngay trong app. Sau lượt quét có kết quả, tab Excel tự mở file vừa xuất.
+
+Bảng dùng để xem và nhập dữ liệu, chưa hỗ trợ sửa ô hoặc lưu thay đổi vào workbook gốc. Không cần cài Microsoft Excel để dùng các tính năng này.
+
 ## Cập nhật desktop
 
 App kiểm tra GitHub Releases của `AzuraDev202/Ytb-Bot` sau khi mở, sau mỗi 6 giờ và khi nhấn **Kiểm tra cập nhật**. Khi có bản mới, sidebar và nhật ký thông báo; nhấn **Cập nhật ngay** và xác nhận để tải, kiểm tra SHA-256, tự thay EXE và mở lại. App không cập nhật giữa một lượt quét. Không có mạng hoặc GitHub giới hạn truy cập thì app vẫn dùng được; kiểm tra lại sau.
