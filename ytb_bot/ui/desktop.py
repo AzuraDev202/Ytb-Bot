@@ -3,17 +3,20 @@ import threading
 import datetime
 import queue
 import sys
+import time
 import tkinter as tk
 from tkinter import messagebox
 import customtkinter as ctk
 import pandas as pd
-from dotenv import load_dotenv
+import httplib2
+from dotenv import load_dotenv, set_key
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from ytb_bot.version import APP_VERSION
 from ytb_bot.updater import check_for_update, download_update, install_update
 from ytb_bot.paths import APP_DIR, ENV_FILE
-from ytb_bot.ui.excel_viewer import ExcelViewer
+from ytb_bot.ui.dashboard import StudioDashboard
+from ytb_bot.ui import theme as t
 from ytb_bot.ui.window_layout import fit_window, screen_work_area
 
 # Cấu hình giao diện chung
@@ -36,23 +39,34 @@ class YtbBotApp(ctk.CTk):
                                                   round(44 * self._get_window_scaling())))
         layout = self._startup_layout
         self._compact = layout.compact
-        self._sidebar_width = 220 if self._compact else 265
-        self._content_width = max(300, layout.width - self._sidebar_width - 70)
         self.minsize(min(900, layout.width), min(580, layout.height))
         self.geometry(f"{layout.width}x{layout.height}+{layout.x}+{layout.y}")
 
         self.excel_keyword_path = ""
         self.is_scanning = False
         self.update_busy = False
+        self.is_installing = False
         self.available_release = None
         self.ui_events = queue.Queue()
+        self.stop_requested = threading.Event()
+        self._scan_outcome = "ready"
+        self._scan_started = None
 
         # Bố cục chính: Sidebar bên trái, Main Content bên phải
-        self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        self._build_sidebar()
-        self._build_main_area()
+        self.configure(fg_color=t.color("canvas"))
+        self.view = StudioDashboard(self, compact=self._compact,
+            on_scan=self.start_scan_thread, on_stop=self.stop_scan,
+            on_excel=self.load_keywords_excel, on_results=self.open_output_excel,
+            on_update=self.update_action, on_import=self._import_excel_keywords)
+        self.view.grid(row=0, column=0, sticky="nsew")
+        self.log("Chọn chủ đề và bộ lọc, sau đó bắt đầu khám phá. Ctrl+Enter để quét · Ctrl+O để mở Excel.")
+        self.bind("<Control-Return>", lambda event: (self.start_scan_thread(), "break")[1])
+        self.bind("<Control-o>", lambda event: (self.load_keywords_excel(), "break")[1])
+        self.bind("<Escape>", lambda event: self.stop_scan())
+        self.protocol("WM_DELETE_WINDOW", self._close_window)
         self.update_idletasks()
         self.deiconify()
         self.after(100, self._process_ui_events)
@@ -61,12 +75,12 @@ class YtbBotApp(ctk.CTk):
 
     def _process_ui_events(self):
         try:
-            while True:
+            for _ in range(60):
                 callback, args = self.ui_events.get_nowait()
                 callback(*args)
         except queue.Empty:
             pass
-        self.after(100, self._process_ui_events)
+        self.after(50, self._process_ui_events)
 
     def _scheduled_update_check(self):
         self.check_updates()
@@ -76,8 +90,8 @@ class YtbBotApp(ctk.CTk):
         if self.update_busy:
             return
         self.update_busy = True
-        self.update_button.configure(state="disabled")
-        self.update_label.configure(text="Đang kiểm tra phiên bản…")
+        self.view.update_button.configure(state="disabled")
+        self.view.update_label.configure(text="Đang kiểm tra phiên bản…")
         def work():
             try:
                 release = check_for_update()
@@ -89,15 +103,15 @@ class YtbBotApp(ctk.CTk):
     def _update_checked(self, release, error):
         self.update_busy = False
         self.available_release = release
-        self.update_button.configure(state="normal", text="Cập nhật ngay" if release else "Kiểm tra cập nhật")
+        self.view.update_button.configure(state="normal", text="Cập nhật ngay" if release else "Kiểm tra cập nhật")
         if error:
-            self.update_label.configure(text="Chưa kiểm tra được cập nhật")
+            self.view.update_label.configure(text="Chưa kiểm tra được cập nhật")
             self.log(f"[Cập nhật] {error}")
         elif release:
-            self.update_label.configure(text=f"Có phiên bản mới: v{release.version}")
+            self.view.update_label.configure(text=f"Có phiên bản mới: v{release.version}")
             self.log(f"[Cập nhật] Có v{release.version}. Chọn Cập nhật ngay để tải và khởi động lại.")
         else:
-            self.update_label.configure(text=f"Phiên bản hiện tại: v{APP_VERSION}")
+            self.view.update_label.configure(text=f"Phiên bản hiện tại: v{APP_VERSION}")
 
     def update_action(self):
         if not self.available_release:
@@ -113,8 +127,9 @@ class YtbBotApp(ctk.CTk):
         if not messagebox.askyesno("Cập nhật Ytb-Bot", f"Tải v{release.version} và khởi động lại app?\nAPI Key và file Excel được giữ nguyên."):
             return
         self.update_busy = True
-        self.start_btn.configure(state="disabled")
-        self.update_button.configure(state="disabled")
+        self.view.start_btn.configure(state="disabled")
+        self.is_installing = True
+        self.view.update_button.configure(state="disabled")
         def work():
             try:
                 staged = download_update(release, lambda fraction: self.ui_events.put(
@@ -125,7 +140,7 @@ class YtbBotApp(ctk.CTk):
         threading.Thread(target=work, daemon=True).start()
 
     def _download_progress(self, fraction):
-        self.update_label.configure(text=f"Đang tải cập nhật… {fraction:.0%}")
+        self.view.update_label.configure(text=f"Đang tải cập nhật… {fraction:.0%}")
 
     def _install_download(self, staged):
         try:
@@ -138,153 +153,33 @@ class YtbBotApp(ctk.CTk):
 
     def _update_failed(self, error):
         self.update_busy = False
-        self.start_btn.configure(state="normal")
-        self.update_button.configure(state="normal")
-        self.update_label.configure(text="Cập nhật thất bại · có thể thử lại")
+        self.is_installing = False
+        self.view.start_btn.configure(state="normal")
+        self.view.update_button.configure(state="normal")
+        self.view.update_label.configure(text="Cập nhật thất bại · có thể thử lại")
         messagebox.showerror("Cập nhật", error)
-
-    def _build_sidebar(self):
-        self.sidebar = ctk.CTkScrollableFrame(self, width=self._sidebar_width, corner_radius=0,
-                                             fg_color=("#eef2f7", "#111827"))
-        self.sidebar.grid(row=0, column=0, sticky="nsew")
-        self.sidebar.grid_columnconfigure(0, weight=1)
-        ctk.CTkLabel(self.sidebar, text="YTB / SCANNER", anchor="w",
-                     font=ctk.CTkFont(size=20 if self._compact else 23, weight="bold")).grid(
-                         row=0, column=0, padx=18, pady=(26, 4), sticky="ew")
-        ctk.CTkLabel(self.sidebar, text="Khám phá kênh YouTube mới", anchor="w",
-                     text_color=("#64748b", "#94a3b8")).grid(
-                         row=1, column=0, padx=18, pady=(0, 26), sticky="ew")
-        ctk.CTkLabel(self.sidebar, text="CẤU HÌNH QUÉT", anchor="w",
-                     font=ctk.CTkFont(size=12, weight="bold")).grid(
-                         row=2, column=0, padx=18, pady=(0, 14), sticky="ew")
-        def field(row, title, hint, value, masked=False):
-            ctk.CTkLabel(self.sidebar, text=title, anchor="w").grid(
-                row=row, column=0, padx=18, pady=(12, 4), sticky="ew")
-            entry = ctk.CTkEntry(self.sidebar, height=38, show="*" if masked else "")
-            entry.grid(row=row+1, column=0, padx=18, sticky="ew")
-            entry.insert(0, value)
-            ctk.CTkLabel(self.sidebar, text=hint, anchor="w", wraplength=225,
-                         justify="left", text_color=("#64748b", "#94a3b8"),
-                         font=ctk.CTkFont(size=11)).grid(
-                             row=row+2, column=0, padx=18, pady=(4, 0), sticky="ew")
-            return entry
-        self.api_entry = field(3, "YouTube API Key", "Khóa được lưu khi bắt đầu quét.",
-                               os.getenv("YOUTUBE_API_KEY", ""), True)
-        self.max_age_entry = field(6, "Tuổi kênh tối đa · ngày", "Chỉ tìm kênh mới trong khoảng này.", "90")
-        self.min_views_entry = field(9, "Tổng lượt xem tối thiểu", "Lọc theo tổng lượt xem của kênh.", "500")
-        self.pages_label = ctk.CTkLabel(self.sidebar, text="Độ sâu quét · 2 trang / từ khóa", anchor="w")
-        self.pages_label.grid(row=12, column=0, padx=18, pady=(20, 8), sticky="ew")
-        self.max_pages_slider = ctk.CTkSlider(
-            self.sidebar, from_=1, to=5, number_of_steps=4,
-            command=lambda value: self.pages_label.configure(
-                text=f"Độ sâu quét · {int(value)} trang / từ khóa"))
-        self.max_pages_slider.grid(row=13, column=0, padx=18, sticky="ew")
-        self.max_pages_slider.set(2)
-        ctk.CTkLabel(self.sidebar, text="1 trang = tối đa 50 video", anchor="w",
-                     text_color=("#64748b", "#94a3b8"), font=ctk.CTkFont(size=11)).grid(
-                         row=14, column=0, padx=18, pady=(6, 24), sticky="ew")
-        ctk.CTkLabel(self.sidebar, text="Giao diện", anchor="w").grid(
-            row=15, column=0, padx=18, sticky="ew")
-        self.theme_switch = ctk.CTkOptionMenu(
-            self.sidebar, values=["Tối", "Sáng", "Theo hệ thống"], height=36,
-            command=lambda mode: ctk.set_appearance_mode(
-                {"Tối": "Dark", "Sáng": "Light", "Theo hệ thống": "System"}[mode]))
-        self.theme_switch.grid(row=16, column=0, padx=18, pady=(6, 24), sticky="ew")
-        self.update_label = ctk.CTkLabel(self.sidebar, text=f"Phiên bản hiện tại: v{APP_VERSION}",
-                                         wraplength=225, justify="left")
-        self.update_label.grid(row=17, column=0, padx=18, pady=(4, 8), sticky="ew")
-        self.update_button = ctk.CTkButton(self.sidebar, text="Kiểm tra cập nhật", command=self.update_action)
-        self.update_button.grid(row=18, column=0, padx=18, pady=(0, 20), sticky="ew")
-
-    def _build_main_area(self):
-        main_frame_type = ctk.CTkScrollableFrame if self._compact else ctk.CTkFrame
-        self.main_frame = main_frame_type(self, fg_color="transparent")
-        self.main_frame.grid(row=0, column=1, padx=12 if self._compact else 24,
-                             pady=12 if self._compact else 24, sticky="nsew")
-        self.main_frame.grid_columnconfigure(0, weight=1)
-        self.main_frame.grid_rowconfigure(4, weight=1)
-        ctk.CTkLabel(self.main_frame, text="Khám phá kênh tiềm năng", anchor="w",
-                     font=ctk.CTkFont(size=23 if self._compact else 27, weight="bold")).grid(row=0, column=0, sticky="ew")
-        ctk.CTkLabel(self.main_frame, text="Nhập từ khóa, chọn bộ lọc và tìm những kênh mới đang tăng trưởng.",
-                     anchor="w", text_color=("#64748b", "#94a3b8"), wraplength=min(650, self._content_width),
-                     justify="left").grid(row=1, column=0, pady=(6, 20), sticky="ew")
-        kw_frame = ctk.CTkFrame(self.main_frame, corner_radius=14,
-                               fg_color=("#ffffff", "#182233"))
-        kw_frame.grid(row=2, column=0, sticky="ew")
-        kw_frame.grid_columnconfigure(0, weight=1)
-        ctk.CTkLabel(kw_frame, text="01  /  Từ khóa tìm kiếm", anchor="w",
-                     font=ctk.CTkFont(size=16, weight="bold")).grid(
-                         row=0, column=0, padx=18, pady=(16, 4), sticky="ew")
-        ctk.CTkButton(kw_frame, text="Nhập Excel", width=120, height=34,
-                      command=self.load_keywords_excel).grid(
-                          row=0, column=1, padx=18, pady=(16, 4))
-        ctk.CTkLabel(kw_frame, text="Mỗi dòng một từ khóa. Nhập Excel để xem sheet và chọn cột từ khóa.",
-                     anchor="w", text_color=("#64748b", "#94a3b8"), wraplength=min(600, self._content_width - 36),
-                     justify="left").grid(row=1, column=0, columnspan=2, padx=18, sticky="ew")
-        self.kw_textbox = ctk.CTkTextbox(kw_frame, height=75 if self._compact else 110, corner_radius=8,
-                                        border_width=1, border_color=("#e2e8f0", "#334155"))
-        self.kw_textbox.grid(row=2, column=0, columnspan=2, padx=18, pady=(12, 18), sticky="ew")
-        self.kw_textbox.insert("0.0", "AI Automation\nAI Agent\ntạo video bằng AI")
-        action_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        action_frame.grid(row=3, column=0, pady=16, sticky="ew")
-        action_frame.grid_columnconfigure(0, weight=1)
-        self.start_btn = ctk.CTkButton(action_frame, text="Bắt đầu quét kênh", height=44,
-                                       font=ctk.CTkFont(size=15, weight="bold"),
-                                       command=self.start_scan_thread)
-        self.start_btn.grid(row=0, column=0, padx=(0, 12), sticky="ew")
-        self.open_output_btn = ctk.CTkButton(action_frame, text="Xem kết quả Excel", height=44,
-                                             fg_color=("#dbe4ef", "#334155"),
-                                             text_color=("#1e293b", "#e2e8f0"),
-                                             hover_color=("#cbd5e1", "#475569"),
-                                             command=self.open_output_excel)
-        self.open_output_btn.grid(row=0, column=1, sticky="ew")
-        self.content_tabs = ctk.CTkTabview(self.main_frame, height=350)
-        self.content_tabs.grid(row=4, column=0, sticky="nsew")
-        activity_tab = self.content_tabs.add("Hoạt động")
-        excel_tab = self.content_tabs.add("Excel")
-        for tab in (activity_tab, excel_tab):
-            tab.grid_columnconfigure(0, weight=1)
-            tab.grid_rowconfigure(0, weight=1)
-        self.excel_viewer = ExcelViewer(excel_tab, on_import=self._import_excel_keywords)
-        self.excel_viewer.grid(row=0, column=0, sticky="nsew")
-        activity = ctk.CTkFrame(activity_tab, corner_radius=14,
-                               fg_color=("#ffffff", "#182233"))
-        activity.grid(row=0, column=0, sticky="nsew")
-        activity.grid_columnconfigure(0, weight=1)
-        activity.grid_rowconfigure(3, weight=1)
-        ctk.CTkLabel(activity, text="02  /  Hoạt động quét", anchor="w",
-                     font=ctk.CTkFont(size=16, weight="bold")).grid(
-                         row=0, column=0, padx=18, pady=(16, 8), sticky="ew")
-        self.status_label = ctk.CTkLabel(activity, text="Sẵn sàng quét", anchor="w",
-                                         text_color=("#64748b", "#94a3b8"))
-        self.status_label.grid(row=1, column=0, padx=18, sticky="ew")
-        self.progress_bar = ctk.CTkProgressBar(activity, height=6)
-        self.progress_bar.grid(row=2, column=0, padx=18, pady=(8, 12), sticky="ew")
-        self.progress_bar.set(0)
-        self.log_box = ctk.CTkTextbox(activity, corner_radius=8, state="disabled",
-                                     font=ctk.CTkFont(family="Consolas", size=12))
-        self.log_box.grid(row=3, column=0, padx=18, pady=(0, 18), sticky="nsew")
-        self.log("Sẵn sàng! Kiểm tra bộ lọc và nhấn Bắt đầu quét kênh.")
 
     def log(self, message):
         if threading.current_thread() is not threading.main_thread():
             self.ui_events.put((self.log, (message,)))
             return
-        self.log_box.configure(state="normal")
-        self.log_box.insert(tk.END, message + "\n")
-        self.log_box.see(tk.END)
-        self.log_box.configure(state="disabled")
+        self.view.log_box.configure(state="normal")
+        tag = "error" if "[!]" in message else "match" if "[+]" in message or "TRÚNG:" in message else ""
+        self.view.log_box.insert(tk.END, message + "\n", tag)
+        self.view.log_box.see(tk.END)
+        self.view.log_box.configure(state="disabled")
 
     def load_keywords_excel(self):
-        self.content_tabs.set("Excel")
-        self.excel_viewer.open_file()
+        self.view.content_tabs.set("Excel")
+        self.view.excel_viewer.open_file()
 
     def _import_excel_keywords(self, keywords, file_path):
         self.excel_keyword_path = file_path
-        self.kw_textbox.delete("0.0", tk.END)
-        self.kw_textbox.insert("0.0", "\n".join(keywords))
+        self.view.kw_textbox.delete("0.0", tk.END)
+        self.view.kw_textbox.insert("0.0", "\n".join(keywords))
+        self.view.refresh_keywords()
         self.log(f"[+] Đã nạp {len(keywords)} từ khóa từ file: {os.path.basename(file_path)}")
-        self.excel_viewer.status.configure(text=f"Đã nhập {len(keywords)} từ khóa vào danh sách phía trên.")
+        self.view.excel_viewer.status.configure(text=f"Đã nhập {len(keywords)} từ khóa vào danh sách phía trên.")
 
     def open_output_excel(self):
         output_file = str(APP_DIR / "danh_sach_kenh_viral_moi.xlsx")
@@ -294,43 +189,58 @@ class YtbBotApp(ctk.CTk):
             messagebox.showinfo("Thông báo", "Chưa có file kết quả. Hãy chạy quét kênh trước!")
 
     def _show_excel(self, path):
-        self.content_tabs.set("Excel")
-        self.excel_viewer.open_file(path)
+        self.view.content_tabs.set("Excel")
+        self.view.excel_viewer.open_file(path)
 
     def start_scan_thread(self):
-        if self.is_scanning or self.update_busy:
+        if self.is_scanning or self.is_installing:
             return
-        api_key = self.api_entry.get().strip()
+        self.view.clear_errors()
+        self.view.content_tabs.set("Hoạt động")
+        api_key = self.view.api_entry.get().strip()
         if not api_key:
-            messagebox.showwarning("Thiếu API Key", "Vui lòng nhập YouTube API Key ở cột bên trái!")
+            self.view.show_error("api", "Nhập YouTube API Key để bắt đầu.")
             return
-
-        # Lưu tự động API key vào file .env
-        with open(ENV_FILE, "w", encoding="utf-8") as f:
-            f.write(f"YOUTUBE_API_KEY={api_key}\n")
-
-        raw_keywords = self.kw_textbox.get("0.0", tk.END).splitlines()
-        keywords = [k.strip() for k in raw_keywords if k.strip()]
+        keywords = self.view.keywords()
         if not keywords:
-            messagebox.showwarning("Thiếu từ khóa", "Vui lòng nhập ít nhất 1 từ khóa để quét!")
+            self.view.show_error("keywords", "Thêm ít nhất một từ khóa; mỗi dòng một chủ đề.")
             return
-
+        values = {}
+        for key, control, minimum, title in [
+            ("age", self.view.max_age_entry, 1, "Tuổi kênh"),
+            ("views", self.view.min_views_entry, 0, "Lượt xem")]:
+            try:
+                values[key] = int(control.get().strip())
+                if values[key] < minimum:
+                    raise ValueError
+            except ValueError:
+                self.view.show_error(key, f"{title} phải là số nguyên từ {minimum} trở lên.")
+                return
+        max_days, min_views = values["age"], values["views"]
+        max_pages = int(self.view.max_pages_slider.get())
         try:
-            max_days = int(self.max_age_entry.get().strip())
-            min_views = int(self.min_views_entry.get().strip())
-            max_pages = int(self.max_pages_slider.get())
-        except ValueError:
-            messagebox.showerror("Lỗi định dạng", "Tuổi kênh và Lượt xem tối thiểu phải là số nguyên!")
+            set_key(ENV_FILE, "YOUTUBE_API_KEY", api_key)
+        except OSError:
+            self.view.show_error("api", "Không lưu được API Key. Kiểm tra quyền ghi thư mục app.")
             return
-
         self.is_scanning = True
-        self.content_tabs.set("Hoạt động")
-        self.start_btn.configure(state="disabled", text="Đang quét…")
-        self.progress_bar.set(0)
-        self.log_box.configure(state="normal")
-        self.log_box.delete("0.0", tk.END)
-        self.log_box.configure(state="disabled")
-        self.status_label.configure(text="Đang bắt đầu quét…")
+        self.stop_requested.clear()
+        self._scan_outcome = "success"
+        self._scan_started = time.monotonic()
+        self.view.content_tabs.set("Hoạt động")
+        self.view.start_btn.configure(state="disabled", text="Đang quét…")
+        self.view.stop_btn.configure(state="normal", text="Dừng")
+        self.view.set_progress(0)
+        if self.view.motion.get():
+            self.view.progress_bar.configure(mode="indeterminate")
+            self.view.progress_bar.start()
+        self.view.state_badge.configure(text="ĐANG KHÁM PHÁ", text_color=t.color("blue"))
+        self.view.stat_values["matches"].configure(text="0")
+        self.view.stat_values["completed"].configure(text=f"0 / {len(keywords)}")
+        self.view.refresh_keywords()
+        self.view.clear_log()
+        self.view.status_label.configure(text="Đang bắt đầu quét…")
+        self._tick_elapsed()
 
         thread = threading.Thread(
             target=self.run_scanner,
@@ -339,9 +249,30 @@ class YtbBotApp(ctk.CTk):
         )
         thread.start()
 
+    def stop_scan(self):
+        if self.is_scanning and not self.stop_requested.is_set():
+            self.stop_requested.set()
+            self.view.stop_btn.configure(state="disabled", text="Đang dừng")
+            self.view.status_label.configure(text="Đang dừng sau yêu cầu hiện tại; sẽ lưu các kênh đã tìm thấy…")
+            self.log("[*] Đã yêu cầu dừng. App sẽ lưu các kết quả đã tìm thấy.")
+
+    def _tick_elapsed(self):
+        if self._scan_started is None:
+            return
+        elapsed = int(time.monotonic() - self._scan_started)
+        self.view.elapsed_label.configure(text=f"Thời gian: {elapsed // 60:02d}:{elapsed % 60:02d}")
+        if self.is_scanning:
+            self.after(500, self._tick_elapsed)
+
+    def _close_window(self):
+        if self.is_scanning and not messagebox.askyesno("Đóng YTB-BOT", "App đang quét. Đóng bây giờ có thể mất kết quả chưa lưu. Bạn vẫn muốn đóng?"):
+            return
+        self.stop_requested.set()
+        self.destroy()
+
     def run_scanner(self, api_key, keywords, max_days, min_views, max_pages):
         try:
-            youtube = build("youtube", "v3", developerKey=api_key)
+            youtube = build("youtube", "v3", developerKey=api_key, http=httplib2.Http(timeout=20))
             cutoff_date = (
                 datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=max_days)
             ).strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -350,12 +281,16 @@ class YtbBotApp(ctk.CTk):
             total_kw = len(keywords)
 
             for idx, kw in enumerate(keywords, 1):
+                if self.stop_requested.is_set():
+                    break
                 self.log(f"\n==========================================")
                 self.log(f"[*] ({idx}/{total_kw}) Đang quét từ khóa: '{kw}'...")
                 video_map = {}
                 next_page_token = None
 
                 for _ in range(max_pages):
+                    if self.stop_requested.is_set():
+                        break
                     search_res = youtube.search().list(
                         q=kw,
                         part="snippet",
@@ -379,6 +314,8 @@ class YtbBotApp(ctk.CTk):
 
                 ch_ids = list(video_map.keys())
                 for i in range(0, len(ch_ids), 50):
+                    if self.stop_requested.is_set():
+                        break
                     batch_ids = ch_ids[i:i+50]
                     ch_res = youtube.channels().list(
                         part="snippet,statistics",
@@ -414,8 +351,10 @@ class YtbBotApp(ctk.CTk):
                                 "Video Gần Nhất": video_map[ch_id]
                             }
                             self.log(f"    [+] TRÚNG: {snippet.get('title')} ({age_days} ngày) - {total_views:,} views")
+                            self.ui_events.put((self._scan_match_count, (len(collected_channels),)))
 
-                self.ui_events.put((self._scan_progress, (idx, total_kw)))
+                if not self.stop_requested.is_set():
+                    self.ui_events.put((self._scan_progress, (idx, total_kw)))
 
             # Lưu kết quả ra Excel
             if collected_channels:
@@ -430,27 +369,51 @@ class YtbBotApp(ctk.CTk):
 
                 self.log(f"\n🎉 HOÀN TẤT! Đã lưu {len(results)} kênh vào '{output_excel}'.")
                 self.ui_events.put((self._show_excel, (output_excel,)))
-                self.ui_events.put((messagebox.showinfo, ("Thành công", f"Đã tìm thấy {len(results)} kênh mới và lưu vào file Excel!")))
+                self.ui_events.put((self._scan_notice, (f"Đã lưu {len(results)} kênh vào Excel.",)))
             else:
                 self.log("\n[-] Không tìm thấy kênh nào thỏa mãn điều kiện.")
-                self.ui_events.put((messagebox.showinfo, ("Kết quả", "Không tìm thấy kênh nào thỏa mãn bộ lọc hiện tại.")))
+                self.ui_events.put((self._scan_notice, ("Chưa có kênh phù hợp. Thử mở rộng bộ lọc hoặc thêm chủ đề mới.",)))
 
         except HttpError as err:
-            self.log(f"\n[!] Lỗi YouTube API: {err}")
-            self.ui_events.put((messagebox.showerror, ("Lỗi API", f"YouTube API báo lỗi:\n{err}")))
+            detail = str(err).replace(api_key, "<API_KEY>")
+            self.log(f"\n[!] Lỗi YouTube API: {detail}")
+            self.ui_events.put((self._scan_failed, ("YouTube API báo lỗi. Kiểm tra khóa API, quota và kết nối mạng.",)))
         except Exception as e:
-            self.log(f"\n[!] Lỗi hệ thống: {e}")
-            self.ui_events.put((messagebox.showerror, ("Lỗi", str(e))))
+            self.log(f"\n[!] Lỗi hệ thống: {str(e).replace(api_key, '<API_KEY>')}")
+            self.ui_events.put((self._scan_failed, ("Lượt quét gặp lỗi. Xem nhật ký để biết chi tiết.",)))
         finally:
             self.ui_events.put((self._scan_finished, ()))
 
     def _scan_progress(self, done, total):
-        self.progress_bar.set(done / total)
-        self.status_label.configure(text=f"Đã xử lý {done}/{total} từ khóa")
+        self.view.set_progress(done / total)
+        self.view.stat_values["completed"].configure(text=f"{done} / {total}")
+        self.view.status_label.configure(text=f"Đã xử lý {done}/{total} từ khóa")
+
+    def _scan_notice(self, text):
+        self.view.status_label.configure(text=text)
+
+    def _scan_match_count(self, count):
+        self.view.stat_values["matches"].configure(text=str(count))
+
+    def _scan_failed(self, text):
+        self._scan_outcome = "error"
+        self.view.form_error.configure(text=text)
+        self.view.status_label.configure(text=text)
 
     def _scan_finished(self):
         self.is_scanning = False
-        self.start_btn.configure(state="normal", text="Bắt đầu quét kênh")
+        self._tick_elapsed()
+        self.view.progress_bar.stop()
+        self.view.progress_bar.configure(mode="determinate")
+        if self._scan_outcome == "error":
+            self.view.state_badge.configure(text="CẦN KIỂM TRA", text_color=t.color("danger"))
+        elif self.stop_requested.is_set():
+            self.view.state_badge.configure(text="ĐÃ DỪNG", text_color=t.color("warning"))
+        else:
+            self.view.set_progress(1)
+            self.view.state_badge.configure(text="HOÀN TẤT", text_color=t.color("success"))
+        self.view.stop_btn.configure(state="disabled", text="Dừng")
+        self.view.start_btn.configure(state="normal", text="Khám phá tiếp")
 
 
 if __name__ == "__main__":

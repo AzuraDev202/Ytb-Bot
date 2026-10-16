@@ -1,0 +1,42 @@
+# YTB-BOT Creator Studio
+
+Giao diện native Windows dùng CustomTkinter và ttk, giữ nguyên version `1.0.2`.
+
+## Hướng thiết kế
+
+Tham khảo dữ liệu local của skill UI/UX Pro Max: phong cách Data-Dense Dashboard và hướng dẫn Progress Indicators. Mẫu landing page Enterprise Gateway trả về cùng kết quả tìm kiếm không áp dụng cho desktop. Chuyển typography sang Segoe UI/Consolas có sẵn trên Windows; không tải font hay tài nguyên web lúc chạy.
+
+- Bề mặt xanh đen/trắng, nút hành động đỏ san hô, trạng thái thành công xanh ngọc.
+- Ba thẻ số liệu lấy từ dữ liệu thực: từ khóa duy nhất, kênh phù hợp và số chủ đề đã xử lý.
+- Một hành động chính: Bắt đầu khám phá. Dừng và xem kết quả là hành động phụ.
+- Excel có khu vực làm việc riêng, bảng xen kẽ màu dòng, tiêu đề sắp xếp và ô tìm kiếm.
+
+## Cấu trúc
+
+- `ytb_bot/ui/theme.py`: token màu semantic, kiểu chữ và factory cho các control phổ biến.
+- `ytb_bot/ui/dashboard.py`: bố cục, preset từ khóa, cá nhân hóa và phản hồi tiến trình.
+- `ytb_bot/ui/desktop.py`: điều phối worker, dữ liệu và vòng đời quét.
+- `ytb_bot/ui/excel_viewer.py`: đọc workbook, lọc/sắp xếp/xem bảng, clipboard và nhập cột từ khóa.
+
+## Trạng thái và tương tác
+
+- Lỗi nhập liệu nằm cạnh trường bị lỗi và tại form; không ghi API Key trước khi các giá trị hợp lệ.
+- Nút Dừng chờ yêu cầu mạng hiện tại hoàn tất, sau đó lưu kết quả đã thu thập. HTTP timeout là 20 giây mỗi yêu cầu, không phải giới hạn tổng lượt quét.
+- Tiến trình dùng chuyển động ngắn, không có hiệu ứng trang trí chạy liên tục. Người dùng tắt được chuyển động; mặc định tham khảo cài đặt animation của Windows.
+- API Key được che mặc định và chỉ hiện khi người dùng chủ động chọn. Lỗi API được che khóa trước khi ghi nhật ký.
+- Khi cửa sổ hẹp hơn 1030 logical pixel, bộ lọc thu gọn với nút hiện/ẩn ở đầu trang. Nội dung vẫn cuộn được sau khi resize.
+- `Ctrl+Enter`: bắt đầu; `Ctrl+O`: mở Excel; `Esc`: yêu cầu dừng. Trong bảng, `Ctrl+C` sao chép dòng đã chọn. Các thao tác quan trọng có nút văn bản tương ứng.
+- Tìm kiếm Excel có debounce. Sắp xếp tác động đến bảng xem; nhập từ khóa vẫn lấy toàn bộ cột gốc, không chỉ các dòng đang lọc.
+
+## Kiểm tra trực quan
+
+```powershell
+python scripts/preview_ui.py --output artifacts/ui/dashboard-dark.png
+python scripts/preview_ui.py --theme light --output artifacts/ui/dashboard-light.png
+python scripts/preview_ui.py --compact --output artifacts/ui/dashboard-compact.png
+python scripts/preview_ui.py --excel --output artifacts/ui/excel-dark.png
+```
+
+Ảnh được chụp từ cửa sổ thật; file Excel trong preview là dữ liệu minh họa có tên rõ ràng. `artifacts/` không được commit. Script này không gọi YouTube API.
+
+Kiểm tra trên Windows với cửa sổ thường/nhỏ, cả hai theme, chế độ giảm chuyển động, preset, lỗi nhập liệu, clipboard, Excel nhiều sheet và dừng có kết quả một phần. CustomTkinter không cung cấp đầy đủ ngữ nghĩa Windows UI Automation như các framework native chuyên dụng; không coi kiểm thử bàn phím là chứng nhận hỗ trợ screen reader.

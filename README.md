@@ -46,6 +46,10 @@ Chỉ tăng version khi có thay đổi lớn về cấu trúc chính. Các ch�
 
 ## Xem và nhập Excel trong app
 
+Giao diện **Creator Studio** có bộ đếm từ khóa/kênh/tiến độ, preset thêm chủ đề, lỗi tại ô nhập, nút dừng có lưu kết quả một phần, theme tối/sáng và tùy chọn tắt chuyển động. Bộ lọc tự thu gọn khi cửa sổ hẹp và có nút hiện/ẩn ở đầu trang. `Ctrl+Enter` bắt đầu quét, `Ctrl+O` mở Excel, `Esc` yêu cầu dừng sau yêu cầu mạng hiện tại.
+
+Trong tab Excel, dùng **Tìm trong bảng**, bấm tiêu đề cột để sắp xếp, chọn dòng rồi **Sao chép dòng** hoặc `Ctrl+C`. Các thao tác xem không thay đổi file gốc; nhập từ khóa vẫn lấy toàn bộ cột gốc. Hướng dẫn thiết kế và kiểm tra trực quan ở [docs/UI_DESIGN.md](docs/UI_DESIGN.md).
+
 Từ phiên bản 1.0.2, cửa sổ tự căn giữa vùng làm việc của màn hình chính, tính cả Windows DPI scaling và chừa chỗ cho taskbar/viền cửa sổ. Trên màn hình nhỏ, nội dung chính và bộ lọc có thể cuộn để các nút không bị khuất. Bạn vẫn có thể kéo giãn hoặc phóng to cửa sổ.
 
 - Nhấn **Nhập Excel** hoặc vào tab **Excel → Mở file Excel**, chọn `.xlsx` hoặc `.xls`.

@@ -34,7 +34,7 @@ class ExcelViewerTests(unittest.TestCase):
                     self.assertLessEqual(app.winfo_rootx() + app.winfo_width(), area[2])
                     self.assertLessEqual(app.winfo_rooty() + app.winfo_height(), area[3])
                     if app._compact:
-                        self.assertIsInstance(app.main_frame, ctk.CTkScrollableFrame)
+                        self.assertIsInstance(app.view.main_frame, ctk.CTkScrollableFrame)
                 finally:
                     self.close_app(app)
 
@@ -50,7 +50,7 @@ class ExcelViewerTests(unittest.TestCase):
                 app = YtbBotApp()
                 app.withdraw()
                 try:
-                    viewer = app.excel_viewer
+                    viewer = app.view.excel_viewer
 
                     def ready():
                         deadline = time.monotonic() + 10
@@ -63,7 +63,7 @@ class ExcelViewerTests(unittest.TestCase):
 
                     app._show_excel(str(workbook))
                     ready()
-                    self.assertEqual(app.content_tabs.get(), "Excel")
+                    self.assertEqual(app.view.content_tabs.get(), "Excel")
                     self.assertEqual(viewer.sheet_menu.get(), "Overview")
                     viewer._select_sheet("Keywords")
                     ready()
@@ -73,16 +73,28 @@ class ExcelViewerTests(unittest.TestCase):
                     viewer._move_page(1)
                     self.assertEqual(len(viewer.table.get_children()), 5)
                     self.assertEqual(viewer.next.cget("state"), "disabled")
+                    viewer.search.set("keyword 400")
+                    viewer._apply_search()
+                    self.assertEqual(len(viewer.table.get_children()), 1)
+                    item = viewer.table.get_children()[0]
+                    viewer.table.selection_set(item)
+                    viewer.copy_selected()
+                    self.assertIn("keyword 400", app.clipboard_get())
                     with patch("ytb_bot.ui.excel_viewer.messagebox.askyesno", return_value=False):
-                        before = app.kw_textbox.get("1.0", "end")
+                        before = app.view.kw_textbox.get("1.0", "end")
                         viewer.import_keywords()
-                        self.assertEqual(app.kw_textbox.get("1.0", "end"), before)
+                        self.assertEqual(app.view.kw_textbox.get("1.0", "end"), before)
                     with patch("ytb_bot.ui.excel_viewer.messagebox.askyesno", return_value=True):
                         viewer.import_keywords()
-                    imported = app.kw_textbox.get("1.0", "end").strip().splitlines()
+                    imported = app.view.kw_textbox.get("1.0", "end").strip().splitlines()
                     self.assertEqual(len(imported), 403)
                     self.assertEqual(imported[:2], ["AI Agent", "tạo video"])
                     self.assertEqual(imported[-1], "keyword 400")
+                    viewer.search.set("")
+                    viewer._apply_search()
+                    viewer._sort(1)
+                    viewer._sort(1)
+                    self.assertEqual(viewer.table.item(viewer.table.get_children()[0], "values")[1], "404")
                     viewer._select_sheet("Empty")
                     ready()
                     self.assertEqual(viewer.import_button.cget("state"), "disabled")
