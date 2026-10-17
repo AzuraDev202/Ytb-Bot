@@ -2,6 +2,7 @@
 from functools import wraps
 import json
 import os
+from pathlib import Path
 import threading
 import webbrowser
 from urllib.parse import urlparse
@@ -10,9 +11,10 @@ from dotenv import dotenv_values, set_key
 
 from ytb_bot.build_info import build_id
 from ytb_bot.core.engine import ScanEngine
-from ytb_bot.paths import APP_DIR, ENV_FILE
+from ytb_bot.paths import APP_DIR, ENV_FILE, DATA_DIR
 from ytb_bot.version import APP_VERSION
 from ytb_bot.core.workbook import Workbook
+from ytb_bot.core.storage import WorkspaceStore
 from ytb_bot.updater import check_for_update, download_update, install_update
 
 
@@ -30,10 +32,12 @@ def reply(method):
 
 
 class DesktopAPI:
-    def __init__(self):
+    def __init__(self, data_dir=None):
         self._window = None
+        self._keywords_dirty = False
         self._key = os.getenv("YOUTUBE_API_KEY") or dotenv_values(ENV_FILE).get("YOUTUBE_API_KEY", "")
-        self._scan = ScanEngine(APP_DIR)
+        self._store = WorkspaceStore(Path(data_dir or DATA_DIR) / "workspace.sqlite3")
+        self._scan = ScanEngine(APP_DIR, store=self._store)
         self._book = Workbook()
         self._lock = threading.RLock()
         self._release = None
@@ -46,7 +50,22 @@ class DesktopAPI:
         except (OSError, ValueError):
             preferences = {}
         return {"version": APP_VERSION, "build": build_id(), "has_api_key": bool(self._key),
-                "preferences": preferences if isinstance(preferences, dict) else {}}
+                "preferences": preferences if isinstance(preferences, dict) else {}, "keywords": self._store.keywords()}
+
+    @reply
+    def save_keywords(self, text):
+        return self._store.save_keywords(text)
+
+    @reply
+    def set_keywords_dirty(self, dirty):
+        if not isinstance(dirty, bool):
+            raise ValueError("Trạng thái chỉnh sửa không hợp lệ.")
+        self._keywords_dirty = dirty
+        return True
+
+    @reply
+    def list_results(self):
+        return self._store.runs()
 
     @reply
     def save_preferences(self, theme, motion):
@@ -106,11 +125,21 @@ class DesktopAPI:
         return self._book.open(paths[0]) if paths else None
 
     @reply
-    def open_results(self):
-        path = APP_DIR / "danh_sach_kenh_viral_moi.xlsx"
-        if not path.exists():
-            raise ValueError("Chưa có file kết quả. Hãy chạy quét trước.")
-        return self._book.open(path)
+    def open_results(self, run_id=None):
+        run = self._store.result(run_id)
+        meta = Workbook().from_rows(run["rows"], f"Lượt quét #{run['id']}", columns=[
+            "Tên Kênh", "Channel ID", "URL Kênh", "Từ Khóa Quét", "Ngày Tạo", "Tuổi Kênh (Ngày)",
+            "Subscribers", "Tổng Lượt Xem", "Tổng Video", "Video Gần Nhất"])
+        return {**meta, "run_id": run["id"]}
+
+    @reply
+    def results_page(self, sheet, query="", page=0, sort=None, descending=False):
+        run = self._store.result(int(sheet.rsplit("#", 1)[1]))
+        book = Workbook()
+        book.from_rows(run["rows"], sheet, columns=[
+            "Tên Kênh", "Channel ID", "URL Kênh", "Từ Khóa Quét", "Ngày Tạo", "Tuổi Kênh (Ngày)",
+            "Subscribers", "Tổng Lượt Xem", "Tổng Video", "Video Gần Nhất"])
+        return book.page(sheet, query, page, sort, descending)
 
     @reply
     def workbook_page(self, sheet, query="", page=0, sort=None, descending=False):
@@ -151,6 +180,8 @@ class DesktopAPI:
     @reply
     def install_available_update(self):
         with self._lock:
+            if self._keywords_dirty:
+                raise ValueError("Lưu bảng từ khóa trước khi cập nhật và khởi động lại.")
             if self._scan.snapshot()["status"] in ("running", "stopping"):
                 raise ValueError("Chờ lượt quét hoàn tất trước khi cập nhật.")
             if not self._release or self._update["status"] == "downloading":

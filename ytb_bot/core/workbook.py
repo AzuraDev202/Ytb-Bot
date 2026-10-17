@@ -24,11 +24,19 @@ class Workbook:
             return {"filename": path.name, "sheets": list(sheets)}
 
     def _frame(self, sheet):
-        if not self._path or sheet not in self._sheets:
+        if sheet not in self._sheets:
             raise ValueError("Chọn file và sheet Excel hợp lệ.")
         if sheet not in self._frames:
             self._frames[sheet] = pd.read_excel(self._path, sheet_name=sheet)
         return self._frames[sheet]
+
+    def from_rows(self, rows, name="Kết quả", columns=None):
+        """Present saved application data through the same paged table interface."""
+        with self._lock:
+            self._path = None
+            self._sheets = [name]
+            self._frames = {name: pd.DataFrame(rows, columns=columns)}
+            return {"filename": name, "sheets": [name], "internal": True}
 
     def page(self, sheet, query="", page=0, sort=None, descending=False):
         with self._lock:

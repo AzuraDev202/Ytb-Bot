@@ -7,7 +7,8 @@ Giao diện mặc định là React + TypeScript trong cửa sổ pywebview / Ed
 - Bề mặt xanh đen/trắng, hành động chính đỏ san hô và trạng thái thành công xanh ngọc.
 - Bốn thẻ hiển thị dữ liệu thật: từ khóa duy nhất, kênh phù hợp, số chủ đề đã xử lý và thời gian.
 - Một hành động chính: **Bắt đầu khám phá**. Dừng và xem kết quả là các hành động phụ.
-- Excel có khu vực riêng, tìm kiếm, sắp xếp, chọn dòng và phân trang.
+- Từ khóa có bảng chỉnh sửa trực tiếp, thêm/xóa/dán dòng và trạng thái chưa lưu.
+- Kết quả có lịch sử theo lượt quét, tìm kiếm, sắp xếp, chọn dòng và phân trang; không tải Excel.
 - Font hệ thống, tài nguyên frontend đóng gói cục bộ; không cần tải font lúc chạy.
 
 ## Cấu trúc
@@ -16,12 +17,14 @@ Giao diện mặc định là React + TypeScript trong cửa sổ pywebview / Ed
 | --- | --- |
 | `frontend/src/App.tsx` | Màn hình chính và trạng thái UI |
 | `frontend/src/components/ConfirmDialog.tsx` | Hộp xác nhận thao tác |
-| `frontend/src/components/WorkbookView.tsx` | Trình xem Excel |
+| `frontend/src/components/KeywordTable.tsx` | Bảng từ khóa có chỉnh sửa |
+| `frontend/src/components/ResultsView.tsx` | Chọn lượt quét và xem lịch sử |
+| `frontend/src/components/WorkbookView.tsx` | Bảng kết quả / đọc Excel cũ |
 | `frontend/src/api.ts` | Kiểu dữ liệu và hợp đồng bridge |
 | `frontend/src/styles.css` | Token sáng/tối, responsive và hiệu ứng |
 | `ytb_bot/desktop/app.py` | Cửa sổ native, vị trí và vòng đời |
 | `ytb_bot/desktop/api.py` | Bridge, hộp chọn file và cập nhật |
-| `ytb_bot/core/` | Quét nền và xử lý workbook |
+| `ytb_bot/core/` | Quét nền, xử lý bảng và lưu SQLite |
 
 ## Trạng thái và tương tác
 
@@ -31,7 +34,7 @@ Bộ lọc chuyển thành menu khi cửa sổ hẹp hơn 840 CSS pixel; menu đ
 
 Nút **Dừng** chờ yêu cầu mạng hiện tại rồi lưu kết quả đã có. Timeout mạng là 20 giây mỗi yêu cầu, không phải giới hạn tổng lượt quét.
 
-Phím tắt và thao tác Excel được ghi tại [hướng dẫn desktop](DESKTOP_GUIDE.md). Dùng nút **Sao chép** cho dòng được chọn bằng checkbox. Nhập từ khóa luôn lấy cột gốc, kể cả khi bảng đang lọc.
+Phím tắt và thao tác Excel được ghi tại [hướng dẫn desktop](DESKTOP_GUIDE.md). Dùng nút **Sao chép** cho dòng được chọn bằng checkbox. Nhập từ khóa luôn lấy cột gốc, kể cả khi bảng đang lọc. Sửa bảng được giữ trong draft khi chuyển màn hình và chỉ lưu khi nhấn Lưu/Dùng để quét hoặc bắt đầu quét. Đóng cửa sổ với draft chưa lưu có xác nhận; handler native không chờ JavaScript trên GUI thread.
 
 ## Kiểm tra trực quan
 
@@ -41,6 +44,6 @@ python scripts/smoke_react.py
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/smoke_desktop.ps1
 ```
 
-Playwright tạo `artifacts/ui/react-dark.png`, `react-light.png` và `react-compact.png`. Fixture bridge chỉ nằm trong tests; không dùng dữ liệu giả trong sản phẩm. Smoke React kiểm tra WebView2 thật, trạng thái HWND hiển thị và bridge có tham số. Smoke EXE kiểm tra bản đóng gói khi launcher yêu cầu Hidden, tránh hồi quy chỉ chạy ngầm.
+Playwright tạo `artifacts/ui/react-dark.png`, `react-light.png` và `react-compact.png`. Fixture bridge chỉ nằm trong tests; không dùng dữ liệu giả trong sản phẩm. Smoke React kiểm tra WebView2 thật, trạng thái HWND hiển thị bridge có tham số và hủy đóng khi bảng chưa lưu. Smoke EXE kiểm tra bản đóng gói khi launcher yêu cầu Hidden, tránh hồi quy chỉ chạy ngầm.
 
 Để chụp giao diện dự phòng: `python scripts/preview_legacy_ui.py --output artifacts/ui/legacy.png`. Công cụ này dùng dữ liệu minh họa, không gọi YouTube. Các test legacy phải đi qua `CTk.mainloop()` thật vì chỉ dùng `update()` có thể che lỗi khởi tạo cửa sổ.

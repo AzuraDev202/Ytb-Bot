@@ -8,6 +8,7 @@ import pandas as pd
 
 from ytb_bot.core.engine import ScanEngine
 from ytb_bot.core.workbook import Workbook
+from ytb_bot.core.storage import WorkspaceStore
 from ytb_bot.desktop.api import DesktopAPI
 
 
@@ -30,7 +31,7 @@ class ReactBackendTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 book.page("missing")
 
-    def test_scan_filters_deduplicates_and_exports(self):
+    def test_scan_filters_deduplicates_and_stores_without_excel(self):
         youtube = MagicMock()
         youtube.search.return_value.list.return_value.execute.return_value = {"items": [
             {"snippet": {"channelId": name, "title": "Video"}} for name in ("new", "old", "small")]}
@@ -45,14 +46,17 @@ class ReactBackendTests(unittest.TestCase):
             state = engine.wait()
             self.assertEqual((state["status"], state["matches"], state["completed"]), ("complete", 1, 2))
             self.assertEqual(state["rows"][0]["Channel ID"], "new")
-            self.assertEqual(len(pd.read_excel(Path(directory) / "danh_sach_kenh_viral_moi.xlsx")), 1)
+            self.assertEqual(len(WorkspaceStore(Path(directory) / "workspace.sqlite3").result()["rows"]), 1)
+            self.assertEqual(list(Path(directory).glob("*.xlsx")), [])
 
     def test_scan_redacts_secret_on_failure(self):
         def broken(key):
             raise RuntimeError(f"request failed: {key}")
-        engine = ScanEngine(".", broken)
-        engine.start("test-secret", ["topic"])
-        state = engine.wait()
+        with tempfile.TemporaryDirectory() as directory:
+            engine = ScanEngine(directory, broken)
+            engine.start("test-secret", ["topic"])
+            state = engine.wait()
+            self.assertNotIn("test-secret", str(WorkspaceStore(Path(directory) / "workspace.sqlite3").result()))
         self.assertEqual(state["status"], "error")
         self.assertNotIn("test-secret", str(state))
 
@@ -76,15 +80,15 @@ class ReactBackendTests(unittest.TestCase):
 
     def test_preferences_survive_bridge_recreation(self):
         with tempfile.TemporaryDirectory() as directory, patch("ytb_bot.desktop.api.APP_DIR", Path(directory)):
-            api = DesktopAPI()
+            api = DesktopAPI(data_dir=directory)
             self.assertTrue(api.save_preferences("light", False)["ok"])
-            self.assertEqual(DesktopAPI().get_bootstrap()["data"]["preferences"], {"theme": "light", "motion": False})
+            self.assertEqual(DesktopAPI(data_dir=directory).get_bootstrap()["data"]["preferences"], {"theme": "light", "motion": False})
             self.assertFalse(api.save_preferences("unknown", True)["ok"])
 
     def test_bridge_never_returns_saved_key_and_rejects_invalid_input(self):
-        with patch("ytb_bot.desktop.api.dotenv_values", return_value={"YOUTUBE_API_KEY": "test-secret"}), \
+        with tempfile.TemporaryDirectory() as directory, patch("ytb_bot.desktop.api.dotenv_values", return_value={"YOUTUBE_API_KEY": "test-secret"}), \
                 patch.dict("os.environ", {"YOUTUBE_API_KEY": "test-secret"}):
-            api = DesktopAPI()
+            api = DesktopAPI(data_dir=directory)
             self.assertNotIn("test-secret", str(api.get_bootstrap()))
             self.assertTrue(api.get_bootstrap()["data"]["has_api_key"])
             with patch("ytb_bot.desktop.api.set_key") as save:

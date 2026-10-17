@@ -1,7 +1,7 @@
 export type ScanStatus = 'ready' | 'running' | 'stopping' | 'complete' | 'stopped' | 'error';
 export interface Snapshot { status: ScanStatus; completed: number; total: number; matches: number; elapsed: number; rows: Record<string, string | number>[]; logs: {text: string; kind: string; time: string}[]; error: string; output: boolean; update: {status: string; message: string; progress: number} }
-export interface Bootstrap {version: string; build: string; has_api_key: boolean; preferences?: {theme?: string; motion?: boolean}}
-export interface WorkbookMeta {filename: string; sheets: string[]}
+export interface Bootstrap {version: string; build: string; has_api_key: boolean; keywords: string; preferences?: {theme?: string; motion?: boolean}}
+export interface WorkbookMeta {filename: string; sheets: string[]; internal?: boolean; run_id?: number}
 export interface WorkbookPage {columns: string[]; rows: (string | number | null)[][]; page: number; pages: number; total: number; original_total: number}
 type Reply = {ok: boolean; data?: unknown; error?: string};
 declare global {interface Window {pywebview?: {api: Record<string, (...args: unknown[]) => Promise<Reply>>}}}

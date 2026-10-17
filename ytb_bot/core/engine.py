@@ -6,13 +6,14 @@ import threading
 import time
 
 import httplib2
-import pandas as pd
 from googleapiclient.discovery import build
+from ytb_bot.core.storage import WorkspaceStore
 
 
 class ScanEngine:
-    def __init__(self, output_dir, client_factory=None):
-        self._output_dir = Path(output_dir)
+    def __init__(self, output_dir, client_factory=None, store=None):
+        self._store = store or WorkspaceStore(Path(output_dir) / "workspace.sqlite3")
+        self._run_id = None
         self._client_factory = client_factory or (lambda key: build("youtube", "v3", developerKey=key, http=httplib2.Http(timeout=20)))
         self._lock = threading.RLock()
         self._stop = threading.Event()
@@ -49,6 +50,7 @@ class ScanEngine:
             if self._state["status"] in ("running", "stopping"):
                 raise ValueError("Một lượt quét đang chạy.")
             self._stop.clear()
+            self._run_id = self._store.begin_run(keywords)
             self._logs.clear()
             self._started = time.monotonic()
             self._state = {"status": "running", "completed": 0, "total": len(keywords), "matches": 0, "rows": [], "error": "", "elapsed": 0, "output": False}
@@ -114,16 +116,12 @@ class ScanEngine:
                         with self._lock:
                             self._state["matches"] = len(channels)
                             self._state["rows"] = sorted(channels.values(), key=lambda row: row["Tổng Lượt Xem"], reverse=True)
+                    self._store.save_run(self._run_id, "running", self._all_rows())
                 if not self._stop.is_set():
                     with self._lock:
                         self._state["completed"] = index
             if channels:
-                frame = pd.DataFrame(channels.values()).sort_values("Tổng Lượt Xem", ascending=False)
-                frame.insert(0, "STT", range(1, len(frame) + 1))
-                frame.to_excel(self._output_dir / "danh_sach_kenh_viral_moi.xlsx", sheet_name="Kênh Mới Viral", index=False, engine="openpyxl")
-                with self._lock:
-                    self._state["output"] = True
-                self._log(f"Đã lưu {len(frame)} kênh vào Excel.", "success")
+                self._log(f"Đã lưu {len(channels)} kênh trong Bot. Mở Kết quả để xem lại.", "success")
             else:
                 self._log("Chưa có kênh phù hợp. Thử thêm chủ đề hoặc mở rộng bộ lọc.")
             with self._lock:
@@ -136,3 +134,14 @@ class ScanEngine:
         finally:
             with self._lock:
                 self._state["elapsed"] = int(time.monotonic() - self._started)
+                try:
+                    self._store.save_run(self._run_id, self._state["status"], self._all_rows(), self._state["error"])
+                    self._state["output"] = True
+                except Exception as error:
+                    self._state["status"] = "error"
+                    self._state["error"] = f"Không lưu được kết quả: {str(error).replace(key, '<API_KEY>')}"
+                    self._log(self._state["error"], "error")
+
+    def _all_rows(self):
+        with self._lock:
+            return [dict(row) for row in self._state["rows"]]

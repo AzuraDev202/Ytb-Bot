@@ -15,3 +15,7 @@ frontend/test-results/
 frontend/playwright-report/
 studio-settings.json
 studio-settings.tmp
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm

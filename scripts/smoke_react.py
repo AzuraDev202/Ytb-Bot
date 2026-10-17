@@ -39,6 +39,22 @@ def verify(window):
             time.sleep(.1)
         else:
             raise AssertionError("Bridge did not validate a request with arguments")
+        # Exercise closing on the actual GUI thread: it must not wait for JS.
+        confirmation_seen = threading.Event()
+        original_confirmation = window.create_confirmation_dialog
+        def refuse_close(*args):
+            confirmation_seen.set()
+            return False
+        window.create_confirmation_dialog = refuse_close
+        try:
+            window._js_api.set_keywords_dirty(True)
+            window.destroy()
+            assert confirmation_seen.wait(3), "Unsaved keyword close guard was not invoked"
+            if sys.platform == "win32":
+                assert ctypes.windll.user32.IsWindowVisible(ctypes.c_void_p(window.native.Handle.ToInt64())), "Close guard did not preserve the window"
+        finally:
+            window._js_api.set_keywords_dirty(False)
+            window.create_confirmation_dialog = original_confirmation
         print("PASS: native WebView2 loaded React and connected to Python")
     except Exception as error:
         failures.append(str(error))

@@ -37,6 +37,9 @@ def main(on_started=None):
         api._window = window
 
         def closing():
+            # Closing runs on the WinForms thread: never wait for JavaScript here.
+            if api._keywords_dirty and not window.create_confirmation_dialog("Từ khóa chưa lưu", "Bảng từ khóa có thay đổi chưa lưu. Đóng app sẽ bỏ các thay đổi đó. Bạn vẫn muốn đóng?"):
+                return False
             if api._scan.snapshot()["status"] in ("running", "stopping"):
                 if not window.create_confirmation_dialog("Đóng YTB-BOT", "Lượt quét chưa xong. Đóng bây giờ có thể mất kết quả chưa lưu. Bạn vẫn muốn đóng?"):
                     return False

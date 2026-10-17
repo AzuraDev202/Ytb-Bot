@@ -12,10 +12,11 @@ Link tải trỏ tới asset trong Release mới nhất sau khi workflow phát h
 
 - Tìm kênh YouTube mới có tiềm năng bằng các bộ lọc có thể điều chỉnh.
 - Tập trung quét kênh, theo dõi tiến trình và quản lý danh sách từ khóa trong một ứng dụng.
-- Xem, tìm kiếm, sắp xếp và nhập từ khóa từ Excel; tự xuất danh sách kênh phù hợp.
+- Sửa bảng từ khóa ngay trong Bot; thêm/xóa dòng, dán cột từ Excel và lưu để dùng lại.
+- Lưu lịch sử quét, tìm kiếm và xem toàn bộ kết quả trong Bot, không tự tạo hoặc tải file Excel.
 - Cung cấp giao diện sáng/tối, bố cục co giãn và cập nhật từ GitHub Releases.
 
-Kết quả phục vụ nghiên cứu kênh, không cam kết kênh sẽ viral. Trình xem Excel hiện chưa hỗ trợ sửa ô và lưu thay đổi vào workbook gốc.
+Kết quả phục vụ nghiên cứu kênh, không cam kết kênh sẽ viral. Bảng từ khóa được chỉnh sửa và lưu trong kho nội bộ. Khi nhập file Excel cũ, app chỉ đọc dữ liệu; file gốc được giữ nguyên.
 
 ## Yêu cầu cấu hình dự án
 
@@ -30,7 +31,7 @@ Kết quả phục vụ nghiên cứu kênh, không cam kết kênh sẽ viral. 
 | API | YouTube Data API v3 key hợp lệ, còn quota | Tương tự khi quét dữ liệu thật |
 | Quyền ghi | Thư mục chứa EXE | Thư mục dự án và build |
 
-Nhập API Key trong app hoặc cấu hình `YOUTUBE_API_KEY` trong `.env`. Khóa được lưu cục bộ và sử dụng khi gửi yêu cầu tới Google YouTube Data API. `.env`, Excel và tùy chọn giao diện nằm cạnh EXE khi chạy bản đóng gói; khi chạy mã nguồn, chúng nằm ở thư mục gốc dự án. Không commit API Key.
+Nhập API Key trong app hoặc cấu hình `YOUTUBE_API_KEY` trong `.env`. Khóa được lưu cục bộ và sử dụng khi gửi yêu cầu tới Google YouTube Data API. `.env` và tùy chọn giao diện nằm cạnh EXE khi chạy bản đóng gói; khi chạy mã nguồn, chúng nằm ở thư mục gốc dự án. Bảng từ khóa và lịch sử kết quả được lưu tại `%LOCALAPPDATA%/Ytb-Bot/data/workspace.sqlite3`, mở lại được sau khi khởi động Bot hoặc thay EXE. Không commit API Key.
 
 ## Chạy từ mã nguồn
 
@@ -76,13 +77,13 @@ Khi push lên `main`, [workflow phát hành](.github/workflows/release.yml) ch�
 ```text
 frontend/
   src/
-    components/          Hộp xác nhận và trình xem Excel
+    components/          Bảng từ khóa, lịch sử kết quả và nhập Excel cũ
     App.tsx              Màn hình React và trạng thái UI
     api.ts               Kiểu dữ liệu và cầu nối Python
     styles.css           Theme và bố cục responsive
   tests/                 Kiểm thử thao tác bằng Playwright
 ytb_bot/
-  core/                  Bộ quét nền và xử lý workbook
+  core/                  Bộ quét, bảng dữ liệu và kho SQLite nội bộ
   desktop/               Cửa sổ WebView2 và API cho React
   cli/                   Scanner dòng lệnh
   legacy_ui/             CustomTkinter dự phòng (--legacy)
@@ -110,7 +111,7 @@ python scripts/smoke_react.py
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/smoke_desktop.ps1
 ```
 
-Hai lệnh smoke cần Windows có phiên desktop tương tác. Build frontend trước `smoke_react.py` và build EXE trước `smoke_desktop.ps1`. Test UI và scanner dùng fixture/mock, không xác nhận quota hoặc dữ liệu YouTube thật.
+Hai lệnh smoke cần Windows có phiên desktop tương tác. Build frontend trước `smoke_react.py` và build EXE trước `smoke_desktop.ps1`. Test UI và scanner dùng fixture/mock, không xác nhận quota hoặc dữ liệu YouTube thật. Các bài test workspace kiểm tra sửa/lưu/mở lại, kết quả vượt 200 dòng, dừng/lỗi một phần và không tạo Excel.
 
 ## Tài liệu
 

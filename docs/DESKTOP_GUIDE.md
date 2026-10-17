@@ -1,27 +1,35 @@
 # Sử dụng và phát hành YTB-BOT Desktop
 
-## Quét và xem Excel
+## Từ khóa trong Bot
 
-1. Nhập YouTube API Key, tuổi kênh tối đa, lượt xem tối thiểu và độ sâu quét.
-2. Nhập mỗi từ khóa trên một dòng hoặc chọn **Nhập Excel**. Từ khóa trùng được gộp.
-3. Nhấn **Bắt đầu khám phá**. Nhật ký và số liệu phản ánh lượt quét thật.
-4. **Dừng** chờ yêu cầu mạng hiện tại hoàn tất rồi lưu kết quả đã tìm được.
-5. Nhấn **Xem kết quả Excel** để mở file xuất trong app.
+1. Vào **Từ khóa** hoặc nhấn **Sửa bảng từ khóa** trên màn hình khám phá.
+2. Sửa trực tiếp trong ô, nhấn **Thêm dòng**, hoặc dán nhiều dòng từ Excel vào một ô. Khi dán nhiều cột, chỉ cột đầu tiên được lấy.
+3. Chọn checkbox rồi **Xóa** để bỏ dòng; thao tác xóa có xác nhận.
+4. Nhấn **Lưu từ khóa** hoặc **Ctrl+S** trong bảng để lưu nội bộ. **Dùng để quét** vừa lưu vừa quay lại màn hình khám phá.
+5. Dòng trống được bỏ qua và từ trùng được gộp khi quét. Bạn có thể lưu một bảng trống.
+6. Nếu đóng app khi còn thay đổi chưa lưu, Bot hỏi xác nhận. Cần lưu trước khi cập nhật và khởi động lại.
 
-Trong **Bảng dữ liệu**, nhấn **Mở Excel**, chọn file `.xlsx` hoặc `.xls`, sheet và cột từ khóa. Bảng phân trang 100 dòng; tìm kiếm và sắp xếp chỉ thay đổi phần xem. Chọn dòng rồi nhấn **Sao chép** để lấy nội dung các dòng đó.
+Để lấy dữ liệu từ file cũ, chọn **Nhập từ file cũ**, mở `.xlsx` hoặc `.xls`, chọn sheet/cột rồi **Nhập cột từ khóa**. Bot hỏi trước khi thay danh sách, lấy toàn bộ cột gốc dù đang lọc, rồi đưa dữ liệu vào bảng chỉnh sửa. Nhấn **Lưu từ khóa** để giữ lại. File gốc không bị ghi đè.
 
-**Nhập cột từ khóa** lấy toàn bộ cột gốc, loại ô trống và từ trùng, rồi hỏi xác nhận trước khi thay danh sách hiện tại. Trình xem không sửa file gốc.
+## Quét và xem kết quả
 
-Phím tắt: `Ctrl+Enter` bắt đầu, `Ctrl+O` chọn Excel, `Esc` đóng bộ lọc hoặc yêu cầu dừng. `Ctrl+C` thông thường chỉ sao chép văn bản được bôi chọn; dùng nút **Sao chép** cho các dòng có checkbox.
+Nhập API Key và bộ lọc rồi nhấn **Bắt đầu khám phá**. Danh sách từ khóa đang dùng được lưu trước khi quét. **Dừng** chờ yêu cầu mạng hiện tại hoàn tất rồi giữ kết quả đã có.
+
+Vào **Kết quả** hoặc **Xem kết quả trong Bot** để xem từng lượt quét theo thời gian, trạng thái và số kênh. Bảng có tìm kiếm, sắp xếp, phân trang 100 dòng và sao chép các dòng có checkbox. Dữ liệu đầy đủ được giữ, kể cả lượt quét không có kênh hoặc gặp lỗi; màn hình khám phá chỉ hiển thị nhanh 200 kênh đầu tiên.
+
+Kết quả được ghi vào kho nội bộ theo từng đợt xử lý và khi lượt quét kết thúc, không tạo file `.xlsx`. Nhấn **Làm mới** nếu đang xem một lượt còn quét. Nếu ứng dụng bị tắt đột ngột, các đợt đã lưu vẫn có thể xem lại; phần yêu cầu đang xử lý có thể chưa được ghi.
+
+Phím tắt: `Ctrl+Enter` bắt đầu, `Ctrl+O` nhập file cũ, `Esc` đóng bộ lọc hoặc yêu cầu dừng. `Ctrl+C` thông thường sao chép văn bản bôi chọn; dùng nút **Sao chép** cho dòng có checkbox.
 
 ## Dữ liệu và chẩn đoán
 
-- Bản EXE đọc/ghi `.env`, `studio-settings.json` và Excel cạnh EXE. Đặt EXE trong thư mục có quyền ghi.
-- Chạy mã nguồn lưu các file đó tại thư mục gốc dự án.
-- Kết quả được lưu thành `danh_sach_kenh_viral_moi.xlsx` khi có kênh phù hợp.
-- API Key được lưu cục bộ và gửi tới Google để gọi YouTube Data API; không đóng gói vào EXE.
+- Bảng từ khóa và lịch sử: `%LOCALAPPDATA%/Ytb-Bot/data/workspace.sqlite3`. Đây là dữ liệu nội bộ của app, không phải file Excel để người dùng theo dõi thủ công.
+- Đóng Bot trước khi sao lưu hoặc chuyển kho dữ liệu sang máy khác. Sao chép `workspace.sqlite3` tới cùng thư mục dữ liệu trên máy đích.
+- `.env` và `studio-settings.json` ở cạnh EXE hoặc thư mục gốc khi chạy source.
+- Các file Excel cũ không bị xóa hoặc sửa bởi tính năng mới.
+- API Key được lưu cục bộ, dùng để gọi Google YouTube Data API và không được đóng gói vào EXE.
 - Log khởi động: `%LOCALAPPDATA%/Ytb-Bot/logs/desktop.log`.
-- Nếu không mở được app, kiểm tra WebView2 Runtime và log. `python gui_app.py --legacy` mở giao diện dự phòng.
+- Luồng quản lý dữ liệu trong Bot dùng giao diện React mặc định. CLI và `--legacy` là các công cụ cũ được giữ để tương thích.
 
 ## Cập nhật desktop
 
