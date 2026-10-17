@@ -20,9 +20,10 @@ test('edit, paste, delete and reopen the keyword table without downloading files
   await expect(page.getByRole('textbox', {name: 'Từ khóa dòng 1', exact: true})).toHaveValue('New topic');
   await expect(page.getByRole('textbox', {name: 'Từ khóa dòng 2', exact: true})).toHaveValue('Edited topic');
   await page.getByRole('button', {name: 'Thêm dòng', exact: true}).click();
+  await expect(page.getByRole('textbox', {name: 'Từ khóa dòng 5', exact: true})).toBeFocused();
   await expect(page.getByText(/Có thay đổi chưa lưu/)).toBeVisible();
   expect(downloads).toEqual([]);
-  await page.screenshot({path: '../artifacts/ui/keyword-editor.png', fullPage: true});
+  await page.screenshot({animations: 'disabled', path: '../artifacts/ui/keyword-editor.png', fullPage: true});
 });
 
 test('browse result history, paginate, search and sort without downloads', async ({page}) => {
@@ -43,7 +44,7 @@ test('browse result history, paginate, search and sort without downloads', async
   await expect(page.getByRole('cell', {name: 'Earlier channel', exact: true})).toBeVisible();
   await expect(page.getByRole('button', {name: 'Mở Excel', exact: true})).toHaveCount(0);
   expect(downloads).toEqual([]);
-  await page.screenshot({path: '../artifacts/ui/result-history.png', fullPage: true});
+  await page.screenshot({animations: 'disabled', path: '../artifacts/ui/result-history.png', fullPage: true});
 });
 
 test.beforeEach(async ({ page }) => {
@@ -77,10 +78,10 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('theme, scan lifecycle and responsive layout', async ({page}) => {
-  await page.screenshot({path: '../artifacts/ui/react-dark.png', fullPage: true});
+  await page.screenshot({animations: 'disabled', path: '../artifacts/ui/react-dark.png', fullPage: true});
   await page.getByRole('button', {name: 'Chuyển giao diện sáng'}).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  await page.screenshot({path: '../artifacts/ui/react-light.png', fullPage: true});
+  await page.screenshot({animations: 'disabled', path: '../artifacts/ui/react-light.png', fullPage: true});
   await page.getByRole('button', {name: /Bắt đầu khám phá/}).click();
   await expect(page.getByRole('button', {name: 'Dừng', exact: true})).toBeEnabled();
   await page.getByRole('button', {name: 'Dừng', exact: true}).click();
@@ -108,4 +109,83 @@ test('Excel search and confirmed import use the original column', async ({page})
   await expect(page.getByRole('textbox', {name: 'Từ khóa dòng 1', exact: true})).toHaveValue('alpha');
   await page.getByRole('button', {name: 'Dùng để quét'}).click();
   await expect(page.getByRole('textbox', {name: 'Danh sách từ khóa'})).toHaveValue('alpha\nbeta');
+});
+
+test('drawer traps keyboard focus and returns it to the trigger', async ({page}) => {
+  await page.setViewportSize({width: 800, height: 650});
+  const trigger = page.getByRole('button', {name: 'Mở menu và bộ lọc'});
+  await trigger.click();
+  await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+  const close = page.getByRole('button', {name: 'Đóng menu', exact: true});
+  await expect(close).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(page.getByRole('button', {name: 'Kiểm tra cập nhật', exact: true})).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(close).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(trigger).toBeFocused();
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  expect(await page.locator('main').evaluate(element => element.inert)).toBe(false);
+});
+
+test('short laptop layouts keep the primary action visible without page overflow', async ({page}) => {
+  for (const viewport of [{width: 1280, height: 720}, {width: 1024, height: 768}, {width: 375, height: 812}]) {
+    await page.setViewportSize(viewport);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    if (viewport.width > 840) {
+      const button = await page.getByRole('button', {name: /Bắt đầu khám phá/}).boundingBox();
+      expect(button!.y + button!.height).toBeLessThanOrEqual(viewport.height);
+    }
+  }
+  await page.setViewportSize({width: 1280, height: 720});
+  await page.screenshot({animations: 'disabled', path: '../artifacts/ui/studio-laptop.png', fullPage: true});
+  await page.getByRole('button', {name: 'Sửa bảng từ khóa', exact: true}).click();
+  await expect(page.getByRole('heading', {level: 1})).toHaveText('Mọi ý tưởng, một nơi lưu.');
+  await expect(page.getByRole('region', {name: 'Số liệu lượt quét'})).toHaveCount(0);
+  await expect(page.getByRole('textbox', {name: 'Từ khóa dòng 1', exact: true})).toBeVisible();
+});
+
+test('result errors have an inline retry and empty history offers a clear next action', async ({page}) => {
+  await page.evaluate(() => {window.pywebview!.api.list_results = async () => ({ok: false, error: 'History unavailable'});});
+  await page.getByRole('button', {name: /Xem kết quả trong Bot/}).click();
+  await expect(page.getByRole('alert').filter({hasText: 'Chưa đọc được lịch sử.'})).toBeVisible();
+  await page.evaluate(() => {window.pywebview!.api.list_results = async () => ({ok: true, data: []});});
+  await page.getByRole('button', {name: 'Làm mới', exact: true}).click();
+  await expect(page.getByRole('heading', {name: 'Chưa có lượt khám phá nào'})).toBeVisible();
+  await page.getByRole('button', {name: 'Bắt đầu lượt đầu tiên'}).click();
+  await expect(page.getByRole('heading', {level: 1})).toHaveText('Khám phá kênh mới.');
+});
+
+test('text contrast remains readable in both themes', async ({page}) => {
+  await page.emulateMedia({reducedMotion: 'reduce'});
+  const contrast = async () => page.evaluate(() => {
+    function luminance(color: string) {
+      const values = color.match(/[\d.]+/g)!.slice(0, 3).map(Number).map(value => {
+        const channel = value / 255;
+        return channel <= .04045 ? channel / 12.92 : ((channel + .055) / 1.055) ** 2.4;
+      });
+      return values[0] * .2126 + values[1] * .7152 + values[2] * .0722;
+    }
+    function ratio(foreground: string, background: string) {
+      const a = luminance(foreground); const b = luminance(background);
+      return (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
+    }
+    const button = getComputedStyle(document.querySelector('.start-button')!);
+    const nav = getComputedStyle(document.querySelector('.nav-item.active')!);
+    const muted = getComputedStyle(document.querySelector('.log-placeholder p')!);
+    const panel = getComputedStyle(document.querySelector('.activity-panel')!);
+    return [ratio(button.color, button.backgroundColor), ratio(nav.color, nav.backgroundColor), ratio(muted.color, panel.backgroundColor)];
+  });
+  for (const value of await contrast()) expect(value).toBeGreaterThanOrEqual(4.5);
+  await page.getByRole('button', {name: 'Chuyển giao diện sáng'}).click();
+  for (const value of await contrast()) expect(value).toBeGreaterThanOrEqual(4.5);
+});
+
+test('table loading failures can be retried without showing stale rows', async ({page}) => {
+  await page.evaluate(() => {window.pywebview!.api.results_page = async () => ({ok: false, error: 'Read failed'});});
+  await page.getByRole('button', {name: /Xem kết quả trong Bot/}).click();
+  await expect(page.getByRole('alert').filter({hasText: 'Chưa đọc được bảng dữ liệu.'})).toBeVisible();
+  await page.evaluate(() => {window.pywebview!.api.results_page = async () => ({ok: true, data: {columns: ['Tên Kênh'], rows: [['Recovered channel']], page: 0, pages: 1, total: 1, original_total: 1}});});
+  await page.getByRole('button', {name: 'Tải lại bảng', exact: true}).click();
+  await expect(page.getByRole('cell', {name: 'Recovered channel', exact: true})).toBeVisible();
 });

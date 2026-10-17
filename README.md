@@ -80,7 +80,8 @@ frontend/
     components/          Bảng từ khóa, lịch sử kết quả và nhập Excel cũ
     App.tsx              Màn hình React và trạng thái UI
     api.ts               Kiểu dữ liệu và cầu nối Python
-    styles.css           Theme và bố cục responsive
+    styles.css           Control dùng chung
+    studio.css           Theme studio và bố cục laptop
   tests/                 Kiểm thử thao tác bằng Playwright
 ytb_bot/
   core/                  Bộ quét, bảng dữ liệu và kho SQLite nội bộ
