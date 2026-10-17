@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
-from ytb_bot.ui.desktop import YtbBotApp
+from ytb_bot.legacy_ui.desktop import YtbBotApp
 
 
 @unittest.skipUnless(os.name == "nt", "Windows desktop GUI")
@@ -54,14 +54,14 @@ class DashboardTests(unittest.TestCase):
         self.assertEqual(view.keywords(), ["AI", "video"])
         self.assertEqual(view.stat_values["keywords"].cget("text"), "2")
         view.api_entry.delete(0, "end")
-        with patch("ytb_bot.ui.desktop.set_key") as save:
+        with patch("ytb_bot.legacy_ui.desktop.set_key") as save:
             self.app.start_scan_thread()
             self.assertIn("API Key", view.form_error.cget("text"))
             save.assert_not_called()
         view.api_entry.insert(0, "test-api-key")
         view.max_age_entry.delete(0, "end")
         view.max_age_entry.insert(0, "-3")
-        with patch("ytb_bot.ui.desktop.set_key") as save:
+        with patch("ytb_bot.legacy_ui.desktop.set_key") as save:
             self.app.start_scan_thread()
             self.assertIn("Tuổi kênh", view.form_error.cget("text"))
             save.assert_not_called()
@@ -113,10 +113,10 @@ class DashboardTests(unittest.TestCase):
                 "publishedAt": datetime.datetime.now(datetime.timezone.utc).isoformat()},
             "statistics": {"viewCount": "2000", "subscriberCount": "100", "videoCount": "2"}}]}
         with tempfile.TemporaryDirectory() as directory, \
-                patch("ytb_bot.ui.desktop.APP_DIR", Path(directory)), \
-                patch("ytb_bot.ui.desktop.ENV_FILE", str(Path(directory) / ".env")), \
-                patch("ytb_bot.ui.desktop.threading.Thread"), \
-                patch("ytb_bot.ui.desktop.build", return_value=youtube):
+                patch("ytb_bot.legacy_ui.desktop.APP_DIR", Path(directory)), \
+                patch("ytb_bot.legacy_ui.desktop.ENV_FILE", str(Path(directory) / ".env")), \
+                patch("ytb_bot.legacy_ui.desktop.threading.Thread"), \
+                patch("ytb_bot.legacy_ui.desktop.build", return_value=youtube):
             self.app.start_scan_thread()
             self.app.run_scanner("test-api-key", ["first topic", "second topic"], 90, 500, 1)
             self.app._process_ui_events()

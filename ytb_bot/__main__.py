@@ -4,11 +4,11 @@
 def main():
     import sys
     if "--legacy" in sys.argv:
-        from ytb_bot.ui.desktop import YtbBotApp
+        from ytb_bot.legacy_ui.desktop import YtbBotApp
         app = YtbBotApp()
         app.mainloop()
     else:
-        from ytb_bot.react_desktop import main as react_main
+        from ytb_bot.desktop.app import main as react_main
         react_main()
 
 

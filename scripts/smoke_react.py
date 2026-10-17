@@ -4,7 +4,7 @@ import sys
 import threading
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from ytb_bot.react_desktop import main
+from ytb_bot.desktop.app import main
 
 failures = []
 

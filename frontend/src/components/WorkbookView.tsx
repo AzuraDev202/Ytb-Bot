@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ArrowDownToLine, ArrowLeft, ArrowRight, ArrowUpDown, Copy, FileSpreadsheet, FolderOpen, Loader2, Plus, Search, ShieldCheck, X } from 'lucide-react';
-import { call, type WorkbookMeta, type WorkbookPage } from './api';
+import { call, type WorkbookMeta, type WorkbookPage } from '../api';
 import { ConfirmDialog, type Confirmation, type Notice } from './ConfirmDialog';
 const format = (value: number) => new Intl.NumberFormat('vi-VN').format(value);
 

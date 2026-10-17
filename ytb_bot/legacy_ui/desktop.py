@@ -16,9 +16,9 @@ from ytb_bot.version import APP_VERSION
 from ytb_bot.build_info import build_id
 from ytb_bot.updater import check_for_update, download_update, install_update
 from ytb_bot.paths import APP_DIR, ENV_FILE
-from ytb_bot.ui.dashboard import StudioDashboard
-from ytb_bot.ui import theme as t
-from ytb_bot.ui.window_layout import fit_window, screen_work_area
+from ytb_bot.legacy_ui.dashboard import StudioDashboard
+from ytb_bot.legacy_ui import theme as t
+from ytb_bot.legacy_ui.window_layout import fit_window, screen_work_area
 
 # Cấu hình giao diện chung
 ctk.set_appearance_mode("Dark")  # "Dark", "Light", hoặc "System"

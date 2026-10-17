@@ -9,10 +9,10 @@ from urllib.parse import urlparse
 from dotenv import dotenv_values, set_key
 
 from ytb_bot.build_info import build_id
-from ytb_bot.engine import ScanEngine
+from ytb_bot.core.engine import ScanEngine
 from ytb_bot.paths import APP_DIR, ENV_FILE
 from ytb_bot.version import APP_VERSION
-from ytb_bot.workbook import Workbook
+from ytb_bot.core.workbook import Workbook
 from ytb_bot.updater import check_for_update, download_update, install_update
 
 

@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from PIL import ImageGrab
-from ytb_bot.ui.desktop import YtbBotApp
+from ytb_bot.legacy_ui.desktop import YtbBotApp
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--theme", choices=["dark", "light"], default="dark")

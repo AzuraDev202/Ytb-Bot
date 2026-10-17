@@ -3,8 +3,8 @@ import os
 import tkinter as tk
 import customtkinter as ctk
 
-from ytb_bot.ui import theme as t
-from ytb_bot.ui.excel_viewer import ExcelViewer
+from ytb_bot.legacy_ui import theme as t
+from ytb_bot.legacy_ui.excel_viewer import ExcelViewer
 from ytb_bot.version import APP_VERSION
 from ytb_bot.build_info import build_id
 

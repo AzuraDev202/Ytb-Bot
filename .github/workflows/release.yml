@@ -31,7 +31,7 @@ jobs:
         run: python scripts/prepare_release.py
       - name: Install build dependencies
         if: steps.version.outputs.publish == 'true'
-        run: python -m pip install -r requirements.txt pyinstaller
+        run: python -m pip install -r requirements-dev.txt
       - name: Test updater
         if: steps.version.outputs.publish == 'true'
         run: python -m unittest discover -s tests -v

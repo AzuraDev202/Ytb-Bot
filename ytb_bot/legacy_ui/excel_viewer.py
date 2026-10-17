@@ -8,7 +8,7 @@ from tkinter import filedialog, messagebox, ttk
 
 import customtkinter as ctk
 import pandas as pd
-from ytb_bot.ui import theme as t
+from ytb_bot.legacy_ui import theme as t
 
 
 class ExcelViewer(ctk.CTkFrame):

@@ -6,8 +6,9 @@ from pathlib import Path
 import sys
 
 from ytb_bot.build_info import build_id
-from ytb_bot.react_api import DesktopAPI
+from ytb_bot.desktop.api import DesktopAPI
 from ytb_bot.version import APP_VERSION
+from ytb_bot.paths import PROJECT_ROOT
 
 
 def main(on_started=None):
@@ -17,7 +18,7 @@ def main(on_started=None):
                         format="%(asctime)s %(levelname)s %(message)s")
     try:
         import webview
-        root = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[1]))
+        root = Path(getattr(sys, "_MEIPASS", PROJECT_ROOT))
         document = root / "frontend" / "web-dist" / "index.html"
         if not document.exists():
             raise RuntimeError("Chưa build React. Chạy npm ci --prefix frontend và npm run build --prefix frontend.")

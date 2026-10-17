@@ -3,6 +3,8 @@
 *.csv
 __pycache__/
 venv/
+.venv/
+*.pyc
 build/
 dist/
 .release-build/

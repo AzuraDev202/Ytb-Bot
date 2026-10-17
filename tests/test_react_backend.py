@@ -6,9 +6,9 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
-from ytb_bot.engine import ScanEngine
-from ytb_bot.workbook import Workbook
-from ytb_bot.react_api import DesktopAPI
+from ytb_bot.core.engine import ScanEngine
+from ytb_bot.core.workbook import Workbook
+from ytb_bot.desktop.api import DesktopAPI
 
 
 class ReactBackendTests(unittest.TestCase):
@@ -75,19 +75,19 @@ class ReactBackendTests(unittest.TestCase):
             youtube.search.return_value.list.assert_called_once()
 
     def test_preferences_survive_bridge_recreation(self):
-        with tempfile.TemporaryDirectory() as directory, patch("ytb_bot.react_api.APP_DIR", Path(directory)):
+        with tempfile.TemporaryDirectory() as directory, patch("ytb_bot.desktop.api.APP_DIR", Path(directory)):
             api = DesktopAPI()
             self.assertTrue(api.save_preferences("light", False)["ok"])
             self.assertEqual(DesktopAPI().get_bootstrap()["data"]["preferences"], {"theme": "light", "motion": False})
             self.assertFalse(api.save_preferences("unknown", True)["ok"])
 
     def test_bridge_never_returns_saved_key_and_rejects_invalid_input(self):
-        with patch("ytb_bot.react_api.dotenv_values", return_value={"YOUTUBE_API_KEY": "test-secret"}), \
+        with patch("ytb_bot.desktop.api.dotenv_values", return_value={"YOUTUBE_API_KEY": "test-secret"}), \
                 patch.dict("os.environ", {"YOUTUBE_API_KEY": "test-secret"}):
             api = DesktopAPI()
             self.assertNotIn("test-secret", str(api.get_bootstrap()))
             self.assertTrue(api.get_bootstrap()["data"]["has_api_key"])
-            with patch("ytb_bot.react_api.set_key") as save:
+            with patch("ytb_bot.desktop.api.set_key") as save:
                 result = api.start_scan({"api_key": "new", "keywords": ["a"], "max_days": -1})
                 self.assertFalse(result["ok"])
                 save.assert_not_called()
