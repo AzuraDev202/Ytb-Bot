@@ -1,22 +1,28 @@
 # YTB-BOT Creator Studio
 
-Giao diện native Windows dùng CustomTkinter và ttk, giữ nguyên version `1.0.2`.
+Giao diện mặc định dùng React + TypeScript trong cửa sổ pywebview / Edge WebView2, giữ version `1.0.2`. Giao diện CustomTkinter cũ có thể mở bằng `--legacy`.
 
 ## Hướng thiết kế
 
 Tham khảo dữ liệu local của skill UI/UX Pro Max: phong cách Data-Dense Dashboard và hướng dẫn Progress Indicators. Mẫu landing page Enterprise Gateway trả về cùng kết quả tìm kiếm không áp dụng cho desktop. Chuyển typography sang Segoe UI/Consolas có sẵn trên Windows; không tải font hay tài nguyên web lúc chạy.
 
 - Bề mặt xanh đen/trắng, nút hành động đỏ san hô, trạng thái thành công xanh ngọc.
-- Ba thẻ số liệu lấy từ dữ liệu thực: từ khóa duy nhất, kênh phù hợp và số chủ đề đã xử lý.
+- Bốn thẻ số liệu lấy từ dữ liệu thực: từ khóa duy nhất, kênh phù hợp, số chủ đề đã xử lý và thời gian.
 - Một hành động chính: Bắt đầu khám phá. Dừng và xem kết quả là hành động phụ.
 - Excel có khu vực làm việc riêng, bảng xen kẽ màu dòng, tiêu đề sắp xếp và ô tìm kiếm.
 
 ## Cấu trúc
 
-- `ytb_bot/ui/theme.py`: token màu semantic, kiểu chữ và factory cho các control phổ biến.
-- `ytb_bot/ui/dashboard.py`: bố cục, preset từ khóa, cá nhân hóa và phản hồi tiến trình.
-- `ytb_bot/ui/desktop.py`: điều phối worker, dữ liệu và vòng đời quét.
-- `ytb_bot/ui/excel_viewer.py`: đọc workbook, lọc/sắp xếp/xem bảng, clipboard và nhập cột từ khóa.
+- `frontend/src/styles.css`: token màu sáng/tối, bố cục responsive và hiệu ứng tôn trọng reduced motion.
+- `frontend/src/App.tsx`: điều phối trạng thái giao diện, bộ lọc, nhật ký và kết quả.
+- `frontend/src/WorkbookView.tsx`: trình xem Excel và nhập cột từ khóa.
+- `frontend/src/api.ts`: kiểu dữ liệu và hợp đồng cầu nối JSON với Python.
+- `ytb_bot/react_desktop.py`, `react_api.py`: cửa sổ desktop, hộp chọn file và cầu nối có kiểm tra lỗi.
+- `ytb_bot/engine.py`, `workbook.py`: xử lý nền, dữ liệu thật và các phiên Excel, độc lập với React.
+
+## Kiểm tra React
+
+`npm test --prefix frontend` kiểm tra sáng/tối, bắt đầu/dừng, cửa sổ hẹp và nhập Excel có xác nhận. Fixture bridge chỉ nằm trong thư mục tests. Ảnh được tạo tại `artifacts/ui/react-dark.png`, `react-light.png`, `react-compact.png`. `python scripts/smoke_react.py` kiểm tra WebView2 thật tải React và kết nối với Python; `scripts/smoke_desktop.ps1` kiểm tra cửa sổ EXE sau khi đóng gói.
 
 ## Trạng thái và tương tác
 

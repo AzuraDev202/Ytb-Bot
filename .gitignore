@@ -7,3 +7,9 @@ build/
 dist/
 .release-build/
 artifacts/
+frontend/node_modules/
+frontend/web-dist/
+frontend/test-results/
+frontend/playwright-report/
+studio-settings.json
+studio-settings.tmp

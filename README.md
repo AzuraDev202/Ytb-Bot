@@ -14,23 +14,35 @@ Link tải cố định luôn trỏ tới EXE trong Release mới nhất. Link c
 
 ```powershell
 python -m pip install -r requirements.txt pyinstaller
+npm ci --prefix frontend
+npm run build --prefix frontend
 python gui_app.py
 python scripts/build_release.py
 ```
 
 Build tạo `dist/gui_app.exe`, `dist/gui_app.exe.sha256` và `dist/build-info.json`. Mã build (commit + thời gian build UTC) xuất hiện trên titlebar và cạnh thông tin phiên bản để phân biệt các file cùng version. Không đóng gói `.env` hay API Key vào EXE.
 
+Giao diện mặc định dùng **React + TypeScript**, chạy trong cửa sổ desktop **pywebview / Microsoft Edge WebView2**. Python tiếp tục xử lý YouTube, Excel và cập nhật. Máy phát triển cần Node.js 22.12+; người tải EXE không cần Node.js hoặc Python, nhưng cần Microsoft Edge WebView2 Runtime. Frontend được đóng gói cục bộ, không tải giao diện từ website bên ngoài. Nếu không mở được cửa sổ, xem `%LOCALAPPDATA%/Ytb-Bot/logs/desktop.log`.
+
+`npm run dev --prefix frontend` dùng để xem trước giao diện trên trình duyệt; các chức năng Python chỉ hoạt động trong cửa sổ desktop. `python gui_app.py --legacy` mở giao diện CustomTkinter dự phòng. Kiểm tra bằng `npm test --prefix frontend`, `python scripts/smoke_react.py` và `python -m unittest discover -s tests -v`.
+
 ## Cấu trúc thư mục
 
 ```text
 ytb_bot/                 Mã nguồn ứng dụng
-  ui/                    Giao diện desktop, Excel và bố cục cửa sổ
+  react_desktop.py        Cửa sổ WebView2 và kiểm tra khởi động
+  react_api.py            Cầu nối React/Python, hộp chọn file và cập nhật
+  engine.py              Bộ quét nền độc lập với giao diện
+  workbook.py            Phiên Excel, tìm kiếm, sắp xếp và phân trang
+  ui/                    Giao diện CustomTkinter dự phòng (--legacy)
   scanner.py             Bộ quét chạy từ dòng lệnh
   updater.py             Kiểm tra, tải và cài bản cập nhật
   paths.py               Đường dẫn .env và dữ liệu lúc chạy
   version.py             Phiên bản và nguồn cập nhật
   __main__.py            Điểm khởi chạy desktop
 packaging/desktop.spec   Cấu hình PyInstaller
+frontend/src/            React + TypeScript + CSS, theme sáng/tối
+frontend/tests/          Kiểm tra tương tác bằng Playwright
 scripts/                 Các lệnh build và chuẩn bị Release
 tests/                   Kiểm thử
 .github/workflows/       Quy trình GitHub Actions
@@ -53,9 +65,9 @@ Trong tab Excel, dùng **Tìm trong bảng**, bấm tiêu đề cột để sắ
 Từ phiên bản 1.0.2, cửa sổ tự căn giữa vùng làm việc của màn hình chính, tính cả Windows DPI scaling và chừa chỗ cho taskbar/viền cửa sổ. Trên màn hình nhỏ, nội dung chính và bộ lọc có thể cuộn để các nút không bị khuất. Bạn vẫn có thể kéo giãn hoặc phóng to cửa sổ.
 
 - Nhấn **Nhập Excel** hoặc vào tab **Excel → Mở file Excel**, chọn `.xlsx` hoặc `.xls`.
-- Chọn sheet để xem bảng; bảng có thanh cuộn ngang/dọc và phân trang 200 dòng. Dữ liệu được đọc ở nền để cửa sổ vẫn phản hồi.
+- Chọn sheet để xem bảng; bảng có thanh cuộn ngang/dọc và phân trang 100 dòng. Dữ liệu được đọc ở nền để cửa sổ vẫn phản hồi.
 - Chọn cột rồi nhấn **Dùng cột làm từ khóa**. App lấy toàn bộ cột, bỏ ô trống và từ khóa trùng, rồi hỏi trước khi thay danh sách hiện tại. Cột `Keyword` được chọn mặc định nếu có.
-- Nhấn **Xem kết quả Excel** để xem file kết quả ngay trong app. Sau lượt quét có kết quả, tab Excel tự mở file vừa xuất.
+- Nhấn **Xem kết quả Excel** để xem file kết quả vừa xuất ngay trong app.
 
 Bảng dùng để xem và nhập dữ liệu, chưa hỗ trợ sửa ô hoặc lưu thay đổi vào workbook gốc. Không cần cài Microsoft Excel để dùng các tính năng này.
 

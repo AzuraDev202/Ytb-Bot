@@ -1,5 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 from pathlib import Path
+from PyInstaller.utils.hooks import collect_data_files
 
 ROOT = Path(SPECPATH).resolve().parent
 
@@ -7,12 +8,13 @@ a = Analysis(
     [str(ROOT / 'gui_app.py')],
     pathex=[str(ROOT)],
     binaries=[],
-    datas=[(str(ROOT / '.release-build' / 'build-info.json'), 'ytb_bot')],
-    hiddenimports=['openpyxl', 'xlrd'],
+    datas=[(str(ROOT / '.release-build' / 'build-info.json'), 'ytb_bot'),
+           (str(ROOT / 'frontend' / 'web-dist'), 'frontend/web-dist')] + collect_data_files('webview'),
+    hiddenimports=['openpyxl', 'xlrd', 'webview.platforms.winforms', 'webview.platforms.edgechromium'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=['PyQt5', 'PyQt6', 'PySide2', 'PySide6', 'webview.platforms.qt', 'webview.platforms.gtk'],
     noarchive=False,
     optimize=0,
 )

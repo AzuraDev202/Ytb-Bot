@@ -14,6 +14,9 @@ from ytb_bot.updater import version_tuple
 version_tuple(APP_VERSION)
 if len(sys.argv) > 1 and sys.argv[1] != f"v{APP_VERSION}":
     raise SystemExit("Git tag must match APP_VERSION in ytb_bot/version.py")
+npm = "npm.cmd" if sys.platform == "win32" else "npm"
+subprocess.run([npm, "ci"], cwd=ROOT / "frontend", check=True)
+subprocess.run([npm, "run", "build"], cwd=ROOT / "frontend", check=True)
 revision = subprocess.check_output(["git", "rev-parse", "--short=8", "HEAD"], cwd=ROOT, text=True).strip()
 built_at = datetime.datetime.now(datetime.timezone.utc)
 metadata = {"version": APP_VERSION, "commit": revision,
