@@ -111,6 +111,13 @@ class UpdaterTests(unittest.TestCase):
                                 checksum_message='校验和不匹配。', expected_log='校验和不匹配。')
 
     @unittest.skipUnless(os.name == "nt", "Windows helper")
+    def test_windows_helper_localized_failure_is_independent_of_parent_encoding(self):
+        # Reproduce the hosted Windows runner even when the developer uses UTF-8.
+        with patch('subprocess._text_encoding', return_value='cp1252'):
+            self.run_windows_helper(checksum='0' * 64, expected_error='checksum',
+                                    checksum_message='校验和不匹配。', expected_log='校验和不匹配。')
+
+    @unittest.skipUnless(os.name == "nt", "Windows helper")
     def test_windows_helper_missing_target_fails_without_long_retry(self):
         self.run_windows_helper(target_exists=False, expected_error="Replace", max_attempts=30)
 
@@ -132,6 +139,8 @@ class UpdaterTests(unittest.TestCase):
             # Exercise actual PowerShell file replacement without launching a fake EXE.
             script = root / "test.ps1"
             script.write_text("param([string]$ConfigPath)\nImport-Module Microsoft.PowerShell.Utility, Microsoft.PowerShell.Management\n"
+                              # Match both pipe endpoints instead of inheriting a Windows code page.
+                              + "[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)\n"
                               + "function Start-Process { param($FilePath, $WorkingDirectory, $WindowStyle) }\n"
                               # Reproduce the GitHub runner where Get-FileHash is unavailable.
                               + "function Get-FileHash { throw 'Get-FileHash is unavailable in this environment' }\n"
@@ -139,11 +148,10 @@ class UpdaterTests(unittest.TestCase):
                               encoding="utf-8-sig")
             result = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
                                      "-File", str(script), "-ConfigPath", str(config)], timeout=20,
-                                    capture_output=True, text=True)
+                                    capture_output=True, text=True, encoding="utf-8")
             if expected_error:
                 self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
-                if not expected_log:
-                    self.assertIn(expected_error, result.stderr)
+                self.assertIn(expected_log or expected_error, result.stderr)
                 if target_exists:
                     self.assertEqual(target.read_bytes(), b"MZold")
                 else:
