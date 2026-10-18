@@ -11,6 +11,7 @@ from dotenv import dotenv_values, set_key
 
 from ytb_bot.build_info import build_id
 from ytb_bot.core.engine import ScanEngine
+from ytb_bot.core.contacts import CONTACT_COLUMNS
 from ytb_bot.paths import APP_DIR, ENV_FILE, DATA_DIR
 from ytb_bot.version import APP_VERSION
 from ytb_bot.core.workbook import Workbook
@@ -129,7 +130,7 @@ class DesktopAPI:
         run = self._store.result(run_id)
         meta = Workbook().from_rows(run["rows"], f"Lượt quét #{run['id']}", columns=[
             "Tên Kênh", "Channel ID", "URL Kênh", "Từ Khóa Quét", "Ngày Tạo", "Tuổi Kênh (Ngày)",
-            "Subscribers", "Tổng Lượt Xem", "Tổng Video", "Video Gần Nhất"])
+            "Subscribers", "Tổng Lượt Xem", "Tổng Video", "Video Gần Nhất", *CONTACT_COLUMNS])
         return {**meta, "run_id": run["id"]}
 
     @reply
@@ -138,7 +139,7 @@ class DesktopAPI:
         book = Workbook()
         book.from_rows(run["rows"], sheet, columns=[
             "Tên Kênh", "Channel ID", "URL Kênh", "Từ Khóa Quét", "Ngày Tạo", "Tuổi Kênh (Ngày)",
-            "Subscribers", "Tổng Lượt Xem", "Tổng Video", "Video Gần Nhất"])
+            "Subscribers", "Tổng Lượt Xem", "Tổng Video", "Video Gần Nhất", *CONTACT_COLUMNS])
         return book.page(sheet, query, page, sort, descending)
 
     @reply

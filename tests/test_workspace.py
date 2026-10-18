@@ -58,7 +58,7 @@ class WorkspaceTests(unittest.TestCase):
             youtube.search.return_value.list.return_value.execute.side_effect = [
                 {'items': [{'snippet': {'channelId': 'kept', 'title': 'Video'}}]}, RuntimeError('quota failed: secret-key')]
             youtube.channels.return_value.list.return_value.execute.return_value = {'items': [
-                {'id': 'kept', 'snippet': {'title': 'Saved channel', 'publishedAt': dt.datetime.now(dt.timezone.utc).isoformat()},
+                {'id': 'kept', 'snippet': {'title': 'Saved channel', 'description': 'test@example.com', 'publishedAt': dt.datetime.now(dt.timezone.utc).isoformat()},
                  'statistics': {'viewCount': '2000'}}]}
             engine = ScanEngine(directory, lambda _: youtube)
             engine.start('secret-key', ['first', 'second'])

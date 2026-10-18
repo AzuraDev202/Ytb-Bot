@@ -199,6 +199,7 @@ th[aria-sort=ascending], th[aria-sort=descending] { color: var(--accent); }
 .workbook-panel th.row-tools { z-index: 3; background: var(--inset); }
 .workbook-panel .selected-row .row-tools { background: var(--accent-soft); }
 .row-actions { display: flex; align-items: center; gap: 10px; }
+.contact-preview { display: block; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row-detail-button { min-height: 32px; padding: 5px 8px; border-radius: 6px; background: var(--inset); border: 1px solid var(--line); color: var(--accent); font-size: 12px; white-space: nowrap; }
 .row-detail-button:hover { background: var(--hover); }
 .horizontal-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 11px; padding: 7px 0; border-bottom: 1px solid var(--line); }

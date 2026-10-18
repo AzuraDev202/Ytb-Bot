@@ -37,7 +37,7 @@ class ReactBackendTests(unittest.TestCase):
             {"snippet": {"channelId": name, "title": "Video"}} for name in ("new", "old", "small")]}
         now = dt.datetime.now(dt.timezone.utc)
         youtube.channels.return_value.list.return_value.execute.return_value = {"items": [
-            {"id": name, "snippet": {"title": name, "publishedAt": (now - dt.timedelta(days=age)).isoformat()},
+            {"id": name, "snippet": {"title": name, "description": "Contact test@example.com", "publishedAt": (now - dt.timedelta(days=age)).isoformat()},
              "statistics": {"viewCount": str(views)}}
             for name, age, views in [("new", 2, 1000), ("old", 300, 5000), ("small", 1, 10)]]}
         with tempfile.TemporaryDirectory() as directory:
@@ -68,7 +68,7 @@ class ReactBackendTests(unittest.TestCase):
             engine = ScanEngine(directory, lambda _: youtube)
             def channel_response():
                 engine.stop()
-                return {"items": [{"id": "new", "snippet": {"title": "New", "publishedAt": dt.datetime.now(dt.timezone.utc).isoformat()},
+                return {"items": [{"id": "new", "snippet": {"title": "New", "description": "facebook.com/new.channel", "publishedAt": dt.datetime.now(dt.timezone.utc).isoformat()},
                                    "statistics": {"viewCount": "1000"}}]}
             youtube.channels.return_value.list.return_value.execute.side_effect = channel_response
             engine.start("test-key", ["one", "two"])

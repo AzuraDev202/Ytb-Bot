@@ -4,8 +4,8 @@ test('wide result tables keep trailing fields reachable inside the workspace', a
   await page.setViewportSize({width: 1280, height: 720});
   await page.evaluate(() => {
     window.pywebview!.api.results_page = async () => ({ok: true, data: {
-      columns: ['Tên Kênh', 'Channel ID', 'URL Kênh', 'Từ Khóa Quét', 'Ngày Tạo', 'Tuổi Kênh (Ngày)', 'Subscribers', 'Tổng Lượt Xem', 'Tổng Video', 'Video Gần Nhất'],
-      rows: [['A channel with a long name', 'UC' + 'a'.repeat(22), 'https://www.youtube.com/channel/UC' + 'a'.repeat(22), 'AI Agent', '2026-10-06', 12, 23, 123456, 18, 'A detailed video title '.repeat(16)]],
+      columns: ['Tên Kênh', 'Channel ID', 'URL Kênh', 'Từ Khóa Quét', 'Ngày Tạo', 'Tuổi Kênh (Ngày)', 'Subscribers', 'Tổng Lượt Xem', 'Tổng Video', 'Video Gần Nhất', 'Email', 'Facebook', 'Liên Hệ Khác'],
+      rows: [['A channel with a long name', 'UC' + 'a'.repeat(22), 'https://www.youtube.com/channel/UC' + 'a'.repeat(22), 'AI Agent', '2026-10-06', 12, 23, 123456, 18, 'A detailed video title '.repeat(16), 'hello@example.com', 'https://facebook.com/creator', 'https://t.me/myteam']],
       page: 0, pages: 1, total: 1, original_total: 1,
     }});
   });
@@ -25,7 +25,9 @@ test('wide result tables keep trailing fields reachable inside the workspace', a
   await page.getByRole('button', {name: 'Xem đầy đủ dòng 1', exact: true}).click();
   await expect(page.getByRole('dialog', {name: 'Chi tiết kết quả'})).toBeVisible();
   await expect(page.getByRole('dialog').getByText('123456', {exact: true})).toBeVisible();
-  await expect(page.getByRole('dialog').locator('dd').last()).toHaveText('A detailed video title '.repeat(16).trim());
+  await expect(page.getByRole('dialog').locator('dd').nth(9)).toHaveText('A detailed video title '.repeat(16).trim());
+  await expect(page.getByRole('dialog').getByText('hello@example.com', {exact: true})).toBeAttached();
+  await expect(page.getByRole('dialog').locator('dd').last()).toHaveText('https://t.me/myteam');
   await page.screenshot({animations: 'disabled', path: '../artifacts/ui/result-details.png'});
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).not.toBeVisible();

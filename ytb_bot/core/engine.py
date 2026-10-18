@@ -8,6 +8,7 @@ import time
 import httplib2
 from googleapiclient.discovery import build
 from ytb_bot.core.storage import WorkspaceStore
+from ytb_bot.core.contacts import extract_contacts
 
 
 class ScanEngine:
@@ -107,11 +108,14 @@ class ScanEngine:
                         views = int(stats.get("viewCount", 0))
                         if age > max_days or views < min_views:
                             continue
+                        contacts = extract_contacts(snippet.get("description", ""))
+                        if not contacts:
+                            continue
                         channels[channel_id] = {"Tên Kênh": snippet.get("title", ""), "Channel ID": channel_id,
                             "URL Kênh": f"https://www.youtube.com/channel/{channel_id}", "Từ Khóa Quét": keyword,
                             "Ngày Tạo": created[:10], "Tuổi Kênh (Ngày)": age,
                             "Subscribers": "Ẩn" if stats.get("hiddenSubscriberCount") else int(stats.get("subscriberCount", 0)),
-                            "Tổng Lượt Xem": views, "Tổng Video": int(stats.get("videoCount", 0)), "Video Gần Nhất": videos[channel_id]}
+                            "Tổng Lượt Xem": views, "Tổng Video": int(stats.get("videoCount", 0)), "Video Gần Nhất": videos[channel_id], **contacts}
                         self._log(f"Phù hợp: {snippet.get('title', '')} · {views:,} lượt xem", "success")
                         with self._lock:
                             self._state["matches"] = len(channels)
@@ -123,7 +127,7 @@ class ScanEngine:
             if channels:
                 self._log(f"Đã lưu {len(channels)} kênh trong Bot. Mở Kết quả để xem lại.", "success")
             else:
-                self._log("Chưa có kênh phù hợp. Thử thêm chủ đề hoặc mở rộng bộ lọc.")
+                self._log("Chưa có kênh đáp ứng bộ lọc và có liên hệ công khai trong mô tả. Thử thêm chủ đề hoặc mở rộng bộ lọc.")
             with self._lock:
                 self._state["status"] = "stopped" if self._stop.is_set() else "complete"
         except Exception as error:

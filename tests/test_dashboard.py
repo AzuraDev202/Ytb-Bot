@@ -109,7 +109,7 @@ class DashboardTests(unittest.TestCase):
 
         youtube.search.return_value.list.return_value.execute.side_effect = search
         youtube.channels.return_value.list.return_value.execute.return_value = {"items": [{
-            "id": "channel-1", "snippet": {"title": "A real fixture channel",
+            "id": "channel-1", "snippet": {"title": "A real fixture channel", "description": "test@example.com",
                 "publishedAt": datetime.datetime.now(datetime.timezone.utc).isoformat()},
             "statistics": {"viewCount": "2000", "subscriberCount": "100", "videoCount": "2"}}]}
         with tempfile.TemporaryDirectory() as directory, \

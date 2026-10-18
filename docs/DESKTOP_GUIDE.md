@@ -50,3 +50,11 @@ Updater giữ bản trước thành `<tên EXE>.previous`. Helper khôi phục f
 - Asset gồm `gui_app.exe`, `gui_app.exe.sha256` và `build-info.json`.
 
 Không commit file build hoặc khóa thật. Khi phát hành thủ công, giữ EXE, checksum và metadata từ cùng một lần build. Trước khi phân phối rộng, kiểm tra cập nhật giữa hai EXE trên Windows và xác nhận dữ liệu cục bộ vẫn còn.
+
+## Lọc kênh có liên hệ công khai
+
+Lượt quét mới chỉ nhận kênh đáp ứng tuổi kênh, lượt xem **và** có email hoặc đường dẫn liên hệ cụ thể trong mô tả kênh. Bot nhận diện email, Facebook, Instagram, LinkedIn, TikTok, X/Twitter, Telegram, Zalo và WhatsApp. Chỉ nhắc tên nền tảng, link trang chủ hoặc link chia sẻ không đủ điều kiện. Bot không kiểm chứng chủ sở hữu hay khả năng liên lạc của địa chỉ/link được ghi trong mô tả.
+
+Trong **Kết quả**, các cột **Email**, **Facebook**, **Liên Hệ Khác** chứa thông tin tìm được; dùng **Xem đầy đủ** hoặc **Sao chép** để lấy nội dung nguyên vẹn. Lịch sử cũ vẫn giữ nguyên; cần quét lại để kiểm tra liên hệ theo logic mới. Quét mặc định tiếp tục lưu trong Bot, không tạo file Excel.
+
+Nguồn kiểm tra là `snippet.description` của [YouTube Data API](https://developers.google.com/youtube/data/reference/rest/v3/channels#snippet.description). Liên hệ chỉ nằm trong video, banner, liên kết ngoài mô tả hoặc mục email cần đăng nhập không nằm trong phạm vi kiểm tra hiện tại.

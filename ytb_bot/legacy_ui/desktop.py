@@ -13,6 +13,7 @@ from dotenv import load_dotenv, set_key
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from ytb_bot.version import APP_VERSION
+from ytb_bot.core.contacts import extract_contacts
 from ytb_bot.build_info import build_id
 from ytb_bot.updater import check_for_update, download_update, install_update
 from ytb_bot.paths import APP_DIR, ENV_FILE
@@ -350,7 +351,8 @@ class YtbBotApp(ctk.CTk):
                         age_days = (datetime.datetime.now(datetime.timezone.utc) - created_dt).days
                         total_views = int(stats.get("viewCount", 0))
 
-                        if age_days <= max_days and total_views >= min_views:
+                        contacts = extract_contacts(snippet.get("description", ""))
+                        if age_days <= max_days and total_views >= min_views and contacts:
                             collected_channels[ch_id] = {
                                 "Tên Kênh": snippet.get("title"),
                                 "Channel ID": ch_id,
@@ -361,7 +363,7 @@ class YtbBotApp(ctk.CTk):
                                 "Subscribers": int(stats.get("subscriberCount", 0)) if not stats.get("hiddenSubscriberCount", False) else "Ẩn",
                                 "Tổng Lượt Xem": total_views,
                                 "Tổng Video": int(stats.get("videoCount", 0)),
-                                "Video Gần Nhất": video_map[ch_id]
+                                "Video Gần Nhất": video_map[ch_id], **contacts
                             }
                             self.log(f"    [+] TRÚNG: {snippet.get('title')} ({age_days} ngày) - {total_views:,} views")
                             self.ui_events.put((self._scan_match_count, (len(collected_channels),)))

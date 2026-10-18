@@ -4,6 +4,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from ytb_bot.core.contacts import extract_contacts
 
 load_dotenv()
 API_KEY = os.getenv("YOUTUBE_API_KEY")
@@ -98,7 +99,8 @@ def scan_channels_from_excel(input_excel="keywords.xlsx", output_excel="danh_sac
                     under_3_months, age_days = is_channel_under_3_months(created_at)
                     total_views = int(stats.get("viewCount", 0))
 
-                    if under_3_months and total_views >= min_views:
+                    contacts = extract_contacts(snippet.get("description", ""))
+                    if under_3_months and total_views >= min_views and contacts:
                         collected_channels[ch_id] = {
                             "Tên Kênh": snippet.get("title"),
                             "Channel ID": ch_id,
@@ -109,7 +111,7 @@ def scan_channels_from_excel(input_excel="keywords.xlsx", output_excel="danh_sac
                             "Subscribers": int(stats.get("subscriberCount", 0)) if not stats.get("hiddenSubscriberCount", False) else "Ẩn",
                             "Tổng Lượt Xem": total_views,
                             "Tổng Video": int(stats.get("videoCount", 0)),
-                            "Video Gần Nhất": video_map[ch_id]["video_title"]
+                            "Video Gần Nhất": video_map[ch_id]["video_title"], **contacts
                         }
                         print(f" -> [TRÚNG] '{snippet.get('title')}' ({age_days} ngày) | {total_views:,} views | Key: {kw}")
 

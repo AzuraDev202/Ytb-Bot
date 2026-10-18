@@ -1,6 +1,6 @@
 # YTB-BOT · Creator Studio
 
-YTB-BOT là ứng dụng desktop Windows giúp khám phá kênh YouTube mới theo từ khóa, tuổi kênh và tổng lượt xem. Giao diện **React + TypeScript** chạy trong cửa sổ **pywebview / Microsoft Edge WebView2**; Python xử lý YouTube Data API và dữ liệu Excel.
+YTB-BOT là ứng dụng desktop Windows giúp khám phá kênh YouTube mới theo từ khóa, tuổi kênh và tổng lượt xem, chỉ nhận kênh có email hoặc đường dẫn liên hệ công khai trong mô tả. Giao diện **React + TypeScript** chạy trong cửa sổ **pywebview / Microsoft Edge WebView2**; Python xử lý YouTube Data API và dữ liệu Excel.
 
 **[Tải YTB-BOT cho Windows](https://github.com/AzuraDev202/Ytb-Bot/releases/latest/download/gui_app.exe)**
 
@@ -11,6 +11,7 @@ Link tải trỏ tới asset trong Release mới nhất sau khi workflow phát h
 ## Mục tiêu dự án
 
 - Tìm kênh YouTube mới có tiềm năng bằng các bộ lọc có thể điều chỉnh.
+- Lọc kênh có email, Facebook hoặc liên hệ mạng xã hội trong mô tả; xem và sao chép thông tin trong Bot. Xem [phạm vi nhận diện liên hệ](docs/DESKTOP_GUIDE.md#lọc-kênh-có-liên-hệ-công-khai).
 - Tập trung quét kênh, theo dõi tiến trình và quản lý danh sách từ khóa trong một ứng dụng.
 - Sửa bảng từ khóa ngay trong Bot; thêm/xóa dòng, dán cột từ Excel và lưu để dùng lại.
 - Lưu lịch sử quét, tìm kiếm và xem toàn bộ kết quả trong Bot, không tự tạo hoặc tải file Excel.
