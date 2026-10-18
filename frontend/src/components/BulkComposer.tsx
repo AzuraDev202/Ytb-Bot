@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Check, ChevronRight, Mail, Send } from 'lucide-react';
 import { call } from '../api';
 import { LanguageSelect, useI18n } from '../i18n';
 
@@ -31,17 +32,18 @@ export function BulkComposer({groupIds, accounts, initial, onClose}: {groupIds: 
   return <dialog ref={dialog} className="contact-composer bulk-composer" aria-label={t('Compose bulk email')} onCancel={event => {event.preventDefault(); if (!busy) close();}}>
     <header><h2>{t('Compose bulk email')}</h2><LanguageSelect/><button className="button secondary" disabled={busy} onClick={close}>{t('Close composer')}</button></header>
     <div className="composer-content">
+      <ol className="bulk-stages" aria-label={t('Email workflow')}><li aria-current={!snapshot ? 'step' : undefined}><Mail size={16}/>{t('Compose bulk email')}<ChevronRight size={15} aria-hidden="true"/></li><li aria-current={snapshot?.status === 'draft' ? 'step' : undefined}>{snapshot && snapshot.status !== 'draft' ? <Check size={16}/> : <Send size={16}/>}{t('Review batch')}</li></ol>
       {error && <p role="alert" className="field-error">{error}</p>}
       {!snapshot ? <>
-        <p>{t('One email per unique address. Maximum 100 recipients.')}</p>
+        <p className="bulk-intro">{t('{count} selected', {count: groupIds.length})} · {t('One email per unique address. Maximum 100 recipients.')}</p>
         <label className="composer-field">{t('Sender account')}<select disabled={busy} aria-label={t('Sender account')} value={form.account_id} onChange={event => setForm({...form, account_id: event.target.value})}>{accounts.map(account => <option key={account.id} value={account.id}>{account.email}</option>)}</select></label>
         <label className="composer-field">{t('Subject')}<input disabled={busy} aria-label={t('Email subject')} maxLength={200} value={form.subject} onChange={event => setForm({...form, subject: event.target.value})}/></label>
         <label className="composer-field">{t('Message')}<textarea disabled={busy} aria-label={t('Contact message')} rows={8} maxLength={50000} value={form.body} onChange={event => setForm({...form, body: event.target.value})}/></label>
       </> : <section aria-label={t('Review batch')}>
-        <h3>{t('Review before sending')}</h3><p>{t('From')}: {snapshot.sender}</p><h4>{snapshot.subject}</h4><div className="message-preview">{snapshot.body}</div>
-        <p>{t(bulkLabels[snapshot.status] || snapshot.status)}</p><p>{t('Gmail acceptance does not confirm delivery. No automatic retries.')}</p>
-        <p>{['pending', 'accepted', 'skipped'].map(status => `${t(bulkLabels[status])}: ${snapshot.recipients.filter(item => item.status === status).length}`).join(' · ')}</p>
-        <ul className="bulk-recipients">{snapshot.recipients.map(recipient => <li key={recipient.email}><strong>{recipient.email}</strong><span>{recipient.channels.map(channel => channel.name).join(', ')}</span><span>{t(bulkLabels[recipient.status] || recipient.status)}</span>{recipient.error && <span role="alert">{t(recipient.error)}</span>}</li>)}</ul>
+        <div className="bulk-review-heading"><h3>{t('Review before sending')}</h3><span className={`contact-status ${snapshot.status}`} role="status">{t(bulkLabels[snapshot.status] || snapshot.status)}</span></div><p className="bulk-sender">{t('From')}: <strong>{snapshot.sender}</strong></p><h4 className="bulk-subject">{snapshot.subject}</h4><div className="message-preview">{snapshot.body}</div>
+        <p className="bulk-delivery-note">{t('Gmail acceptance does not confirm delivery. No automatic retries.')}</p>
+        <div className="bulk-counts">{['pending', 'accepted', 'skipped'].map(status => <span key={status}>{t(bulkLabels[status])}<strong>{snapshot.recipients.filter(item => item.status === status).length}</strong></span>)}</div>
+        <ul className="bulk-recipients">{snapshot.recipients.map(recipient => <li key={recipient.email}><strong>{recipient.email}</strong><span className="contact-channel-names">{recipient.channels.map(channel => channel.name).join(', ')}</span><span className={`contact-status ${recipient.status}`}>{t(bulkLabels[recipient.status] || recipient.status)}</span>{recipient.error && <span role="alert">{t(recipient.error)}</span>}</li>)}</ul>
         {snapshot.error && <p role="alert">{t(snapshot.error)}</p>}
         {snapshot.recipients.some(item => item.status === 'unknown' || item.status === 'sending') && <p role="status">{t('Check Sent in Gmail before creating another batch for uncertain recipients.')}</p>}
       </section>}

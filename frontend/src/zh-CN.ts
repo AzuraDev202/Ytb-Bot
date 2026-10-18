@@ -147,4 +147,12 @@ export const zhCN: Record<string, string> = {
   'YouTube API Key': 'YouTube API 密钥', 'views': '次观看', 'Studio': '工作室', 'Desktop': '桌面版',
   'CREATOR WORKSPACE': '创作者工作区', 'Sheet': '工作表', 'BOT DATA': '应用数据', 'LOCAL FILE': '本地文件',
   'pages': '页',
+  '{count} selected': '已选择 {count} 个',
+  'Clear selection': '清除选择',
+  'Loading contacts…': '正在加载联系人…',
+  'Try another search or contact type.': '请尝试其他搜索词或联系方式类型。',
+  'Saved channel contacts will appear here after a scan.': '扫描后，已保存频道的联系方式将显示在此处。',
+  'Reset filters': '重置筛选条件',
+  'Your reviewed batches and send results will appear here.': '已检查的批次和发送结果将显示在此处。',
+  'Email workflow': '邮件操作步骤',
 };

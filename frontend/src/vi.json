@@ -321,5 +321,13 @@
   "Pending": "Đang chờ",
   "Skipped": "Đã bỏ qua",
   "Canceled": "Đã hủy",
-  "Outcome uncertain · Check Gmail": "Chưa rõ kết quả · Kiểm tra Gmail"
+  "Outcome uncertain · Check Gmail": "Chưa rõ kết quả · Kiểm tra Gmail",
+  "{count} selected": "Đã chọn {count}",
+  "Clear selection": "Bỏ chọn tất cả",
+  "Loading contacts…": "Đang tải liên hệ…",
+  "Try another search or contact type.": "Thử từ khóa hoặc loại liên hệ khác.",
+  "Saved channel contacts will appear here after a scan.": "Liên hệ của các kênh đã lưu sẽ xuất hiện tại đây sau khi quét.",
+  "Reset filters": "Đặt lại bộ lọc",
+  "Your reviewed batches and send results will appear here.": "Các đợt gửi đã xem trước và kết quả gửi sẽ xuất hiện tại đây.",
+  "Email workflow": "Các bước soạn thư"
 }

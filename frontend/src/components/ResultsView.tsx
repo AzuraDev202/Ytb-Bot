@@ -81,7 +81,7 @@ export function ResultsView({status, notify, onDiscover}: {
     <div hidden={view !== 'contacts'}><ContactGroups active={view === 'contacts'}/></div>
     <div hidden={view !== 'history'}>
     <section className="panel history-toolbar">
-      <div><span className="eyebrow">{t("YOUR HISTORY")}</span><h2>{t("Choose a scan")}</h2></div>
+      <div><h2>{t("Choose a scan")}</h2></div>
       <div className="history-select">
         <label>{t("Scan")}<select aria-label={t("Scan")} value={selected} disabled={loading && !runs.length} onChange={event => setSelected(event.target.value)}>
           <option value="" disabled>{t("Select scan")}</option>

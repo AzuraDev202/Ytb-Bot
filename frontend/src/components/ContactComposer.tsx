@@ -91,7 +91,7 @@ export function ContactComposer({channelId, onClose, notify}: {channelId: string
   }
   if (!channelId) return null;
   return <dialog ref={dialog} className="contact-composer" aria-labelledby={id + '-title'} onCancel={event => {event.preventDefault(); close();}}>
-    <header><div><span className="eyebrow">{t("CONNECT WITH CREATORS")}</span><h2 id={id + '-title'}>{t("Compose contact")}</h2><p>{context?.name || t("Opening channel details…")}</p></div><LanguageSelect/><button className="icon-button" aria-label={t("Close composer")} disabled={working} onClick={close}><X size={20}/></button></header>
+    <header><div><h2 id={id + '-title'}>{t("Compose contact")}</h2><p>{context?.name || t("Opening channel details…")}</p></div><LanguageSelect/><button className="icon-button" aria-label={t("Close composer")} disabled={working} onClick={close}><X size={20}/></button></header>
     <div className="composer-content">
       {error && <div className="composer-message error" role="alert">{t(error)}{!context && <button className="button secondary" onClick={() => setRetry(value => value + 1)}>{t("Try again")}</button>}</div>}
       {!context && !error && <p role="status"><Loader2 size={18} className="spin"/> {t("Loading contacts and draft…")}</p>}
