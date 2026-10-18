@@ -11,6 +11,8 @@ Link tải trỏ tới asset trong Release mới nhất sau khi workflow phát h
 ## Mục tiêu dự án
 
 - Tìm kênh YouTube mới có tiềm năng bằng các bộ lọc có thể điều chỉnh.
+- Desktop React loại kênh trùng Channel ID trong toàn bộ lịch sử đã lưu, kể cả sau khi khởi động lại.
+- Tìm kiếm đa quốc gia, không đặt giới hạn quốc gia/ngôn ngữ; hiển thị quốc gia nếu kênh công bố. Kết quả phụ thuộc từ khóa và quota, không đảm bảo liệt kê hết mọi kênh.
 - Lọc kênh có email, Facebook hoặc liên hệ mạng xã hội trong mô tả; xem và sao chép thông tin trong Bot. Xem [phạm vi nhận diện liên hệ](docs/DESKTOP_GUIDE.md#lọc-kênh-có-liên-hệ-công-khai).
 - Tập trung quét kênh, theo dõi tiến trình và quản lý danh sách từ khóa trong một ứng dụng.
 - Sửa bảng từ khóa ngay trong Bot; thêm/xóa dòng, dán cột từ Excel và lưu để dùng lại.

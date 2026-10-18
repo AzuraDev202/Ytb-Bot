@@ -13,6 +13,12 @@
 
 ## Quét và xem kết quả
 
+Desktop React tự đối chiếu **Channel ID** với tất cả lượt quét trong kho nội bộ, gồm kết quả đã lưu của lượt hoàn tất, dừng, gặp lỗi hoặc đang chạy. Mỗi lượt mới chỉ nhận kênh chưa có trong lịch sử; đổi tên kênh hoặc đổi từ khóa không làm kênh cũ xuất hiện lại. Kênh chưa đạt bộ lọc ở lượt trước vẫn có thể được nhận ở lượt sau khi đạt điều kiện. Lịch sử cũ không bị xóa. Phạm vi đối chiếu là kho dữ liệu trên máy hiện tại; không tự đọc kết quả Excel ngoài Bot.
+
+Bot không đặt `regionCode`, `relevanceLanguage` hay bộ lọc quốc gia của kênh. Kênh thuộc mọi quốc gia, kể cả không công bố quốc gia, được xét bằng cùng bộ lọc tuổi/lượt xem/liên hệ. Cột **Quốc Gia** hiển thị mã quốc gia do kênh công bố; không có dữ liệu thì ghi **Không công bố** (lượt cũ có thể để trống).
+
+Đây là tìm kiếm đa quốc gia theo từ khóa, không phải danh sách đầy đủ tất cả kênh YouTube. Thêm từ khóa bằng nhiều ngôn ngữ và tăng độ sâu để mở rộng kết quả; vẫn chịu giới hạn xếp hạng, số trang và quota của API. `regionCode` lọc khả năng xem video tại một nước, không phải quốc tịch chủ kênh. Tham khảo [YouTube search.list](https://developers.google.com/youtube/data/reference/rest/v3/search/list).
+
 Nhập API Key và bộ lọc rồi nhấn **Bắt đầu khám phá**. Danh sách từ khóa đang dùng được lưu trước khi quét. **Dừng** chờ yêu cầu mạng hiện tại hoàn tất rồi giữ kết quả đã có.
 
 Vào **Kết quả** hoặc **Xem kết quả trong Bot** để xem từng lượt quét theo thời gian, trạng thái và số kênh. Bảng có tìm kiếm, sắp xếp, phân trang 100 dòng và sao chép các dòng có checkbox. Dữ liệu đầy đủ được giữ, kể cả lượt quét không có kênh hoặc gặp lỗi; màn hình khám phá chỉ hiển thị nhanh 200 kênh đầu tiên.

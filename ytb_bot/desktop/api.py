@@ -130,7 +130,7 @@ class DesktopAPI:
         run = self._store.result(run_id)
         meta = Workbook().from_rows(run["rows"], f"Lượt quét #{run['id']}", columns=[
             "Tên Kênh", "Channel ID", "URL Kênh", "Từ Khóa Quét", "Ngày Tạo", "Tuổi Kênh (Ngày)",
-            "Subscribers", "Tổng Lượt Xem", "Tổng Video", "Video Gần Nhất", *CONTACT_COLUMNS])
+            "Subscribers", "Tổng Lượt Xem", "Tổng Video", "Video Gần Nhất", "Quốc Gia", *CONTACT_COLUMNS])
         return {**meta, "run_id": run["id"]}
 
     @reply
@@ -139,7 +139,7 @@ class DesktopAPI:
         book = Workbook()
         book.from_rows(run["rows"], sheet, columns=[
             "Tên Kênh", "Channel ID", "URL Kênh", "Từ Khóa Quét", "Ngày Tạo", "Tuổi Kênh (Ngày)",
-            "Subscribers", "Tổng Lượt Xem", "Tổng Video", "Video Gần Nhất", *CONTACT_COLUMNS])
+            "Subscribers", "Tổng Lượt Xem", "Tổng Video", "Video Gần Nhất", "Quốc Gia", *CONTACT_COLUMNS])
         return book.page(sheet, query, page, sort, descending)
 
     @reply

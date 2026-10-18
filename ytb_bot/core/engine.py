@@ -73,6 +73,10 @@ class ScanEngine:
     def _run(self, key, keywords, max_days, min_views, max_pages):
         channels = {}
         try:
+            known_ids = self._store.known_channel_ids()
+            checked_ids, skipped_ids = set(), set()
+            self._log(f"Đã đối chiếu {len(known_ids)} kênh trong lịch sử. Chỉ nhận Channel ID chưa từng lưu.")
+            self._log("Tìm kiếm đa quốc gia: không giới hạn quốc gia hoặc ngôn ngữ; kết quả phụ thuộc từ khóa và số trang.")
             youtube = self._client_factory(key)
             cutoff = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=max_days)).strftime('%Y-%m-%dT%H:%M:%SZ')
             for index, keyword in enumerate(keywords, 1):
@@ -86,6 +90,12 @@ class ScanEngine:
                     response = youtube.search().list(q=keyword, part="snippet", type="video", order="date", publishedAfter=cutoff, maxResults=50, pageToken=token).execute()
                     for item in response.get("items", []):
                         snippet = item["snippet"]
+                        channel_id = snippet["channelId"]
+                        if channel_id in known_ids:
+                            skipped_ids.add(channel_id)
+                            continue
+                        if channel_id in checked_ids:
+                            continue
                         videos.setdefault(snippet["channelId"], snippet["title"])
                     token = response.get("nextPageToken")
                     if not token:
@@ -96,9 +106,10 @@ class ScanEngine:
                     if self._stop.is_set():
                         break
                     response = youtube.channels().list(part="snippet,statistics", id=",".join(ids[offset:offset + 50])).execute()
+                    checked_ids.update(ids[offset:offset + 50])
                     for item in response.get("items", []):
                         channel_id = item["id"]
-                        if channel_id in channels:
+                        if channel_id in channels or channel_id in known_ids or channel_id not in videos:
                             continue
                         snippet, stats = item.get("snippet", {}), item.get("statistics", {})
                         created = snippet.get("publishedAt")
@@ -115,7 +126,8 @@ class ScanEngine:
                             "URL Kênh": f"https://www.youtube.com/channel/{channel_id}", "Từ Khóa Quét": keyword,
                             "Ngày Tạo": created[:10], "Tuổi Kênh (Ngày)": age,
                             "Subscribers": "Ẩn" if stats.get("hiddenSubscriberCount") else int(stats.get("subscriberCount", 0)),
-                            "Tổng Lượt Xem": views, "Tổng Video": int(stats.get("videoCount", 0)), "Video Gần Nhất": videos[channel_id], **contacts}
+                            "Tổng Lượt Xem": views, "Tổng Video": int(stats.get("videoCount", 0)), "Video Gần Nhất": videos[channel_id],
+                            "Quốc Gia": snippet.get("country") or "Không công bố", **contacts}
                         self._log(f"Phù hợp: {snippet.get('title', '')} · {views:,} lượt xem", "success")
                         with self._lock:
                             self._state["matches"] = len(channels)
@@ -124,10 +136,11 @@ class ScanEngine:
                 if not self._stop.is_set():
                     with self._lock:
                         self._state["completed"] = index
+            self._log(f"Đã bỏ qua {len(skipped_ids)} kênh trùng với lịch sử.")
             if channels:
                 self._log(f"Đã lưu {len(channels)} kênh trong Bot. Mở Kết quả để xem lại.", "success")
             else:
-                self._log("Chưa có kênh đáp ứng bộ lọc và có liên hệ công khai trong mô tả. Thử thêm chủ đề hoặc mở rộng bộ lọc.")
+                self._log("Chưa có kênh mới đáp ứng bộ lọc và có liên hệ công khai; kênh đã lưu được bỏ qua. Thử thêm từ khóa đa ngôn ngữ hoặc tăng độ sâu.")
             with self._lock:
                 self._state["status"] = "stopped" if self._stop.is_set() else "complete"
         except Exception as error:
