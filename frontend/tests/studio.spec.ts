@@ -1,4 +1,97 @@
 import { expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
+
+async function contactFixture(page: Page, outcome = 'accepted', configured = true) {
+  await page.evaluate(({outcome, configured}) => {
+    const api = window.pywebview!.api;
+    const sender = {id: 'sender', email: 'me@example.com'};
+    let ready = configured;
+    let connected = configured;
+    api.results_page = async () => ({ok: true, data: {columns: ['Tên Kênh', 'Channel ID', 'Email', 'Facebook'], rows: [['Creator', 'creator', 'creator@example.com', 'https://facebook.com/creator']], page: 0, pages: 1, total: 1, original_total: 1}});
+    api.get_mail_state = async () => ({ok: true, data: {configured: ready, connecting: false, error: '', accounts: connected ? [sender] : []}});
+    api.configure_gmail = async () => {ready = true; return api.get_mail_state();};
+    api.connect_gmail = async () => {connected = true; return {ok: true, data: true};};
+    api.set_contact_dirty = async () => ({ok: true, data: true});
+    api.contact_context = async () => ({ok: true, data: {channel_id: 'creator', name: 'Creator', contacts: [
+      {kind: 'email', label: 'Email', value: 'creator@example.com'}, {kind: 'social', label: 'Facebook', value: 'https://facebook.com/creator'}],
+      draft: JSON.parse(localStorage.getItem('contact-draft') || 'null'), history: JSON.parse(localStorage.getItem('contact-history') || '[]')}});
+    api.save_contact_draft = async (_channel, payload) => {
+      const value = payload as {recipient: string; account_id: string; subject: string; body: string};
+      const previous = JSON.parse(localStorage.getItem('contact-draft') || 'null');
+      const revision = (previous?.revision || 0) + 1;
+      const saved = {...value, revision}; localStorage.setItem('contact-draft', JSON.stringify(saved));
+      return {ok: true, data: saved};
+    };
+    api.send_contact_mail = async (_channel, revision) => {
+      localStorage.setItem('contact-send-count', String(Number(localStorage.getItem('contact-send-count') || 0) + 1));
+      localStorage.setItem('contact-history', JSON.stringify([{id: 'attempt', revision, created: '2026-10-18T03:00:00Z', status: outcome, payload: JSON.parse(localStorage.getItem('contact-draft') || '{}'), message_id: outcome === 'accepted' ? 'gmail-message' : ''}]));
+      return {ok: true, data: {status: outcome, message: outcome === 'accepted' ? 'Gmail đã nhận yêu cầu gửi.' : 'Chưa rõ Gmail đã nhận thư hay chưa. Kiểm tra thư Đã gửi trong Gmail trước khi gửi lại.'}};
+    };
+    api.open_social_contact = async (_channel, target) => {localStorage.setItem('contact-social', String(target)); return {ok: true, data: true};};
+  }, {outcome, configured});
+}
+
+async function openContact(page: Page) {
+  await page.getByRole('button', {name: /Xem kết quả trong Bot/}).click();
+  await page.getByRole('button', {name: 'Xem đầy đủ dòng 1', exact: true}).click();
+  await page.getByRole('button', {name: 'Soạn liên hệ', exact: true}).click();
+  await expect(page.getByRole('dialog', {name: 'Soạn liên hệ', exact: true})).toBeVisible();
+  await expect(page.getByRole('combobox', {name: 'Liên hệ nhận', exact: true})).toBeVisible();
+}
+
+test('contact composer saves drafts, previews sender and sends only after explicit confirmation', async ({page}) => {
+  await page.setViewportSize({width: 1280, height: 720});
+  await contactFixture(page);
+  await openContact(page);
+  await page.getByRole('textbox', {name: 'Tiêu đề email'}).fill('Hợp tác cùng Creator');
+  await page.getByRole('textbox', {name: 'Nội dung liên hệ'}).fill('Xin chào!\nMình muốn trao đổi về dự án.');
+  await page.getByRole('button', {name: 'Lưu bản nháp', exact: true}).click();
+  await page.getByRole('button', {name: 'Đóng hộp soạn'}).click();
+  await page.getByRole('button', {name: 'Xem đầy đủ dòng 1', exact: true}).click();
+  await page.getByRole('button', {name: 'Soạn liên hệ', exact: true}).click();
+  await expect(page.getByRole('textbox', {name: 'Nội dung liên hệ'})).toHaveValue('Xin chào!\nMình muốn trao đổi về dự án.');
+  await page.screenshot({animations: 'disabled', path: '../artifacts/ui/contact-composer.png'});
+  await page.getByRole('button', {name: 'Xem lại email', exact: true}).click();
+  await expect(page.getByRole('region', {name: 'Xem lại email'})).toContainText('me@example.com');
+  expect(await page.evaluate(() => localStorage.getItem('contact-send-count'))).toBeNull();
+  await page.getByRole('button', {name: 'Gửi email', exact: true}).click();
+  await expect(page.getByRole('status').filter({hasText: 'Gmail đã nhận yêu cầu gửi.'})).toBeVisible();
+  await expect(page.getByRole('button', {name: 'Gửi email', exact: true})).toBeDisabled();
+  expect(await page.evaluate(() => localStorage.getItem('contact-send-count'))).toBe('1');
+});
+
+test('contact composer handles unsaved drafts, uncertain delivery and narrow windows', async ({page}) => {
+  await page.setViewportSize({width: 375, height: 720});
+  await contactFixture(page, 'unknown');
+  await openContact(page);
+  await page.getByRole('textbox', {name: 'Tiêu đề email'}).fill('Hello');
+  await page.getByRole('textbox', {name: 'Nội dung liên hệ'}).fill('Message');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('button', {name: 'Lưu và đóng'})).toBeVisible();
+  await page.getByRole('button', {name: 'Tiếp tục soạn'}).click();
+  const box = await page.getByRole('dialog', {name: 'Soạn liên hệ', exact: true}).boundingBox();
+  expect(box!.x + box!.width).toBeLessThanOrEqual(375);
+  await page.getByRole('button', {name: 'Xem lại email', exact: true}).click();
+  await page.getByRole('button', {name: 'Gửi email', exact: true}).click();
+  await expect(page.getByRole('status').filter({hasText: 'Chưa rõ Gmail'})).toBeVisible();
+  await expect(page.getByRole('button', {name: 'Gửi email', exact: true})).toBeDisabled();
+});
+
+test('social contact handoff and first-time Gmail setup stay separate from sending email', async ({page}) => {
+  await contactFixture(page, 'accepted', false);
+  await openContact(page);
+  await expect(page.getByRole('button', {name: 'Kết nối Gmail', exact: true})).toBeDisabled();
+  await page.getByRole('button', {name: 'Nhập file OAuth JSON', exact: true}).click();
+  await expect(page.getByRole('button', {name: 'Kết nối Gmail', exact: true})).toBeEnabled();
+  await page.getByRole('button', {name: 'Kết nối Gmail', exact: true}).click();
+  await expect(page.getByRole('combobox', {name: 'Tài khoản gửi'}).getByRole('option', {name: 'me@example.com'})).toBeAttached();
+  await page.getByRole('combobox', {name: 'Liên hệ nhận', exact: true}).selectOption('https://facebook.com/creator');
+  await expect(page.getByRole('textbox', {name: 'Tiêu đề email'})).toHaveCount(0);
+  await page.getByRole('textbox', {name: 'Nội dung liên hệ'}).fill('Hello on Facebook');
+  await page.getByRole('button', {name: 'Mở liên hệ', exact: true}).click();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('contact-social'))).toBe('https://facebook.com/creator');
+  expect(await page.evaluate(() => localStorage.getItem('contact-send-count'))).toBeNull();
+});
 
 test('wide result tables keep trailing fields reachable inside the workspace', async ({page}) => {
   await page.setViewportSize({width: 1280, height: 720});

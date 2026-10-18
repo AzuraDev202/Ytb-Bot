@@ -16,6 +16,7 @@ from ytb_bot.paths import APP_DIR, ENV_FILE, DATA_DIR
 from ytb_bot.version import APP_VERSION
 from ytb_bot.core.workbook import Workbook
 from ytb_bot.core.storage import WorkspaceStore
+from ytb_bot.desktop.outreach import Outreach
 from ytb_bot.updater import check_for_update, download_update, install_update
 
 
@@ -36,10 +37,13 @@ class DesktopAPI:
     def __init__(self, data_dir=None):
         self._window = None
         self._keywords_dirty = False
+        self._contact_dirty = False
+        self._contact_sending = False
         self._key = os.getenv("YOUTUBE_API_KEY") or dotenv_values(ENV_FILE).get("YOUTUBE_API_KEY", "")
         self._store = WorkspaceStore(Path(data_dir or DATA_DIR) / "workspace.sqlite3")
         self._scan = ScanEngine(APP_DIR, store=self._store)
         self._book = Workbook()
+        self._outreach = Outreach(self._store.path)
         self._lock = threading.RLock()
         self._release = None
         self._update = {"status": "idle", "message": "Kiểm tra bản cập nhật khi bạn cần.", "progress": 0}
@@ -67,6 +71,61 @@ class DesktopAPI:
     @reply
     def list_results(self):
         return self._store.runs()
+
+    @reply
+    def get_mail_state(self):
+        return self._outreach.state()
+
+    @reply
+    def configure_gmail(self):
+        import webview
+        paths = self._window.create_file_dialog(webview.FileDialog.OPEN, allow_multiple=False,
+                                               file_types=('Google OAuth Desktop (*.json)',))
+        return self._outreach.configure(paths[0]) if paths else None
+
+    @reply
+    def connect_gmail(self):
+        return self._outreach.connect()
+
+    @reply
+    def disconnect_gmail(self, account_id):
+        return self._outreach.disconnect(account_id)
+
+    @reply
+    def contact_context(self, channel_id):
+        return self._outreach.context(channel_id)
+
+    @reply
+    def save_contact_draft(self, channel_id, payload):
+        result = self._outreach.save(channel_id, payload)
+        self._contact_dirty = False
+        return result
+
+    @reply
+    def set_contact_dirty(self, dirty):
+        if not isinstance(dirty, bool):
+            raise ValueError('Trạng thái bản nháp không hợp lệ.')
+        self._contact_dirty = dirty
+        return True
+
+    @reply
+    def send_contact_mail(self, channel_id, revision):
+        with self._lock:
+            if self._contact_sending:
+                raise ValueError('Một email đang được gửi. Hãy chờ kết quả.')
+            self._contact_sending = True
+        try:
+            return self._outreach.send(channel_id, revision)
+        finally:
+            self._contact_sending = False
+
+    @reply
+    def open_gmail_setup(self):
+        return webbrowser.open('https://developers.google.com/workspace/gmail/api/quickstart/python#configure_the_oauth_consent_screen')
+
+    @reply
+    def open_social_contact(self, channel_id, target):
+        return self._outreach.open_social(channel_id, target)
 
     @reply
     def save_preferences(self, theme, motion):
@@ -183,6 +242,10 @@ class DesktopAPI:
         with self._lock:
             if self._keywords_dirty:
                 raise ValueError("Lưu bảng từ khóa trước khi cập nhật và khởi động lại.")
+            if self._contact_dirty:
+                raise ValueError('Lưu bản nháp liên hệ trước khi cập nhật và khởi động lại.')
+            if self._contact_sending:
+                raise ValueError('Chờ Gmail trả kết quả gửi trước khi cập nhật.')
             if self._scan.snapshot()["status"] in ("running", "stopping"):
                 raise ValueError("Chờ lượt quét hoàn tất trước khi cập nhật.")
             if not self._release or self._update["status"] == "downloading":

@@ -13,6 +13,8 @@
 
 ## Quét và xem kết quả
 
+Để liên hệ một kênh, chọn **Xem đầy đủ → Soạn liên hệ**. Gmail/Google Workspace hỗ trợ gửi trực tiếp từ tài khoản OAuth đã kết nối, có bước xem lại, lưu nháp và lịch sử gửi. Với Facebook và mạng xã hội, dùng sao chép nội dung và mở hồ sơ. Hướng dẫn cấu hình Google và các trạng thái gửi nằm trong [Liên hệ kênh](CONTACT_COMPOSER.md).
+
 Desktop React tự đối chiếu **Channel ID** với tất cả lượt quét trong kho nội bộ, gồm kết quả đã lưu của lượt hoàn tất, dừng, gặp lỗi hoặc đang chạy. Mỗi lượt mới chỉ nhận kênh chưa có trong lịch sử; đổi tên kênh hoặc đổi từ khóa không làm kênh cũ xuất hiện lại. Kênh chưa đạt bộ lọc ở lượt trước vẫn có thể được nhận ở lượt sau khi đạt điều kiện. Lịch sử cũ không bị xóa. Phạm vi đối chiếu là kho dữ liệu trên máy hiện tại; không tự đọc kết quả Excel ngoài Bot.
 
 Bot không đặt `regionCode`, `relevanceLanguage` hay bộ lọc quốc gia của kênh. Kênh thuộc mọi quốc gia, kể cả không công bố quốc gia, được xét bằng cùng bộ lọc tuổi/lượt xem/liên hệ. Cột **Quốc Gia** hiển thị mã quốc gia do kênh công bố; không có dữ liệu thì ghi **Không công bố** (lượt cũ có thể để trống).

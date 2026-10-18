@@ -19,3 +19,7 @@ studio-settings.tmp
 *.sqlite3-journal
 *.sqlite3-wal
 *.sqlite3-shm
+client_secret*.json
+credentials*.json
+token*.json
+credentials.bin

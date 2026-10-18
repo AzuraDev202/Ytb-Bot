@@ -13,6 +13,10 @@ _SOCIAL = re.compile(
 _NON_CONTACT = {"share", "sharer", "sharer.php", "intent", "login", "help", "privacy", "policies", "terms"}
 
 
+def is_email(value):
+    return isinstance(value, str) and bool(_EMAIL.fullmatch(value))
+
+
 def extract_contacts(description):
     """Return contact fields, or an empty dict when no concrete contact exists.
 

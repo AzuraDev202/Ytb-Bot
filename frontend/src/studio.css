@@ -200,6 +200,50 @@ th[aria-sort=ascending], th[aria-sort=descending] { color: var(--accent); }
 .workbook-panel .selected-row .row-tools { background: var(--accent-soft); }
 .row-actions { display: flex; align-items: center; gap: 10px; }
 .contact-preview { display: block; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.contact-composer { width: 820px; max-width: calc(100vw - 32px); max-height: calc(100dvh - 32px); padding: 0; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+.contact-composer[open] { display: flex; flex-direction: column; }
+.contact-composer::backdrop { background: #0a1015b8; backdrop-filter: blur(5px); }
+.contact-composer>header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 22px 24px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+.contact-composer h2 { margin: 6px 0; font-size: 24px; }
+.contact-composer header p { margin: 0; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.composer-content { padding: 22px 24px; overflow-y: auto; min-height: 0; display: grid; gap: 20px; }
+.composer-field { display: grid; gap: 8px; color: var(--muted); font-size: 13px; min-width: 0; }
+.composer-field input,.composer-field select,.composer-field textarea { width: 100%; min-width: 0; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--inset); color: var(--text); font: inherit; font-size: 14px; }
+.composer-field textarea { min-height: 170px; resize: vertical; line-height: 1.7; }
+.composer-hint { color: var(--muted); font-size: 11px; line-height: 1.6; }
+.sender-section { border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 14px; min-width: 0; }
+.sender-heading,.sender-actions,.composer-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sender-heading { color: var(--text); font-size: 13px; }
+.sender-heading>svg { color: var(--accent); }
+.gmail-setup { border-top: 1px solid var(--line); padding-top: 12px; }
+.gmail-setup summary,.contact-history summary { cursor: pointer; color: var(--accent); font-size: 12px; padding: 6px 0; }
+.gmail-setup p,.contact-history p,.mail-review p { color: var(--muted); font-size: 12px; line-height: 1.8; }
+.composer-message { display: flex; align-items: flex-start; gap: 10px; padding: 13px 15px; background: var(--inset); border: 1px solid var(--line); border-radius: 8px; font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+.composer-message>svg { flex-shrink: 0; margin-top: 3px; }
+.composer-message.error { color: var(--danger); }
+.composer-message.success { color: var(--green); }
+.review-heading { display: flex; align-items: center; gap: 10px; color: var(--accent); }
+.mail-review dl { margin: 20px 0; }
+.mail-review dl>div { display: grid; grid-template-columns: 70px minmax(0,1fr); gap: 12px; padding: 9px 0; font-size: 13px; }
+.mail-review dt { color: var(--muted); }
+.mail-review dd { margin: 0; overflow-wrap: anywhere; }
+.message-preview { padding: 18px; background: var(--inset); border: 1px solid var(--line); border-radius: 8px; font-size: 14px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; }
+.contact-history { border-top: 1px solid var(--line); padding-top: 12px; }
+.contact-history ul { list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 12px; }
+.contact-history li { display: grid; gap: 5px; font-size: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; overflow-wrap: anywhere; }
+.contact-history li span { color: var(--muted); }
+.contact-composer>footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 24px; border-top: 1px solid var(--line); flex-shrink: 0; }
+.contact-composer>footer>span { font-size: 11px; color: var(--muted); }
+.composer-discard { padding: 12px 24px; border-top: 1px solid var(--line); background: var(--inset); flex-shrink: 0; }
+.composer-discard p { margin: 0 0 10px; font-size: 13px; }
+@media (max-width: 600px) {
+  .contact-composer>header,.composer-content { padding: 16px; }
+  .contact-composer>footer { padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
+  .contact-composer>footer>span { display: none; }
+  .composer-actions { width: 100%; }
+  .sender-actions .button,.composer-actions .button { min-height: 40px; }
+  .result-details footer { flex-wrap: wrap; }
+}
 .row-detail-button { min-height: 32px; padding: 5px 8px; border-radius: 6px; background: var(--inset); border: 1px solid var(--line); color: var(--accent); font-size: 12px; white-space: nowrap; }
 .row-detail-button:hover { background: var(--hover); }
 .horizontal-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 11px; padding: 7px 0; border-bottom: 1px solid var(--line); }

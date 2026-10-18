@@ -1,0 +1,187 @@
+import base64
+import concurrent.futures
+from email import policy
+from email.parser import BytesParser
+import json
+import os
+from pathlib import Path
+import tempfile
+import threading
+import unittest
+from unittest.mock import MagicMock, patch
+from urllib.error import HTTPError
+
+from ytb_bot.core.storage import WorkspaceStore
+from ytb_bot.desktop.credential_vault import CredentialVault
+from ytb_bot.desktop.gmail import Gmail, SendRejected, client_configuration
+from ytb_bot.desktop.outreach import Outreach
+from ytb_bot.desktop.api import DesktopAPI
+
+
+class MemoryVault:
+    def __init__(self):
+        self.value = {'client': {'installed': {'client_id': 'test-client'}}, 'accounts': {
+            'account': {'email': 'sender@example.com', 'credentials': {'token': 'private-token'}}}}
+
+    def read(self):
+        return json.loads(json.dumps(self.value))
+
+    def write(self, value):
+        self.value = json.loads(json.dumps(value))
+
+
+class OutreachTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.path = Path(self.temporary.name) / 'workspace.sqlite3'
+        store = WorkspaceStore(self.path)
+        run = store.begin_run(['topic'])
+        store.save_run(run, 'complete', [{'Channel ID': 'channel', 'Tên Kênh': 'Creator',
+            'Email': 'creator@example.com', 'Facebook': 'https://facebook.com/creator'}])
+        self.gmail = MagicMock()
+        self.gmail.access.return_value = 'private-token'
+        self.gmail.send.return_value = 'provider-id'
+        self.outreach = Outreach(self.path, MemoryVault(), self.gmail)
+        self.payload = {'account_id': 'account', 'recipient': 'creator@example.com', 'subject': 'Hợp tác', 'body': 'Xin chào!\nNội dung trao đổi.'}
+
+    def test_draft_round_trip_and_single_submission_per_revision(self):
+        saved = self.outreach.save('channel', self.payload)
+        same = self.outreach.save('channel', self.payload)
+        self.assertEqual(saved['revision'], same['revision'])
+        reopened = Outreach(self.path, self.outreach.vault, self.gmail)
+        self.assertEqual(reopened.context('channel')['draft']['body'], self.payload['body'])
+        self.assertEqual(reopened.send('channel', saved['revision'])['status'], 'accepted')
+        self.gmail.send.assert_called_once_with('private-token', 'sender@example.com', 'creator@example.com', 'Hợp tác', self.payload['body'])
+        with self.assertRaises(ValueError):
+            reopened.send('channel', saved['revision'])
+        self.assertEqual(self.gmail.send.call_count, 1)
+        history = reopened.context('channel')['history']
+        self.assertEqual((history[0]['status'], history[0]['message_id']), ('accepted', 'provider-id'))
+        self.assertNotIn('private-token', str(history))
+
+    def test_concurrent_clicks_claim_only_one_network_submission(self):
+        saved = self.outreach.save('channel', self.payload)
+        def send():
+            try:
+                return self.outreach.send('channel', saved['revision'])['status']
+            except ValueError:
+                return 'blocked'
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            results = list(executor.map(lambda _: send(), range(2)))
+        self.assertCountEqual(results, ['accepted', 'blocked'])
+        self.assertEqual(self.gmail.send.call_count, 1)
+
+    def test_timeout_and_rejection_keep_history_and_never_auto_retry(self):
+        for failure, expected in [(TimeoutError('private-token'), 'unknown'), (SendRejected('Gmail rejected request'), 'failed')]:
+            self.payload['body'] += '\nNew version'
+            saved = self.outreach.save('channel', self.payload)
+            self.gmail.send.side_effect = failure
+            result = self.outreach.send('channel', saved['revision'])
+            self.assertEqual(result['status'], expected)
+            self.assertNotIn('private-token', str(result))
+            count = self.gmail.send.call_count
+            with self.assertRaises(ValueError):
+                self.outreach.send('channel', saved['revision'])
+            self.assertEqual(self.gmail.send.call_count, count)
+            self.assertEqual(self.outreach.context('channel')['history'][0]['status'], expected)
+
+    def test_invalid_recipient_headers_accounts_and_stale_draft_are_rejected(self):
+        for changes in [{'recipient': 'outsider@example.com'}, {'subject': 'Hello\r\nBcc: outsider@example.com'}, {'body': 'x' * 50001}]:
+            with self.subTest(changes=list(changes)):
+                with self.assertRaises(ValueError):
+                    self.outreach.save('channel', {**self.payload, **changes})
+        with self.assertRaises(ValueError):
+            self.outreach.save('not-saved', self.payload)
+        saved = self.outreach.save('channel', self.payload)
+        self.outreach.save('channel', {**self.payload, 'subject': 'Changed'})
+        with self.assertRaises(ValueError):
+            self.outreach.send('channel', saved['revision'])
+        changed = self.outreach.save('channel', {**self.payload, 'account_id': 'unknown'})
+        with self.assertRaises(ValueError):
+            self.outreach.send('channel', changed['revision'])
+        self.gmail.send.assert_not_called()
+
+    def test_only_saved_social_profiles_open_and_are_not_marked_sent(self):
+        with patch('ytb_bot.desktop.outreach.webbrowser.open', return_value=True) as browser:
+            self.outreach.open_social('channel', 'https://facebook.com/creator')
+            browser.assert_called_once()
+            with self.assertRaises(ValueError):
+                self.outreach.open_social('channel', 'https://evil.test')
+        self.assertEqual(self.outreach.context('channel')['history'], [])
+
+    def test_public_account_state_disconnect_and_oauth_connection_do_not_expose_tokens(self):
+        self.assertNotIn('private-token', str(self.outreach.state()))
+        connected = threading.Event()
+        self.gmail.connect.side_effect = lambda _: {'email': 'second@example.com', 'credentials': {'token': 'other-private'}}
+        original_write = self.outreach.vault.write
+        def write(value):
+            original_write(value)
+            connected.set()
+        self.outreach.vault.write = write
+        self.outreach.connect()
+        self.assertTrue(connected.wait(3))
+        state = self.outreach.state()
+        self.assertEqual(len(state['accounts']), 2)
+        self.assertNotIn('other-private', str(state))
+        self.outreach.disconnect('account')
+        self.assertNotIn('account', [account['id'] for account in self.outreach.state()['accounts']])
+
+    def test_gmail_mime_preserves_unicode_and_uses_only_send_endpoint(self):
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = b'{"id":"message-123"}'
+        with patch('ytb_bot.desktop.gmail.urlopen', return_value=response) as request:
+            result = Gmail().send('secret', 'sender@example.com', 'creator@example.com', 'Hợp tác', 'Xin chào!')
+        self.assertEqual(result, 'message-123')
+        sent = request.call_args.args[0]
+        self.assertEqual(sent.full_url, 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send')
+        raw = base64.urlsafe_b64decode(json.loads(sent.data)['raw'])
+        message = BytesParser(policy=policy.default).parsebytes(raw)
+        self.assertEqual(str(message['Subject']), 'Hợp tác')
+        self.assertEqual(message.get_content().strip(), 'Xin chào!')
+        self.assertEqual(message['From'], 'sender@example.com')
+        self.assertIsNone(message['Bcc'])
+
+    def test_oauth_import_ignores_untrusted_endpoints_and_requires_desktop_client(self):
+        path = Path(self.temporary.name) / 'client.json'
+        path.write_text(json.dumps({'installed': {'client_id': '123.apps.googleusercontent.com', 'client_secret': 'secret', 'token_uri': 'https://evil.test'}}))
+        result = client_configuration(path)
+        self.assertEqual(result['installed']['token_uri'], 'https://oauth2.googleapis.com/token')
+        path.write_text(json.dumps({'web': {'client_id': '123.apps.googleusercontent.com', 'client_secret': 'secret'}}))
+        with self.assertRaises(ValueError):
+            client_configuration(path)
+
+    def test_google_oauth_uses_external_browser_pkce_and_verified_identity(self):
+        credentials = MagicMock(id_token='signed-id-token', refresh_token='refresh-token')
+        credentials.to_json.return_value = '{"token":"private-token"}'
+        with patch('google_auth_oauthlib.flow.InstalledAppFlow.from_client_config') as factory, \
+                patch('google.oauth2.id_token.verify_oauth2_token', return_value={'email': 'sender@example.com', 'email_verified': True}) as verify:
+            factory.return_value.run_local_server.return_value = credentials
+            account = Gmail().connect({'installed': {'client_id': 'client-id'}})
+            self.assertEqual(account['email'], 'sender@example.com')
+            self.assertTrue(factory.call_args.kwargs['autogenerate_code_verifier'])
+            self.assertIn('https://www.googleapis.com/auth/gmail.send', factory.call_args.args[1])
+            self.assertNotIn('https://mail.google.com/', factory.call_args.args[1])
+            self.assertTrue(factory.return_value.run_local_server.call_args.kwargs['open_browser'])
+            self.assertEqual(factory.return_value.run_local_server.call_args.kwargs['port'], 0)
+            self.assertEqual(verify.call_args.args[2], 'client-id')
+            verify.return_value = {'email': 'sender@example.com', 'email_verified': False}
+            with self.assertRaises(ValueError):
+                Gmail().connect({'installed': {'client_id': 'client-id'}})
+
+    @unittest.skipUnless(os.name == 'nt', 'Windows DPAPI')
+    def test_windows_vault_encrypts_and_reopens_credentials(self):
+        path = Path(self.temporary.name) / 'credentials.bin'
+        vault = CredentialVault(path)
+        vault.write({'client': None, 'accounts': {'token': 'very-private-refresh-token'}})
+        self.assertNotIn(b'very-private-refresh-token', path.read_bytes())
+        self.assertEqual(CredentialVault(path).read()['accounts']['token'], 'very-private-refresh-token')
+
+    def test_unsaved_draft_and_active_send_block_update(self):
+        api = DesktopAPI(self.temporary.name)
+        self.assertTrue(api.set_contact_dirty(True)['ok'])
+        self.assertFalse(api.install_available_update()['ok'])
+        self.assertFalse(api.set_contact_dirty('invalid')['ok'])
+        api.set_contact_dirty(False)
+        api._contact_sending = True
+        self.assertIn('Gmail', api.install_available_update()['error'])

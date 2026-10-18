@@ -18,6 +18,7 @@ Link tải trỏ tới asset trong Release mới nhất sau khi workflow phát h
 - Sửa bảng từ khóa ngay trong Bot; thêm/xóa dòng, dán cột từ Excel và lưu để dùng lại.
 - Lưu lịch sử quét, tìm kiếm và xem toàn bộ kết quả trong Bot, không tự tạo hoặc tải file Excel.
 - Cung cấp giao diện sáng/tối, bố cục co giãn và cập nhật từ GitHub Releases.
+- Soạn liên hệ từ kết quả: kết nối Gmail/Google Workspace qua OAuth, chọn tài khoản gửi, lưu nháp và gửi sau bước xem lại. Với mạng xã hội, sao chép nội dung và mở hồ sơ. Xem [thiết lập gửi email](docs/CONTACT_COMPOSER.md).
 
 Kết quả phục vụ nghiên cứu kênh, không cam kết kênh sẽ viral. Bảng từ khóa được chỉnh sửa và lưu trong kho nội bộ. Khi nhập file Excel cũ, app chỉ đọc dữ liệu; file gốc được giữ nguyên.
 

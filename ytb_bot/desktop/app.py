@@ -38,6 +38,10 @@ def main(on_started=None):
 
         def closing():
             # Closing runs on the WinForms thread: never wait for JavaScript here.
+            if api._contact_sending and not window.create_confirmation_dialog('Email đang gửi', 'Gmail đang xử lý yêu cầu. Đóng bây giờ có thể khiến kết quả chưa rõ. Bạn vẫn muốn đóng?'):
+                return False
+            if api._contact_dirty and not window.create_confirmation_dialog('Liên hệ chưa lưu', 'Bản nháp liên hệ có thay đổi chưa lưu. Đóng app sẽ bỏ các thay đổi đó. Bạn vẫn muốn đóng?'):
+                return False
             if api._keywords_dirty and not window.create_confirmation_dialog("Từ khóa chưa lưu", "Bảng từ khóa có thay đổi chưa lưu. Đóng app sẽ bỏ các thay đổi đó. Bạn vẫn muốn đóng?"):
                 return False
             if api._scan.snapshot()["status"] in ("running", "stopping"):

@@ -1,0 +1,68 @@
+"""Persistent drafts and immutable, single-attempt email submissions."""
+import datetime as dt
+import json
+import sqlite3
+import uuid
+
+from ytb_bot.core.storage import WorkspaceStore
+
+
+class OutreachStore(WorkspaceStore):
+    def __init__(self, path):
+        super().__init__(path)
+        with self._connection() as db:
+            db.executescript('''
+                CREATE TABLE IF NOT EXISTS contact_drafts (
+                    channel_id TEXT PRIMARY KEY, payload TEXT NOT NULL, revision INTEGER NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS mail_attempts (
+                    id TEXT PRIMARY KEY, channel_id TEXT NOT NULL, revision INTEGER NOT NULL,
+                    created TEXT NOT NULL, status TEXT NOT NULL, payload TEXT NOT NULL,
+                    message_id TEXT NOT NULL DEFAULT '', UNIQUE(channel_id, revision)
+                );
+            ''')
+
+    def channel(self, channel_id):
+        with self._connection() as db:
+            row = db.execute('''SELECT item.value FROM runs, json_each(runs.rows) AS item
+                WHERE json_extract(item.value, '$."Channel ID"') = ? ORDER BY runs.id DESC LIMIT 1''', (channel_id,)).fetchone()
+        if not row:
+            raise ValueError('Không tìm thấy kênh trong lịch sử đã lưu.')
+        return json.loads(row[0])
+
+    def draft(self, channel_id):
+        with self._connection() as db:
+            row = db.execute('SELECT payload,revision FROM contact_drafts WHERE channel_id=?', (channel_id,)).fetchone()
+        return {**json.loads(row[0]), 'revision': row[1]} if row else None
+
+    def save_draft(self, channel_id, payload):
+        encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True)
+        with self._connection() as db:
+            db.execute('BEGIN IMMEDIATE')
+            previous = db.execute('SELECT payload,revision FROM contact_drafts WHERE channel_id=?', (channel_id,)).fetchone()
+            revision = previous[1] + (previous[0] != encoded) if previous else 1
+            db.execute('INSERT INTO contact_drafts VALUES (?,?,?) ON CONFLICT(channel_id) DO UPDATE SET payload=excluded.payload,revision=excluded.revision', (channel_id, encoded, revision))
+        return {**payload, 'revision': revision}
+
+    def claim(self, channel_id, revision):
+        with self._connection() as db:
+            db.execute('BEGIN IMMEDIATE')
+            row = db.execute('SELECT payload,revision FROM contact_drafts WHERE channel_id=?', (channel_id,)).fetchone()
+            if not row or row[1] != revision:
+                raise ValueError('Bản nháp đã thay đổi. Hãy lưu và xem lại trước khi gửi.')
+            attempt = uuid.uuid4().hex
+            try:
+                db.execute('INSERT INTO mail_attempts(id,channel_id,revision,created,status,payload) VALUES (?,?,?,?,?,?)',
+                    (attempt, channel_id, revision, dt.datetime.now(dt.timezone.utc).isoformat(), 'sending', row[0]))
+            except sqlite3.IntegrityError:
+                raise ValueError('Bản nháp này đã có lần gửi. Kiểm tra lịch sử; chỉnh sửa và lưu bản mới nếu muốn gửi lại.') from None
+        return attempt, json.loads(row[0])
+
+    def finish(self, attempt, status, message_id=''):
+        with self._connection() as db:
+            db.execute('UPDATE mail_attempts SET status=?,message_id=? WHERE id=?', (status, message_id, attempt))
+
+    def history(self, channel_id):
+        with self._connection() as db:
+            rows = db.execute('SELECT id,revision,created,status,payload,message_id FROM mail_attempts WHERE channel_id=? ORDER BY created DESC LIMIT 20', (channel_id,)).fetchall()
+        return [{**dict(row), 'payload': json.loads(row['payload'])} for row in rows]

@@ -3,6 +3,7 @@ import { ArrowDownToLine, ArrowLeft, ArrowRight, ArrowUpDown, Copy, FileSpreadsh
 import { call, type WorkbookMeta, type WorkbookPage } from '../api';
 import { TableLoading } from './TableLoading';
 import { ResultDetails } from './ResultDetails';
+import { ContactComposer } from './ContactComposer';
 import { ConfirmDialog, type Confirmation, type Notice } from './ConfirmDialog';
 const format = (value: number) => new Intl.NumberFormat('vi-VN').format(value);
 
@@ -20,6 +21,8 @@ export function WorkbookView({meta, onOpen, onImport, notify, readOnly = false}:
   const [selection, setSelection] = useState<number[]>([]);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [details, setDetails] = useState<{columns: string[]; values: (string | number | null)[]} | null>(null);
+  const [contactChannel, setContactChannel] = useState<string | null>(null);
+  const detailChannelId = details?.values[details.columns.indexOf('Channel ID')];
   const scroll = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState({overflow: false, start: true, end: true});
   function measureScroll() {
@@ -74,7 +77,8 @@ export function WorkbookView({meta, onOpen, onImport, notify, readOnly = false}:
       {edges.overflow && !loading && !failure && <div className="horizontal-controls"><span>Cuộn ngang để xem các cột phía sau · Hoặc chọn Xem đầy đủ</span><div><button className="icon-button" aria-label="Cuộn sang trái" disabled={edges.start} onClick={() => pan(-1)}><ArrowLeft size={18}/></button><button className="icon-button" aria-label="Cuộn sang phải" disabled={edges.end} onClick={() => pan(1)}><ArrowRight size={18}/></button></div></div>}
       <div className="table-footer"><span>{format(data?.total ?? 0)} / {format(data?.original_total ?? 0)} dòng · 100 dòng / trang</span><div><button className="icon-button" aria-label="Trang trước" disabled={page === 0 || loading} onClick={() => setPage(value => value - 1)}><ArrowLeft size={16}/></button><span>{(data?.page ?? 0) + 1} / {data?.pages ?? 1}</span><button className="icon-button" aria-label="Trang sau" disabled={page + 1 >= (data?.pages ?? 1) || loading} onClick={() => setPage(value => value + 1)}><ArrowRight size={16}/></button></div></div>
     </>}
-    <ResultDetails record={details} onClose={() => setDetails(null)}/>
+    <ResultDetails record={details} onClose={() => setDetails(null)} onContact={readOnly && detailChannelId ? () => {setDetails(null); setContactChannel(String(detailChannelId));} : undefined}/>
+    <ContactComposer channelId={contactChannel} onClose={() => setContactChannel(null)} notify={notify}/>
     <ConfirmDialog request={confirmation} dismiss={() => setConfirmation(null)}/>
   </section>;
 }
