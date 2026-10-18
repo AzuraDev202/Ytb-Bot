@@ -22,7 +22,7 @@ def verify(window):
         import time
         deadline = time.monotonic() + 20
         while time.monotonic() < deadline:
-            if window.evaluate_js("document.querySelector('.connection-status')?.textContent === 'Xử lý trên máy'"):
+            if window.evaluate_js("document.querySelector('.connection-status')?.textContent === 'Local processing'"):
                 break
             time.sleep(.2)
         else:

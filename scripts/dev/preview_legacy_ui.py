@@ -24,16 +24,16 @@ with patch.object(YtbBotApp, "check_updates"):
             try:
                 if not app.winfo_viewable():
                     raise RuntimeError("Desktop startup left the window hidden")
-                app.view.change_theme("Tối" if args.theme == "dark" else "Sáng")
-                app.view.theme_switch.set("Tối" if args.theme == "dark" else "Sáng")
+                app.view.change_theme("Dark" if args.theme == "dark" else "Light")
+                app.view.theme_switch.set("Dark" if args.theme == "dark" else "Light")
                 if args.compact:
                     app.geometry("940x640+30+30")
                 if args.excel:
                     import pandas as pd
-                    workbook = Path(temporary.name) / "du-lieu-minh-hoa.xlsx"
-                    pd.DataFrame({"Tên kênh (minh họa)": ["Demo AI Studio", "Demo Creator", "Demo Technology"],
-                                  "Từ khóa": ["AI Agent", "Content creator", "Công nghệ"],
-                                  "Lượt xem": [12500, 8300, 6700], "Tuổi kênh (ngày)": [30, 45, 18]}).to_excel(workbook, index=False)
+                    workbook = Path(temporary.name) / "sample-data.xlsx"
+                    pd.DataFrame({"Channel name (example)": ["Demo AI Studio", "Demo Creator", "Demo Technology"],
+                                  "Keyword": ["AI Agent", "Content creator", "Technology"],
+                                  "Views": [12500, 8300, 6700], "Channel age (days)": [30, 45, 18]}).to_excel(workbook, index=False)
                     app._show_excel(str(workbook))
                 app.attributes("-topmost", True)
                 app.after(1200, capture)

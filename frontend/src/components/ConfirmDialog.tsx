@@ -10,7 +10,7 @@ export function ConfirmDialog({request, dismiss}: {request: Confirmation | null;
   useEffect(() => {if (request && !dialog.current?.open) dialog.current?.showModal(); else if (!request) dialog.current?.close();}, [request]);
   return <dialog ref={dialog} className="confirmation" aria-labelledby={id + "-title"} aria-describedby={id + "-description"} onCancel={event => {event.preventDefault(); dismiss();}}>
     <div className="dialog-icon"><ShieldCheck size={25}/></div><h2 id={id + "-title"}>{request?.title}</h2><p id={id + "-description"}>{request?.text}</p>
-    <div className="dialog-actions"><button className="button secondary" onClick={dismiss}>Hủy</button><button className="button primary" onClick={() => {const action = request?.action; dismiss(); action?.();}}>Xác nhận</button></div>
+    <div className="dialog-actions"><button className="button secondary" onClick={dismiss}>Cancel</button><button className="button primary" onClick={() => {const action = request?.action; dismiss(); action?.();}}>Confirm</button></div>
   </dialog>;
 }
 

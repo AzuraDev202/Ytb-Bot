@@ -29,7 +29,7 @@ class Release:
 
 def version_tuple(value):
     if not re.fullmatch(r"v?\d+\.\d+\.\d+", value):
-        raise UpdateError("Phiên bản phải có định dạng X.Y.Z.")
+        raise UpdateError("The version must use the X.Y.Z format.")
     return tuple(map(int, value.removeprefix("v").split(".")))
 
 
@@ -41,7 +41,7 @@ def _asset_url(url):
     parsed = urlparse(url)
     if (parsed.scheme != "https" or parsed.netloc != "github.com"
             or not parsed.path.startswith(f"/{UPDATE_REPOSITORY}/releases/download/")):
-        raise UpdateError("Địa chỉ tải cập nhật không hợp lệ.")
+        raise UpdateError("Invalid update download URL.")
     return url
 
 
@@ -53,7 +53,7 @@ def check_for_update(current=APP_VERSION):
     except HTTPError as error:
         if error.code == 404:
             return None
-        raise UpdateError(f"Không thể kiểm tra cập nhật (HTTP {error.code}).") from error
+        raise UpdateError(f"Unable to check for updates (HTTP {error.code}).") from error
     if data.get("draft") or data.get("prerelease"):
         return None
     version = data.get("tag_name", "")
@@ -64,15 +64,15 @@ def check_for_update(current=APP_VERSION):
         return None
     assets = {item["name"]: item for item in data.get("assets", [])}
     if UPDATE_ASSET not in assets or f"{UPDATE_ASSET}.sha256" not in assets:
-        raise UpdateError("Bản phát hành thiếu file EXE hoặc SHA-256.")
+        raise UpdateError("The release is missing the EXE or SHA-256 file.")
     exe = assets[UPDATE_ASSET]
     size = exe.get("size", 0)
     if not isinstance(size, int) or not 0 < size <= 512 * 1024 * 1024:
-        raise UpdateError("Kích thước bản cập nhật không hợp lệ.")
+        raise UpdateError("Invalid update size.")
     if same_version:
         remote_digest = exe.get("digest", "") or ""
         if not re.fullmatch(r"sha256:[0-9a-fA-F]{64}", remote_digest):
-            raise UpdateError("Không xác minh được bản build cùng phiên bản: GitHub thiếu SHA-256.")
+            raise UpdateError("Unable to verify the build with the same version: GitHub is missing SHA-256.")
         with open(sys.executable, "rb") as installed:
             local_digest = hashlib.file_digest(installed, "sha256").hexdigest()
         if local_digest == remote_digest.split(":", 1)[1].lower():
@@ -86,7 +86,7 @@ def download_update(release, progress=lambda value: None):
     with urlopen(_request(release.checksum_url), timeout=15) as response:
         checksum = response.read(4096).decode("ascii").split()[0].lower()
     if not re.fullmatch(r"[0-9a-f]{64}", checksum):
-        raise UpdateError("SHA-256 của bản cập nhật không hợp lệ.")
+        raise UpdateError("Invalid update SHA-256 checksum.")
     directory = Path(tempfile.mkdtemp(prefix="ytb-update-"))
     target = directory / UPDATE_ASSET
     digest = hashlib.sha256()
@@ -96,15 +96,15 @@ def download_update(release, progress=lambda value: None):
             while chunk := response.read(256 * 1024):
                 received += len(chunk)
                 if received > release.size:
-                    raise UpdateError("Bản cập nhật vượt kích thước đã công bố.")
+                    raise UpdateError("The update exceeds its published size.")
                 output.write(chunk)
                 digest.update(chunk)
                 progress(received / release.size)
         if received != release.size or digest.hexdigest() != checksum:
-            raise UpdateError("Bản cập nhật không khớp SHA-256 hoặc tải chưa đầy đủ.")
+            raise UpdateError("The update does not match SHA-256 or the download is incomplete.")
         with target.open("rb") as downloaded:
             if downloaded.read(2) != b"MZ":
-                raise UpdateError("Bản cập nhật không phải file thực thi Windows.")
+                raise UpdateError("The update is not a Windows executable.")
         return target
     except Exception:
         target.unlink(missing_ok=True)
@@ -115,11 +115,11 @@ def download_update(release, progress=lambda value: None):
 def install_update(staged):
     """Start a hidden helper. Caller must close the app after this succeeds."""
     if os.name != "nt" or not getattr(sys, "frozen", False):
-        raise UpdateError("Tự cập nhật chỉ hỗ trợ bản desktop EXE trên Windows.")
+        raise UpdateError("Automatic updates are only supported by the Windows desktop EXE.")
     target = Path(sys.executable).resolve()
     staged = Path(staged).resolve()
     if staged.name != UPDATE_ASSET or staged.parent == target.parent:
-        raise UpdateError("File cập nhật tạm không hợp lệ.")
+        raise UpdateError("Invalid staged update file.")
     # Fail before shutting down if the install folder is not writable.
     with tempfile.TemporaryFile(dir=target.parent):
         pass
@@ -197,7 +197,7 @@ try {
     [Console]::Error.WriteLine($failure)
     if ($updateConfig.interactive -eq $true) {
         Add-Type -AssemblyName System.Windows.Forms
-        [System.Windows.Forms.MessageBox]::Show("Cap nhat that bai. Ban cu duoc giu lai.`n$failure", 'Ytb-Bot') | Out-Null
+        [System.Windows.Forms.MessageBox]::Show("Update failed. The previous version has been preserved.`n$failure", 'Ytb-Bot') | Out-Null
     }
 } finally {
     if (Test-Path -LiteralPath $candidatePath) { Remove-Item -LiteralPath $candidatePath -Force }

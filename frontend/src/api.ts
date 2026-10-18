@@ -6,9 +6,9 @@ export interface WorkbookPage {columns: string[]; rows: (string | number | null)
 type Reply = {ok: boolean; data?: unknown; error?: string};
 declare global {interface Window {pywebview?: {api: Record<string, (...args: unknown[]) => Promise<Reply>>}}}
 export async function call<T>(method: string, ...args: unknown[]): Promise<T> {
-  if (!window.pywebview?.api) throw new Error('Chưa kết nối Python. Mở app bằng python gui_app.py hoặc bản EXE.');
+  if (!window.pywebview?.api) throw new Error('Python is not connected. Launch the app with python gui_app.py or the EXE.');
   const reply = await window.pywebview.api[method](...args);
-  if (!reply.ok) throw new Error(reply.error || 'Thao tác chưa hoàn tất.');
+  if (!reply.ok) throw new Error(reply.error || 'The operation could not be completed.');
   return reply.data as T;
 }
-export const initialState: Snapshot = {status: 'ready', completed: 0, total: 0, matches: 0, elapsed: 0, rows: [], logs: [], error: '', output: false, update: {status: 'idle', message: 'Kiểm tra bản cập nhật', progress: 0}};
+export const initialState: Snapshot = {status: 'ready', completed: 0, total: 0, matches: 0, elapsed: 0, rows: [], logs: [], error: '', output: false, update: {status: 'idle', message: 'Check for updates', progress: 0}};

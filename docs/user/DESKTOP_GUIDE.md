@@ -1,56 +1,56 @@
-# Hướng dẫn sử dụng YTB-BOT Desktop
+# YTB-BOT Desktop User Guide
 
-## Từ khóa trong Bot
+## Keywords in the application
 
-1. Vào **Từ khóa** hoặc nhấn **Sửa bảng từ khóa** trên màn hình khám phá.
-2. Sửa trực tiếp trong ô, nhấn **Thêm dòng**, hoặc dán nhiều dòng từ Excel vào một ô. Khi dán nhiều cột, chỉ cột đầu tiên được lấy.
-3. Chọn checkbox rồi **Xóa** để bỏ dòng; thao tác xóa có xác nhận.
-4. Nhấn **Lưu từ khóa** hoặc **Ctrl+S** trong bảng để lưu nội bộ. **Dùng để quét** vừa lưu vừa quay lại màn hình khám phá.
-5. Dòng trống được bỏ qua và từ trùng được gộp khi quét. Bạn có thể lưu một bảng trống.
-6. Nếu đóng app khi còn thay đổi chưa lưu, Bot hỏi xác nhận. Cần lưu trước khi cập nhật và khởi động lại.
+1. Open **Keywords**, or select **Edit keyword table** on the discovery screen.
+2. Edit cells directly, select **Add row**, or paste multiple lines from Excel into one cell. When pasting multiple columns, only the first column is used.
+3. Select row checkboxes and choose **Delete** to remove rows; deletion requires confirmation.
+4. Select **Save keywords**, or press **Ctrl+S** in the table, to save locally. **Use for scan** saves and returns to discovery.
+5. Empty rows are ignored and duplicate keywords are combined when scanning. You can save an empty table.
+6. If you close the application with unsaved changes, it asks for confirmation. Save before updating and restarting.
 
-Để lấy dữ liệu từ file cũ, chọn **Nhập từ file cũ**, mở `.xlsx` hoặc `.xls`, chọn sheet/cột rồi **Nhập cột từ khóa**. Bot hỏi trước khi thay danh sách, lấy toàn bộ cột gốc dù đang lọc, rồi đưa dữ liệu vào bảng chỉnh sửa. Nhấn **Lưu từ khóa** để giữ lại. File gốc không bị ghi đè.
+To import an older file, select **Import existing file**, open `.xlsx` or `.xls`, select a sheet/column, and choose **Import keyword column**. The application asks before replacing the list, reads the entire original column even when filtered, and places the data in the editor. Select **Save keywords** to keep it. The original file is not overwritten.
 
-## Quét và xem kết quả
+## Scanning and reviewing results
 
-Để liên hệ một kênh, chọn **Xem đầy đủ → Soạn liên hệ**. Gmail/Google Workspace hỗ trợ gửi trực tiếp từ tài khoản OAuth đã kết nối, có bước xem lại, lưu nháp và lịch sử gửi. Với Facebook và mạng xã hội, dùng sao chép nội dung và mở hồ sơ. Hướng dẫn cấu hình Google và các trạng thái gửi nằm trong [Liên hệ kênh](CONTACT_COMPOSER.md).
+To contact a channel, choose **View full details → Compose contact**. Gmail/Google Workspace supports direct sending through a connected OAuth account, with review, drafts, and send history. For Facebook and other social networks, copy your message and open the profile. Google setup and sending statuses are described in [Channel outreach](CONTACT_COMPOSER.md).
 
-Desktop React tự đối chiếu **Channel ID** với tất cả lượt quét trong kho nội bộ, gồm kết quả đã lưu của lượt hoàn tất, dừng, gặp lỗi hoặc đang chạy. Mỗi lượt mới chỉ nhận kênh chưa có trong lịch sử; đổi tên kênh hoặc đổi từ khóa không làm kênh cũ xuất hiện lại. Kênh chưa đạt bộ lọc ở lượt trước vẫn có thể được nhận ở lượt sau khi đạt điều kiện. Lịch sử cũ không bị xóa. Phạm vi đối chiếu là kho dữ liệu trên máy hiện tại; không tự đọc kết quả Excel ngoài Bot.
+The React desktop automatically checks **Channel ID** against all scans in local storage, including saved results from completed, stopped, failed, and running scans. Each new scan accepts only channels absent from history; renaming a channel or changing keywords does not make an existing channel appear again. A channel that previously failed the filters can be accepted later if it meets the criteria. Existing history is retained. Deduplication covers storage on the current machine; external Excel results are not read automatically.
 
-Bot không đặt `regionCode`, `relevanceLanguage` hay bộ lọc quốc gia của kênh. Kênh thuộc mọi quốc gia, kể cả không công bố quốc gia, được xét bằng cùng bộ lọc tuổi/lượt xem/liên hệ. Cột **Quốc Gia** hiển thị mã quốc gia do kênh công bố; không có dữ liệu thì ghi **Không công bố** (lượt cũ có thể để trống).
+The application does not set `regionCode`, `relevanceLanguage`, or a channel-country filter. Channels from every country, including channels with no disclosed country, use the same age/views/contact filters. The **Country** column shows the channel's disclosed country code; missing data appears as **Not disclosed** (older scans may leave it blank).
 
-Đây là tìm kiếm đa quốc gia theo từ khóa, không phải danh sách đầy đủ tất cả kênh YouTube. Thêm từ khóa bằng nhiều ngôn ngữ và tăng độ sâu để mở rộng kết quả; vẫn chịu giới hạn xếp hạng, số trang và quota của API. `regionCode` lọc khả năng xem video tại một nước, không phải quốc tịch chủ kênh. Tham khảo [YouTube search.list](https://developers.google.com/youtube/data/reference/rest/v3/search/list).
+This is keyword-based discovery across countries, not a complete list of all YouTube channels. Add keywords in multiple languages and increase depth to broaden results; API ranking, page limits, and quota still apply. `regionCode` filters video availability in a country, not the channel owner's nationality. See [YouTube search.list](https://developers.google.com/youtube/data/reference/rest/v3/search/list).
 
-Nhập API Key và bộ lọc rồi nhấn **Bắt đầu khám phá**. Danh sách từ khóa đang dùng được lưu trước khi quét. **Dừng** chờ yêu cầu mạng hiện tại hoàn tất rồi giữ kết quả đã có.
+Enter an API key and filters, then select **Start discovery**. The active keyword list is saved before scanning. **Stop** waits for the current network request to finish and retains collected results.
 
-Vào **Kết quả** hoặc **Xem kết quả trong Bot** để xem từng lượt quét theo thời gian, trạng thái và số kênh. Bảng có tìm kiếm, sắp xếp, phân trang 100 dòng và sao chép các dòng có checkbox. Dữ liệu đầy đủ được giữ, kể cả lượt quét không có kênh hoặc gặp lỗi; màn hình khám phá chỉ hiển thị nhanh 200 kênh đầu tiên.
+Open **Results** or **View results in the bot** to review scans by time, status, and channel count. The table supports search, sorting, 100-row pagination, and copying checked rows. Full data is retained, including empty or failed scans; discovery shows a preview of only the first 200 channels.
 
-Kết quả được ghi vào kho nội bộ theo từng đợt xử lý và khi lượt quét kết thúc, không tạo file `.xlsx`. Nhấn **Làm mới** nếu đang xem một lượt còn quét. Nếu ứng dụng bị tắt đột ngột, các đợt đã lưu vẫn có thể xem lại; phần yêu cầu đang xử lý có thể chưa được ghi.
+Results are written to local storage in batches and when the scan ends; no `.xlsx` file is created. Select **Refresh** when viewing a scan still in progress. If the application closes unexpectedly, saved batches remain available; the request being processed may not yet have been recorded.
 
-Phím tắt: `Ctrl+Enter` bắt đầu, `Ctrl+O` nhập file cũ, `Esc` đóng bộ lọc hoặc yêu cầu dừng. `Ctrl+C` thông thường sao chép văn bản bôi chọn; dùng nút **Sao chép** cho dòng có checkbox.
+Shortcuts: `Ctrl+Enter` starts discovery, `Ctrl+O` imports a legacy file, and `Esc` closes filters or requests a stop. Normal `Ctrl+C` copies selected text; use **Copy** for checked rows.
 
-## Dữ liệu và chẩn đoán
+## Data and troubleshooting
 
-- Bảng từ khóa và lịch sử: `%LOCALAPPDATA%/Ytb-Bot/data/workspace.sqlite3`. Đây là dữ liệu nội bộ của app, không phải file Excel để người dùng theo dõi thủ công.
-- Đóng Bot trước khi sao lưu hoặc chuyển kho dữ liệu sang máy khác. Sao chép `workspace.sqlite3` tới cùng thư mục dữ liệu trên máy đích.
-- `.env` và `studio-settings.json` ở cạnh EXE hoặc thư mục gốc khi chạy source.
-- Các file Excel cũ không bị xóa hoặc sửa bởi tính năng mới.
-- API Key được lưu cục bộ, dùng để gọi Google YouTube Data API và không được đóng gói vào EXE.
-- Log khởi động: `%LOCALAPPDATA%/Ytb-Bot/logs/desktop.log`.
-- Luồng quản lý dữ liệu trong Bot dùng giao diện React mặc định. CLI và `--legacy` là các công cụ cũ được giữ để tương thích.
+- Keyword tables and history: `%LOCALAPPDATA%/Ytb-Bot/data/workspace.sqlite3`. This is internal application data, not an Excel file for manual tracking.
+- Close the application before backing up or transferring storage to another machine. Copy `workspace.sqlite3` to the same data directory on the destination machine.
+- `.env` and `studio-settings.json` are beside the EXE, or at the project root when running from source.
+- The new features do not delete or modify older Excel files.
+- The API key is stored locally, used to call Google YouTube Data API, and not packaged into the EXE.
+- Startup log: `%LOCALAPPDATA%/Ytb-Bot/logs/desktop.log`.
+- In-app data management uses the default React interface. The CLI and `--legacy` are older tools retained for compatibility.
 
-## Cập nhật desktop
+## Desktop updates
 
-App kiểm tra GitHub Releases sau khi mở, mỗi 6 giờ và khi nhấn **Kiểm tra cập nhật**. Khi có bản cập nhật, chọn **Cập nhật ngay** và xác nhận; app tải, kiểm tra SHA-256, thay EXE rồi mở lại. Không cài cập nhật giữa một lượt quét.
+The application checks GitHub Releases after opening, every six hours, and when you select **Check for updates**. When an update is available, select **Update now** and confirm. The application downloads it, checks SHA-256, replaces the EXE, and reopens. Do not install updates during a scan.
 
-Bản EXE so sánh SHA-256 cả khi Release có cùng version, nên có thể nhận một build khác mà không tăng version. Bản chạy mã nguồn không tự thay Python. Bản EXE cũ chưa hỗ trợ cơ chế này cần tải lại thủ công một lần.
+The EXE compares SHA-256 even when the release has the same version, so it can receive a different build without a version increase. Running from source does not automatically replace Python. Older EXEs without this mechanism require one manual download.
 
-Updater giữ bản trước thành `<tên EXE>.previous`. Helper khôi phục file cũ nếu thay thế hoặc khởi chạy thất bại. Nếu app mới mở được nhưng lỗi sau đó, đóng app rồi khôi phục file `.previous` thủ công. Log helper ở `%TEMP%/ytb-update-*/update-error.log`. SHA-256 kiểm tra toàn vẹn, không phải chữ ký số Windows.
+The updater keeps the previous build as `<EXE name>.previous`. Its helper restores the old file if replacement or launch fails. If the new application opens but fails later, close it and restore `.previous` manually. Helper logs are at `%TEMP%/ytb-update-*/update-error.log`. SHA-256 checks integrity; it is not a Windows digital signature.
 
-## Lọc kênh có liên hệ công khai
+## Filtering channels with public contacts
 
-Lượt quét mới chỉ nhận kênh đáp ứng tuổi kênh, lượt xem **và** có email hoặc đường dẫn liên hệ cụ thể trong mô tả kênh. Bot nhận diện email, Facebook, Instagram, LinkedIn, TikTok, X/Twitter, Telegram, Zalo và WhatsApp. Chỉ nhắc tên nền tảng, link trang chủ hoặc link chia sẻ không đủ điều kiện. Bot không kiểm chứng chủ sở hữu hay khả năng liên lạc của địa chỉ/link được ghi trong mô tả.
+New scans accept only channels meeting the age and views filters **and** containing an email address or specific contact URL in the channel description. The application recognizes email, Facebook, Instagram, LinkedIn, TikTok, X/Twitter, Telegram, Zalo, and WhatsApp. Merely mentioning a platform, linking its homepage, or using a share link does not qualify. The application does not verify ownership or whether the recorded address/link can be used to make contact.
 
-Trong **Kết quả**, các cột **Email**, **Facebook**, **Liên Hệ Khác** chứa thông tin tìm được; dùng **Xem đầy đủ** hoặc **Sao chép** để lấy nội dung nguyên vẹn. Lịch sử cũ vẫn giữ nguyên; cần quét lại để kiểm tra liên hệ theo logic mới. Quét mặc định tiếp tục lưu trong Bot, không tạo file Excel.
+In **Results**, the **Email**, **Facebook**, and **Other contacts** columns contain discovered information. Use **View full details** or **Copy** for the full content. Existing history remains unchanged; rescan to check contacts with the newer logic. Default scans continue saving inside the application and do not create Excel files.
 
-Nguồn kiểm tra là `snippet.description` của [YouTube Data API](https://developers.google.com/youtube/data/reference/rest/v3/channels#snippet.description). Liên hệ chỉ nằm trong video, banner, liên kết ngoài mô tả hoặc mục email cần đăng nhập không nằm trong phạm vi kiểm tra hiện tại.
+The checked source is `snippet.description` from the [YouTube Data API](https://developers.google.com/youtube/data/reference/rest/v3/channels#snippet.description). Contacts found only in videos, banners, links outside the description, or sign-in-protected email sections are outside the current scope.

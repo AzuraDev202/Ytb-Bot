@@ -38,14 +38,14 @@ class StudioDashboard(ctk.CTkFrame):
         header = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         header.grid(row=0, column=0, sticky="ew", pady=(0, 18))
         header.grid_columnconfigure(0, weight=1)
-        t.label(header, "KHÔNG GIAN KHÁM PHÁ", size=11, bold=True, muted=True).grid(row=0, column=0, sticky="w")
-        t.label(header, "Tìm kênh mới. Đón xu hướng.", size=23 if compact else 27, bold=True).grid(
+        t.label(header, "DISCOVERY WORKSPACE", size=11, bold=True, muted=True).grid(row=0, column=0, sticky="w")
+        t.label(header, "Find new channels. Discover trends.", size=23 if compact else 27, bold=True).grid(
             row=1, column=0, sticky="w", pady=(3, 4))
-        t.label(header, "Biến từ khóa thành cơ hội sáng tạo tiếp theo.", muted=True).grid(row=2, column=0, sticky="w")
-        self.state_badge = t.label(header, "SẴN SÀNG", size=11, bold=True,
+        t.label(header, "Turn keywords into your next creative opportunity.", muted=True).grid(row=2, column=0, sticky="w")
+        self.state_badge = t.label(header, "READY", size=11, bold=True,
                                    fg_color=t.color("inset"), corner_radius=12, width=112, height=30)
         self.state_badge.grid(row=0, column=1, padx=(12, 0), sticky="e")
-        self.sidebar_toggle = t.button(header, "Hiện bộ lọc", self.toggle_sidebar, width=125)
+        self.sidebar_toggle = t.button(header, "Show filters", self.toggle_sidebar, width=125)
         self.sidebar_toggle.grid(row=2, column=1, padx=(12, 0))
 
         stats = ctk.CTkFrame(self.main_frame, fg_color="transparent")
@@ -53,9 +53,9 @@ class StudioDashboard(ctk.CTkFrame):
         stats.grid_columnconfigure((0, 1, 2), weight=1, uniform="stats")
         self.stat_values = {}
         for index, (key, title, value, note) in enumerate([
-            ("keywords", "TỪ KHÓA", "0", "Chủ đề muốn khám phá"),
-            ("matches", "KÊNH PHÙ HỢP", "0", "Đáp ứng bộ lọc hiện tại"),
-            ("completed", "ĐÃ XỬ LÝ", "0 / 0", "Tiến độ lượt quét")]):
+            ("keywords", "KEYWORDS", "0", "Topics to explore"),
+            ("matches", "MATCHING CHANNELS", "0", "Match the current filters"),
+            ("completed", "PROCESSED", "0 / 0", "Scan progress")]):
             card = ctk.CTkFrame(stats, fg_color=t.color("surface"), corner_radius=14,
                                border_width=1, border_color=t.color("border"))
             card.grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 6, 0 if index == 2 else 6))
@@ -71,7 +71,7 @@ class StudioDashboard(ctk.CTkFrame):
             segmented_button_unselected_color=t.color("inset"), segmented_button_unselected_hover_color=t.color("hover"),
             text_color=t.color("text"))
         self.content_tabs.grid(row=2, column=0, sticky="nsew")
-        scan = self.content_tabs.add("Hoạt động")
+        scan = self.content_tabs.add("Activity")
         excel = self.content_tabs.add("Excel")
         for tab in (scan, excel):
             tab.grid_columnconfigure(0, weight=1)
@@ -85,19 +85,19 @@ class StudioDashboard(ctk.CTkFrame):
         kw_header = ctk.CTkFrame(body, fg_color="transparent")
         kw_header.grid(row=0, column=0, sticky="ew")
         kw_header.grid_columnconfigure(0, weight=1)
-        t.label(kw_header, "Bạn muốn khám phá chủ đề nào?", size=16, bold=True).grid(row=0, column=0, sticky="w")
-        t.button(kw_header, "Nhập Excel", on_excel, width=115).grid(row=0, column=1, padx=(8, 0))
+        t.label(kw_header, "Which topics would you like to explore?", size=16, bold=True).grid(row=0, column=0, sticky="w")
+        t.button(kw_header, "Import Excel", on_excel, width=115).grid(row=0, column=1, padx=(8, 0))
         self.kw_textbox = ctk.CTkTextbox(body, height=90, corner_radius=10, fg_color=t.color("inset"),
             border_width=1, border_color=t.color("border"), text_color=t.color("text"),
             font=ctk.CTkFont(family="Segoe UI", size=14), wrap="word")
         self.kw_textbox.grid(row=1, column=0, sticky="ew", pady=(10, 8))
-        self.kw_textbox.insert("1.0", "AI Automation\nAI Agent\ntạo video bằng AI")
+        self.kw_textbox.insert("1.0", "AI Automation\nAI Agent\nAI video creation")
         self.kw_textbox.bind("<KeyRelease>", self._keywords_changed, add="+")
         presets = ctk.CTkFrame(body, fg_color="transparent")
         presets.grid(row=2, column=0, sticky="ew")
         for index, (title, words) in enumerate([
-            ("AI & Công nghệ", ["AI Automation", "AI Agent", "Công nghệ AI"]),
-            ("Sáng tạo nội dung", ["YouTube Shorts", "Video editing", "Content creator"])]):
+            ("AI & Technology", ["AI Automation", "AI Agent", "AI Technology"]),
+            ("Content creation", ["YouTube Shorts", "Video editing", "Content creator"])]):
             t.button(presets, title, lambda values=words: self.add_keywords(values), width=140).grid(
                 row=0, column=index, padx=(0, 8))
         self.keyword_hint = t.label(presets, "", size=11, muted=True)
@@ -109,18 +109,18 @@ class StudioDashboard(ctk.CTkFrame):
         actions = ctk.CTkFrame(body, fg_color="transparent")
         actions.grid(row=4, column=0, sticky="ew", pady=(4, 16))
         actions.grid_columnconfigure(0, weight=1)
-        self.start_btn = t.button(actions, "Bắt đầu khám phá", on_scan, primary=True)
+        self.start_btn = t.button(actions, "Start exploring", on_scan, primary=True)
         self.start_btn.grid(row=0, column=0, sticky="ew", padx=(0, 8))
-        self.stop_btn = t.button(actions, "Dừng", on_stop, width=72, state="disabled")
+        self.stop_btn = t.button(actions, "Stop", on_stop, width=72, state="disabled")
         self.stop_btn.grid(row=0, column=1, padx=(0, 8))
-        self.open_output_btn = t.button(actions, "Xem kết quả", on_results, width=115)
+        self.open_output_btn = t.button(actions, "View results", on_results, width=115)
         self.open_output_btn.grid(row=0, column=2)
 
         activity = ctk.CTkFrame(body, fg_color=t.color("inset"), corner_radius=12)
         activity.grid(row=5, column=0, sticky="nsew")
         activity.grid_columnconfigure(0, weight=1)
         activity.grid_rowconfigure(2, weight=1)
-        self.status_label = t.label(activity, "Sẵn sàng cho lượt khám phá đầu tiên", anchor="w", size=12)
+        self.status_label = t.label(activity, "Ready for your first discovery scan", anchor="w", size=12)
         self.status_label.grid(row=0, column=0, padx=14, pady=(12, 8), sticky="ew")
         self.progress_label = t.label(activity, "0%", size=12, bold=True)
         self.progress_label.grid(row=0, column=1, padx=(8, 14), pady=(12, 8))
@@ -135,9 +135,9 @@ class StudioDashboard(ctk.CTkFrame):
         footer = ctk.CTkFrame(body, fg_color="transparent")
         footer.grid(row=6, column=0, sticky="ew", pady=(8, 0))
         footer.grid_columnconfigure(0, weight=1)
-        self.elapsed_label = t.label(footer, "Thời gian: 00:00", size=11, muted=True)
+        self.elapsed_label = t.label(footer, "Elapsed: 00:00", size=11, muted=True)
         self.elapsed_label.grid(row=0, column=0, sticky="w")
-        t.button(footer, "Xóa nhật ký", self.clear_log, width=100).grid(row=0, column=1)
+        t.button(footer, "Clear log", self.clear_log, width=100).grid(row=0, column=1)
         self.refresh_keywords()
         master.bind("<Configure>", self._responsive, add="+")
         self._narrow = None
@@ -154,7 +154,7 @@ class StudioDashboard(ctk.CTkFrame):
         mark.grid(row=0, column=0, rowspan=2, padx=(0, 10))
         t.label(brand, "YTB-BOT", size=21, bold=True).grid(row=0, column=1, sticky="w")
         t.label(brand, "CREATOR STUDIO", size=10, muted=True).grid(row=1, column=1, sticky="w")
-        t.label(self.sidebar, "BỘ LỌC KHÁM PHÁ", size=11, bold=True, muted=True).grid(
+        t.label(self.sidebar, "DISCOVERY FILTERS", size=11, bold=True, muted=True).grid(
             row=1, column=0, padx=14, sticky="w", pady=(0, 12))
         self.field_errors = {}
 
@@ -170,32 +170,32 @@ class StudioDashboard(ctk.CTkFrame):
             control.bind("<FocusOut>", lambda event: control.configure(border_color=t.color("border")))
             return control
 
-        self.api_entry = field(2, "api", "YouTube API Key", os.getenv("YOUTUBE_API_KEY", ""), "Khóa của bạn chỉ lưu trên máy.", True)
-        self.reveal_button = t.button(self.sidebar, "Hiện API Key", self._toggle_key, width=120)
+        self.api_entry = field(2, "api", "YouTube API Key", os.getenv("YOUTUBE_API_KEY", ""), "Your key is stored only on this computer.", True)
+        self.reveal_button = t.button(self.sidebar, "Show API key", self._toggle_key, width=120)
         self.reveal_button.grid(row=5, column=0, padx=14, pady=(6, 0), sticky="ew")
-        self.max_age_entry = field(6, "age", "Tuổi kênh tối đa (ngày)", "90", "Chỉ lấy kênh mới trong khoảng này.")
-        self.min_views_entry = field(9, "views", "Tổng lượt xem tối thiểu", "500", "Lượt xem tích lũy trên toàn kênh.")
-        self.pages_label = t.label(self.sidebar, "Độ sâu: 2 trang / từ khóa", size=12, bold=True, anchor="w")
+        self.max_age_entry = field(6, "age", "Maximum channel age (days)", "90", "Only include channels created within this period.")
+        self.min_views_entry = field(9, "views", "Minimum total views", "500", "Cumulative views across the channel.")
+        self.pages_label = t.label(self.sidebar, "Depth: 2 pages / keyword", size=12, bold=True, anchor="w")
         self.pages_label.grid(row=12, column=0, padx=14, pady=(18, 10), sticky="ew")
         self.max_pages_slider = ctk.CTkSlider(self.sidebar, from_=1, to=5, number_of_steps=4,
             progress_color=t.color("accent"), button_color=t.color("accent"), button_hover_color=t.color("accent_hover"),
-            command=lambda value: self.pages_label.configure(text=f"Độ sâu: {int(value)} trang / từ khóa"))
+            command=lambda value: self.pages_label.configure(text=f"Depth: {int(value)} pages / keyword"))
         self.max_pages_slider.grid(row=13, column=0, padx=14, sticky="ew")
         self.max_pages_slider.set(2)
-        t.label(self.sidebar, "1 trang tìm tối đa 50 video.\nQuét sâu hơn sử dụng nhiều quota hơn.", size=11,
+        t.label(self.sidebar, "Each page finds up to 50 videos.\nDeeper scans use more quota.", size=11,
                 muted=True, anchor="w", justify="left", wraplength=195).grid(row=14, column=0, padx=14, pady=(8, 22), sticky="ew")
-        t.label(self.sidebar, "CÁ NHÂN HÓA", size=11, bold=True, muted=True).grid(row=15, column=0, padx=14, sticky="w")
-        self.theme_switch = ctk.CTkOptionMenu(self.sidebar, values=["Tối", "Sáng", "Theo hệ thống"], height=36,
+        t.label(self.sidebar, "PERSONALIZATION", size=11, bold=True, muted=True).grid(row=15, column=0, padx=14, sticky="w")
+        self.theme_switch = ctk.CTkOptionMenu(self.sidebar, values=["Dark", "Light", "System"], height=36,
             fg_color=t.color("inset"), button_color=t.color("hover"), button_hover_color=t.color("border"),
             text_color=t.color("text"), command=self.change_theme)
         self.theme_switch.grid(row=16, column=0, padx=14, pady=(10, 12), sticky="ew")
-        self.motion_switch = ctk.CTkSwitch(self.sidebar, text="Hiệu ứng chuyển động", variable=self.motion,
+        self.motion_switch = ctk.CTkSwitch(self.sidebar, text="Motion effects", variable=self.motion,
             progress_color=t.color("accent"), text_color=t.color("text"), font=ctk.CTkFont(size=11),
             command=self._motion_changed)
         self.motion_switch.grid(row=17, column=0, padx=14, pady=(0, 22), sticky="ew")
         self.update_label = t.label(self.sidebar, f"v{APP_VERSION}\nBuild: {build_id()}", size=11, muted=True, wraplength=190, justify="left")
         self.update_label.grid(row=18, column=0, padx=14, sticky="ew")
-        self.update_button = t.button(self.sidebar, "Kiểm tra cập nhật", on_update)
+        self.update_button = t.button(self.sidebar, "Check for updates", on_update)
         self.update_button.grid(row=19, column=0, padx=14, pady=(10, 20), sticky="ew")
 
     def _responsive(self, event):
@@ -222,15 +222,15 @@ class StudioDashboard(ctk.CTkFrame):
         else:
             self.sidebar.grid_remove()
         self._sidebar_visible = visible
-        self.sidebar_toggle.configure(text="Ẩn bộ lọc" if visible else "Hiện bộ lọc")
+        self.sidebar_toggle.configure(text="Hide filters" if visible else "Show filters")
 
     def _toggle_key(self):
         reveal = self.api_entry.cget("show") == "*"
         self.api_entry.configure(show="" if reveal else "*")
-        self.reveal_button.configure(text="Ẩn API Key" if reveal else "Hiện API Key")
+        self.reveal_button.configure(text="Hide API key" if reveal else "Show API key")
 
     def change_theme(self, value):
-        ctk.set_appearance_mode({"Tối": "Dark", "Sáng": "Light", "Theo hệ thống": "System"}[value])
+        ctk.set_appearance_mode({"Dark": "Dark", "Light": "Light", "System": "System"}[value])
         self.log_box.tag_config("match", foreground=t.resolved("success"))
         self.log_box.tag_config("error", foreground=t.resolved("danger"))
 
@@ -243,7 +243,7 @@ class StudioDashboard(ctk.CTkFrame):
         self._count_timer = None
         count = len(self.keywords())
         self.stat_values["keywords"].configure(text=str(count))
-        self.keyword_hint.configure(text=f"{count} từ khóa\nMỗi dòng một chủ đề")
+        self.keyword_hint.configure(text=f"{count} keywords\nOne topic per line")
 
     def keywords(self):
         return list(dict.fromkeys(line.strip() for line in self.kw_textbox.get("1.0", "end").splitlines() if line.strip()))

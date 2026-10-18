@@ -15,11 +15,11 @@ def client_configuration(path):
     from pathlib import Path
     source = Path(path)
     if source.stat().st_size > 128_000:
-        raise ValueError('File cấu hình quá lớn.')
+        raise ValueError('The configuration file is too large.')
     raw = json.loads(source.read_text(encoding='utf-8-sig')).get('installed', {})
     client_id, secret = raw.get('client_id', ''), raw.get('client_secret', '')
     if not isinstance(client_id, str) or not re.fullmatch(r'[a-zA-Z0-9._-]+\.apps\.googleusercontent\.com', client_id) or not isinstance(secret, str) or not 1 <= len(secret) <= 4096:
-        raise ValueError('Chọn file JSON OAuth Client loại Desktop app của Google.')
+        raise ValueError('Select a Google OAuth Client JSON file for a Desktop app.')
     # Never trust endpoints supplied by a local configuration file.
     return {'installed': {'client_id': client_id, 'client_secret': secret,
             'auth_uri': 'https://accounts.google.com/o/oauth2/auth',
@@ -39,7 +39,7 @@ class Gmail:
             access_type='offline', prompt='consent select_account')
         identity = id_token.verify_oauth2_token(credentials.id_token, GoogleRequest(), client['installed']['client_id'])
         if not identity.get('email_verified') or not credentials.refresh_token:
-            raise ValueError('Chưa xác minh được tài khoản hoặc chưa được cấp quyền truy cập ngoại tuyến.')
+            raise ValueError('The account could not be verified or offline access was not granted.')
         return {'email': identity['email'], 'credentials': json.loads(credentials.to_json())}
 
     def access(self, account):
@@ -64,7 +64,7 @@ class Gmail:
                 result = json.load(response)
         except HTTPError as error:
             if 400 <= error.code < 500 and error.code != 408:
-                raise SendRejected(f'Gmail từ chối yêu cầu (HTTP {error.code}). Kiểm tra quyền gửi và tài khoản.') from None
+                raise SendRejected(f'Gmail rejected the request (HTTP {error.code}). Check send permissions and the account.') from None
             raise
         if not result.get('id'):
             raise RuntimeError('Missing provider message ID')

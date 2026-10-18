@@ -12,9 +12,9 @@ class WorkspaceTests(unittest.TestCase):
     def test_keywords_preserve_edits_blank_library_and_unicode_after_reopen(self):
         with tempfile.TemporaryDirectory() as directory:
             first = DesktopAPI(directory)
-            self.assertTrue(first.save_keywords('AI mới\nsecond\nsecond\n')['ok'])
+            self.assertTrue(first.save_keywords('AI \u2603\nsecond\nsecond\n')['ok'])
             second = DesktopAPI(directory)
-            self.assertEqual(second.get_bootstrap()['data']['keywords'], 'AI mới\nsecond\nsecond\n')
+            self.assertEqual(second.get_bootstrap()['data']['keywords'], 'AI \u2603\nsecond\nsecond\n')
             self.assertTrue(second.save_keywords('')['ok'])
             self.assertEqual(DesktopAPI(directory).get_bootstrap()['data']['keywords'], '')
             self.assertFalse(second.save_keywords(['invalid'])['ok'])
@@ -24,10 +24,10 @@ class WorkspaceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             store = WorkspaceStore(Path(directory) / 'workspace.sqlite3')
             first = store.begin_run(['alpha'])
-            rows = [{'Tên Kênh': f'Channel {i}', 'Tổng Lượt Xem': i} for i in range(251)]
+            rows = [{'Channel Name': f'Channel {i}', 'Total Views': i} for i in range(251)]
             store.save_run(first, 'complete', rows)
             second = store.begin_run(['beta'])
-            store.save_run(second, 'stopped', [{'Tên Kênh': 'Partial'}])
+            store.save_run(second, 'stopped', [{'Channel Name': 'Partial'}])
             api = DesktopAPI(directory)
             self.assertEqual([run['id'] for run in api.list_results()['data']], [second, first])
             sheet = api.open_results(first)['data']['sheets'][0]
@@ -73,6 +73,6 @@ class WorkspaceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             api = DesktopAPI(directory)
             self.assertTrue(api.set_keywords_dirty(True)['ok'])
-            self.assertIn('từ khóa', api.install_available_update()['error'])
+            self.assertIn('keyword', api.install_available_update()['error'])
             self.assertFalse(api.set_keywords_dirty('invalid')['ok'])
             self.assertTrue(api.set_keywords_dirty(False)['ok'])

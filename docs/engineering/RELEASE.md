@@ -1,32 +1,31 @@
-# Phát hành YTB-BOT
+# Releasing YTB-BOT
 
-## Build tại máy phát triển
+## Building on a development machine
 
-Cài môi trường theo [hướng dẫn phát triển](DEVELOPMENT.md), sau đó chạy từ thư mục gốc:
+Set up the environment using the [development guide](DEVELOPMENT.md), then run from the project root:
 
 ```powershell
 python scripts/release/build_release.py
 ```
 
-Script cài dependency frontend bằng `npm ci`, build React, ghi metadata commit/build, chạy PyInstaller với `packaging/desktop.spec` và tạo checksum. Build Windows EXE trên Windows x64. Dừng Vite và test frontend trước khi build để tránh khóa file dependency.
+The script installs frontend dependencies with `npm ci`, builds React, writes commit/build metadata, runs PyInstaller with `packaging/desktop.spec`, and creates a checksum. Build the Windows EXE on Windows x64. Stop Vite and frontend tests before building to avoid locked dependency files.
 
-| Đầu ra | Mục đích |
+| Output | Purpose |
 | --- | --- |
-| `dist/gui_app.exe` | Desktop kèm frontend đã build |
-| `dist/gui_app.exe.sha256` | SHA-256 của EXE |
-| `dist/build-info.json` | Version, commit, thời điểm build và SHA-256 |
+| `dist/gui_app.exe` | Desktop application with the built frontend |
+| `dist/gui_app.exe.sha256` | EXE SHA-256 checksum |
+| `dist/build-info.json` | Version, commit, build time, and SHA-256 |
 
-Không đóng gói `.env`, OAuth JSON hoặc kho đăng nhập. Chạy các [kiểm tra trước phát hành](DEVELOPMENT.md#kiểm-tra-trước-phát-hành), gồm smoke của EXE đã build. Không phát hành artifact từ một lần build chưa qua kiểm tra.
+Do not package `.env`, OAuth JSON, or the credential vault. Run the [pre-release checks](DEVELOPMENT.md#pre-release-checks), including the built EXE smoke test. Do not release artifacts from an unverified build.
 
-## Phát hành tự động
+## Automated releases
 
-[Workflow](../../.github/workflows/release.yml) chạy khi push lên `main`, push tag `v*` hoặc chạy thủ công. Repo/Releases cần công khai để app tải cập nhật mà không nhúng GitHub token vào EXE.
+The [workflow](../../.github/workflows/release.yml) runs on pushes to `main`, pushes of `v*` tags, or manual dispatch. The repository and Releases must be public so the application can download updates without embedding a GitHub token in the EXE.
 
-- Giữ version cho thay đổi nhỏ, sửa lỗi và sắp xếp file; push `main` sẽ thay asset của Release cùng version.
-- Khi có thay đổi lớn cần version mới, sửa `ytb_bot/version.py` theo định dạng `X.Y.Z`. Nếu dùng tag, tag phải khớp `vX.Y.Z`.
-- Version thấp hơn không được phát hành; push lại tag bằng version hiện tại không ghi đè build từ `main`.
-- Workflow kiểm thử Python, build React/EXE, test UI, bridge và cửa sổ EXE trước khi publish.
-- Asset gồm `gui_app.exe`, `gui_app.exe.sha256` và `build-info.json`.
+- Retain the version for minor changes, fixes, and file reorganization; pushing `main` replaces assets on the release with that version.
+- For major changes requiring a new version, update `ytb_bot/version.py` using `X.Y.Z`. If using a tag, it must match `vX.Y.Z`.
+- Lower versions cannot be released; pushing a tag matching the current version again does not overwrite a build from `main`.
+- The workflow tests Python, builds React/the EXE, and tests the UI, bridge, and EXE window before publishing.
+- Assets include `gui_app.exe`, `gui_app.exe.sha256`, and `build-info.json`.
 
-Không commit file build hoặc khóa thật. Khi phát hành thủ công, giữ EXE, checksum và metadata từ cùng một lần build. Trước khi phân phối rộng, kiểm tra cập nhật giữa hai EXE trên Windows và xác nhận dữ liệu cục bộ vẫn còn.
-
+Do not commit build files or real keys. For manual releases, keep the EXE, checksum, and metadata from the same build. Before wider distribution, test updating between two EXEs on Windows and confirm that local data remains intact.

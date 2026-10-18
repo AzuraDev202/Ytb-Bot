@@ -21,7 +21,7 @@ def main(on_started=None):
         root = Path(getattr(sys, "_MEIPASS", PROJECT_ROOT))
         document = root / "frontend" / "web-dist" / "index.html"
         if not document.exists():
-            raise RuntimeError("Chưa build React. Chạy npm ci --prefix frontend và npm run build --prefix frontend.")
+            raise RuntimeError("React has not been built. Run npm ci --prefix frontend and npm run build --prefix frontend.")
         api = DesktopAPI()
         width, height = 1180, 800
         if os.name == "nt":
@@ -38,14 +38,14 @@ def main(on_started=None):
 
         def confirm_closing():
             # Closing runs on the WinForms thread: never wait for JavaScript here.
-            if api._contact_sending and not window.create_confirmation_dialog('Email đang gửi', 'Gmail đang xử lý yêu cầu. Đóng bây giờ có thể khiến kết quả chưa rõ. Bạn vẫn muốn đóng?'):
+            if api._contact_sending and not window.create_confirmation_dialog('Sending email', 'Gmail is processing the request. Closing now may leave the result unknown. Close anyway?'):
                 return False
-            if api._contact_dirty and not window.create_confirmation_dialog('Liên hệ chưa lưu', 'Bản nháp liên hệ có thay đổi chưa lưu. Đóng app sẽ bỏ các thay đổi đó. Bạn vẫn muốn đóng?'):
+            if api._contact_dirty and not window.create_confirmation_dialog('Unsaved contact', 'The contact draft has unsaved changes. Closing the app will discard them. Close anyway?'):
                 return False
-            if api._keywords_dirty and not window.create_confirmation_dialog("Từ khóa chưa lưu", "Bảng từ khóa có thay đổi chưa lưu. Đóng app sẽ bỏ các thay đổi đó. Bạn vẫn muốn đóng?"):
+            if api._keywords_dirty and not window.create_confirmation_dialog("Unsaved keywords", "The keyword table has unsaved changes. Closing the app will discard them. Close anyway?"):
                 return False
             if api._scan.snapshot()["status"] in ("running", "stopping"):
-                if not window.create_confirmation_dialog("Đóng YTB-BOT", "Lượt quét chưa xong. Đóng bây giờ có thể mất kết quả chưa lưu. Bạn vẫn muốn đóng?"):
+                if not window.create_confirmation_dialog("Close YTB-BOT", "The scan is still running. Closing now may lose unsaved results. Close anyway?"):
                     return False
                 api._scan.stop()
             return True
@@ -71,5 +71,5 @@ def main(on_started=None):
         logging.exception("Desktop startup failed")
         if os.name == "nt":
             ctypes.windll.user32.MessageBoxW(None,
-                f"Khong mo duoc YTB-BOT. Kiem tra Microsoft Edge WebView2 Runtime.\nChi tiet: {log_dir / 'desktop.log'}", "YTB-BOT", 0x10)
+                f"Could not open YTB-BOT. Check the Microsoft Edge WebView2 Runtime.\nDetails: {log_dir / 'desktop.log'}", "YTB-BOT", 0x10)
         raise

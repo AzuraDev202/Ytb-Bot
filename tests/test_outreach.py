@@ -43,13 +43,13 @@ class OutreachTests(unittest.TestCase):
         self.path = Path(self.temporary.name) / 'workspace.sqlite3'
         store = WorkspaceStore(self.path)
         run = store.begin_run(['topic'])
-        store.save_run(run, 'complete', [{'Channel ID': 'channel', 'Tên Kênh': 'Creator',
+        store.save_run(run, 'complete', [{'Channel ID': 'channel', 'Channel Name': 'Creator',
             'Email': 'creator@example.com', 'Facebook': 'https://facebook.com/creator'}])
         self.gmail = MagicMock()
         self.gmail.access.return_value = 'private-token'
         self.gmail.send.return_value = 'provider-id'
         self.outreach = Outreach(self.path, MemoryVault(), self.gmail)
-        self.payload = {'account_id': 'account', 'recipient': 'creator@example.com', 'subject': 'Hợp tác', 'body': 'Xin chào!\nNội dung trao đổi.'}
+        self.payload = {'account_id': 'account', 'recipient': 'creator@example.com', 'subject': 'Collaboration \u2603', 'body': 'Hello!\nDiscussion details.'}
 
     def test_draft_round_trip_and_single_submission_per_revision(self):
         saved = self.outreach.save('channel', self.payload)
@@ -58,7 +58,7 @@ class OutreachTests(unittest.TestCase):
         reopened = Outreach(self.path, self.outreach.vault, self.gmail)
         self.assertEqual(reopened.context('channel')['draft']['body'], self.payload['body'])
         self.assertEqual(reopened.send('channel', saved['revision'])['status'], 'accepted')
-        self.gmail.send.assert_called_once_with('private-token', 'sender@example.com', 'creator@example.com', 'Hợp tác', self.payload['body'])
+        self.gmail.send.assert_called_once_with('private-token', 'sender@example.com', 'creator@example.com', 'Collaboration \u2603', self.payload['body'])
         with self.assertRaises(ValueError):
             reopened.send('channel', saved['revision'])
         self.assertEqual(self.gmail.send.call_count, 1)
@@ -137,14 +137,14 @@ class OutreachTests(unittest.TestCase):
         response = MagicMock()
         response.__enter__.return_value.read.return_value = b'{"id":"message-123"}'
         with patch('ytb_bot.desktop.gmail.urlopen', return_value=response) as request:
-            result = Gmail().send('secret', 'sender@example.com', 'creator@example.com', 'Hợp tác', 'Xin chào!')
+            result = Gmail().send('secret', 'sender@example.com', 'creator@example.com', 'Collaboration \u2603', 'Hello!')
         self.assertEqual(result, 'message-123')
         sent = request.call_args.args[0]
         self.assertEqual(sent.full_url, 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send')
         raw = base64.urlsafe_b64decode(json.loads(sent.data)['raw'])
         message = BytesParser(policy=policy.default).parsebytes(raw)
-        self.assertEqual(str(message['Subject']), 'Hợp tác')
-        self.assertEqual(message.get_content().strip(), 'Xin chào!')
+        self.assertEqual(str(message['Subject']), 'Collaboration \u2603')
+        self.assertEqual(message.get_content().strip(), 'Hello!')
         self.assertEqual(message['From'], 'sender@example.com')
         self.assertIsNone(message['Bcc'])
 

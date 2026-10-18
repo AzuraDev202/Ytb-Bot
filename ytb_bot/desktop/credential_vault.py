@@ -15,7 +15,7 @@ class _Blob(ctypes.Structure):
 
 def _protect(data, decrypt=False):
     if os.name != 'nt':
-        raise RuntimeError('Kết nối Gmail hiện hỗ trợ bảo vệ tài khoản trên Windows.')
+        raise RuntimeError('Gmail account protection is currently supported on Windows.')
     buffer = ctypes.create_string_buffer(data)
     source = _Blob(len(data), ctypes.cast(buffer, ctypes.POINTER(ctypes.c_ubyte)))
     output = _Blob()
@@ -28,7 +28,7 @@ def _protect(data, decrypt=False):
                          ctypes.c_void_p, ctypes.c_void_p, wintypes.DWORD, ctypes.POINTER(_Blob)]
     function.restype = wintypes.BOOL
     if not function(ctypes.byref(source), None, None, None, None, 1, ctypes.byref(output)):
-        raise RuntimeError('Không mở được kho đăng nhập của tài khoản Windows này.')
+        raise RuntimeError('Unable to open the credential vault for this Windows account.')
     try:
         return ctypes.string_at(output.data, output.size)
     finally:
@@ -62,7 +62,7 @@ class CredentialVault:
                     break
                 except OSError:
                     if time.monotonic() >= deadline:
-                        raise TimeoutError('Kho đăng nhập đang được cửa sổ khác sử dụng. Thử lại sau.') from None
+                        raise TimeoutError('The credential vault is in use by another window. Try again later.') from None
                     time.sleep(0.025)
             try:
                 yield

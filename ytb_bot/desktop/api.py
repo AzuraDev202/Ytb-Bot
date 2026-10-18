@@ -48,7 +48,7 @@ class DesktopAPI:
         self._release = None
         self._staged_update = None
         self._update_committing = False
-        self._update = {"status": "idle", "message": "Kiểm tra bản cập nhật khi bạn cần.", "progress": 0}
+        self._update = {"status": "idle", "message": "Check for updates whenever you need.", "progress": 0}
 
     @reply
     def get_bootstrap(self):
@@ -66,10 +66,10 @@ class DesktopAPI:
     @reply
     def set_keywords_dirty(self, dirty):
         if not isinstance(dirty, bool):
-            raise ValueError("Trạng thái chỉnh sửa không hợp lệ.")
+            raise ValueError("Invalid editing state.")
         with self._lock:
             if self._update_committing:
-                raise ValueError('Ứng dụng đang khởi động lại để cập nhật.')
+                raise ValueError('The app is restarting to install an update.')
             self._keywords_dirty = dirty
         return True
 
@@ -109,10 +109,10 @@ class DesktopAPI:
     @reply
     def set_contact_dirty(self, dirty):
         if not isinstance(dirty, bool):
-            raise ValueError('Trạng thái bản nháp không hợp lệ.')
+            raise ValueError('Invalid draft state.')
         with self._lock:
             if self._update_committing:
-                raise ValueError('Ứng dụng đang khởi động lại để cập nhật.')
+                raise ValueError('The app is restarting to install an update.')
             self._contact_dirty = dirty
         return True
 
@@ -120,9 +120,9 @@ class DesktopAPI:
     def send_contact_mail(self, channel_id, revision):
         with self._lock:
             if self._update_committing:
-                raise ValueError('Ứng dụng đang khởi động lại để cập nhật.')
+                raise ValueError('The app is restarting to install an update.')
             if self._contact_sending:
-                raise ValueError('Một email đang được gửi. Hãy chờ kết quả.')
+                raise ValueError('An email is being sent. Please wait for the result.')
             self._contact_sending = True
         try:
             return self._outreach.send(channel_id, revision)
@@ -141,7 +141,7 @@ class DesktopAPI:
     @reply
     def save_preferences(self, theme, motion):
         if theme not in ("dark", "light") or not isinstance(motion, bool):
-            raise ValueError("Tùy chọn giao diện không hợp lệ.")
+            raise ValueError("Invalid display preferences.")
         with self._lock:
             path = APP_DIR / "studio-settings.json"
             temporary = path.with_suffix(".tmp")
@@ -158,20 +158,20 @@ class DesktopAPI:
     def start_scan(self, settings):
         with self._lock:
             if self._update["status"] == "downloading":
-                raise ValueError("Hãy chờ cập nhật hoàn tất trước khi quét.")
+                raise ValueError("Wait for the update to finish before scanning.")
             key = str(settings.get("api_key", "")).strip() or self._key
             words = settings.get("keywords", [])
             if not isinstance(words, list) or not all(isinstance(word, str) for word in words):
-                raise ValueError("Danh sách từ khóa không hợp lệ.")
+                raise ValueError("Invalid keyword list.")
             # Validate before changing the saved secret or creating a worker.
             days, views, pages = (int(settings.get(name, default)) for name, default in
                                  [("max_days", 90), ("min_views", 500), ("max_pages", 2)])
             if not key or not any(word.strip() for word in words):
-                raise ValueError("Nhập API Key và ít nhất một từ khóa.")
+                raise ValueError("Enter an API key and at least one keyword.")
             if days < 1 or views < 0 or not 1 <= pages <= 5:
-                raise ValueError("Tuổi kênh từ 1, lượt xem từ 0, độ sâu từ 1 đến 5 trang.")
+                raise ValueError("Channel age must be at least 1 day, views at least 0, and depth between 1 and 5 pages.")
             if self._scan.snapshot()["status"] in ("running", "stopping"):
-                raise ValueError("Một lượt quét đang chạy.")
+                raise ValueError("A scan is already running.")
             if settings.get("api_key", "").strip():
                 set_key(ENV_FILE, "YOUTUBE_API_KEY", key)
                 self._key = key
@@ -198,9 +198,9 @@ class DesktopAPI:
     @reply
     def open_results(self, run_id=None):
         run = self._store.result(run_id)
-        meta = Workbook().from_rows(run["rows"], f"Lượt quét #{run['id']}", columns=[
-            "Tên Kênh", "Channel ID", "URL Kênh", "Từ Khóa Quét", "Ngày Tạo", "Tuổi Kênh (Ngày)",
-            "Subscribers", "Tổng Lượt Xem", "Tổng Video", "Video Gần Nhất", "Quốc Gia", *CONTACT_COLUMNS])
+        meta = Workbook().from_rows(run["rows"], f"Scan #{run['id']}", columns=[
+            "Channel Name", "Channel ID", "Channel URL", "Search Keyword", "Created Date", "Channel Age (Days)",
+            "Subscribers", "Total Views", "Total Videos", "Latest Video", "Country", *CONTACT_COLUMNS])
         return {**meta, "run_id": run["id"]}
 
     @reply
@@ -208,8 +208,8 @@ class DesktopAPI:
         run = self._store.result(int(sheet.rsplit("#", 1)[1]))
         book = Workbook()
         book.from_rows(run["rows"], sheet, columns=[
-            "Tên Kênh", "Channel ID", "URL Kênh", "Từ Khóa Quét", "Ngày Tạo", "Tuổi Kênh (Ngày)",
-            "Subscribers", "Tổng Lượt Xem", "Tổng Video", "Video Gần Nhất", "Quốc Gia", *CONTACT_COLUMNS])
+            "Channel Name", "Channel ID", "Channel URL", "Search Keyword", "Created Date", "Channel Age (Days)",
+            "Subscribers", "Total Views", "Total Videos", "Latest Video", "Country", *CONTACT_COLUMNS])
         return book.page(sheet, query, page, sort, descending)
 
     @reply
@@ -224,7 +224,7 @@ class DesktopAPI:
     def open_channel(self, url):
         parsed = urlparse(url)
         if parsed.scheme != "https" or parsed.hostname not in ("www.youtube.com", "youtube.com"):
-            raise ValueError("Chỉ mở địa chỉ kênh YouTube HTTPS.")
+            raise ValueError("Only HTTPS YouTube channel URLs can be opened.")
         webbrowser.open(url)
         return True
 
@@ -233,7 +233,7 @@ class DesktopAPI:
         with self._lock:
             if self._update["status"] in ("checking", "downloading"):
                 return False
-            self._update = {"status": "checking", "message": "Đang kiểm tra…", "progress": 0}
+            self._update = {"status": "checking", "message": "Checking…", "progress": 0}
 
         def check():
             try:
@@ -241,7 +241,7 @@ class DesktopAPI:
                 with self._lock:
                     self._release = release
                     self._update.update(status="available" if release else "current",
-                                        message=f"Có bản cập nhật v{release.version}" if release else "Bạn đang dùng bản mới nhất.")
+                                        message=f"Update available: v{release.version}" if release else "You are using the latest version.")
             except Exception as error:
                 with self._lock:
                     self._update.update(status="error", message=str(error))
@@ -252,17 +252,17 @@ class DesktopAPI:
     def install_available_update(self):
         with self._lock:
             if self._keywords_dirty:
-                raise ValueError("Lưu bảng từ khóa trước khi cập nhật và khởi động lại.")
+                raise ValueError("Save the keyword table before updating and restarting.")
             if self._contact_dirty:
-                raise ValueError('Lưu bản nháp liên hệ trước khi cập nhật và khởi động lại.')
+                raise ValueError('Save the contact draft before updating and restarting.')
             if self._contact_sending:
-                raise ValueError('Chờ Gmail trả kết quả gửi trước khi cập nhật.')
+                raise ValueError('Wait for Gmail to return the send result before updating.')
             if self._scan.snapshot()["status"] in ("running", "stopping"):
-                raise ValueError("Chờ lượt quét hoàn tất trước khi cập nhật.")
+                raise ValueError("Wait for the scan to finish before updating.")
             if not self._release or self._update["status"] == "downloading":
-                raise ValueError("Hãy kiểm tra bản cập nhật trước.")
+                raise ValueError("Check for updates first.")
             release = self._release
-            self._update.update(status="downloading", message="Đang tải bản cập nhật…", progress=0)
+            self._update.update(status="downloading", message="Downloading update…", progress=0)
 
         def progress(value):
             with self._lock:
@@ -294,7 +294,7 @@ class DesktopAPI:
                 staged.unlink(missing_ok=True)
                 self._staged_update = None
                 self._update.update(status='available', progress=0,
-                                    message='Đã hủy khởi động lại. Bạn có thể cập nhật lại khi sẵn sàng.')
+                                    message='Restart canceled. You can update again when ready.')
                 return False
             try:
                 self._update_committing = True

@@ -8,10 +8,10 @@ import type { Notice } from './ConfirmDialog';
 
 type Run = {id: number; created: string; status: string; count: number; error: string};
 const labels: Record<string, string> = {
-  running: 'Đang quét / chưa kết thúc',
-  complete: 'Hoàn tất',
-  stopped: 'Đã dừng',
-  error: 'Có lỗi',
+  running: 'Scanning / unfinished',
+  complete: 'Completed',
+  stopped: 'Stopped',
+  error: 'Error',
 };
 
 export function ResultsView({status, notify, onDiscover}: {
@@ -43,7 +43,7 @@ export function ResultsView({status, notify, onDiscover}: {
       })
       .catch(error => {
         if (!cancelled) {
-          setListError('Chưa đọc được lịch sử. Nhấn Làm mới để thử lại.');
+          setListError('Could not read the history. Click Refresh to try again.');
           notify({text: String(error), error: true});
         }
       })
@@ -61,7 +61,7 @@ export function ResultsView({status, notify, onDiscover}: {
       .then(value => {if (!cancelled) setMeta(value);})
       .catch(error => {
         if (!cancelled) {
-          setOpenError('Chưa mở được lượt quét này. Nhấn Làm mới để thử lại.');
+          setOpenError('Could not open this scan. Click Refresh to try again.');
           notify({text: String(error), error: true});
         }
       })
@@ -74,21 +74,21 @@ export function ResultsView({status, notify, onDiscover}: {
 
   return <div className="results-workspace">
     <section className="panel history-toolbar">
-      <div><span className="eyebrow">LỊCH SỬ CỦA BẠN</span><h2>Chọn một lượt quét</h2></div>
+      <div><span className="eyebrow">YOUR HISTORY</span><h2>Choose a scan</h2></div>
       <div className="history-select">
-        <label>Lượt quét<select aria-label="Lượt quét" value={selected} disabled={loading && !runs.length} onChange={event => setSelected(event.target.value)}>
-          <option value="" disabled>Chọn lượt quét</option>
-          {runs.map(item => <option key={item.id} value={item.id}>#{item.id} · {new Date(item.created).toLocaleString('vi-VN')} · {item.count} kênh · {labels[item.status] || item.status}</option>)}
+        <label>Scan<select aria-label="Scan" value={selected} disabled={loading && !runs.length} onChange={event => setSelected(event.target.value)}>
+          <option value="" disabled>Select scan</option>
+          {runs.map(item => <option key={item.id} value={item.id}>#{item.id} · {new Date(item.created).toLocaleString('en-US')} · {item.count} channels · {labels[item.status] || item.status}</option>)}
         </select></label>
-        <button className="button secondary" disabled={loading || opening} onClick={() => setRefresh(value => value + 1)}><RefreshCw size={15} className={loading ? 'spin' : ''}/> Làm mới</button>
+        <button className="button secondary" disabled={loading || opening} onClick={() => setRefresh(value => value + 1)}><RefreshCw size={15} className={loading ? 'spin' : ''}/> Refresh</button>
       </div>
-      {run && <span className={`history-status ${run.status}`}><CheckCircle2 size={14}/>{labels[run.status] || run.status} · {run.count.toLocaleString('vi-VN')} kênh đã lưu</span>}
-      {run?.error && <p role="alert" className="field-error">Lượt quét gặp lỗi: {run.error}. Các kênh đã thu thập vẫn được giữ.</p>}
+      {run && <span className={`history-status ${run.status}`}><CheckCircle2 size={14}/>{labels[run.status] || run.status} · {run.count.toLocaleString('en-US')} saved channels</span>}
+      {run?.error && <p role="alert" className="field-error">Scan failed: {run.error}. Previously collected channels are preserved.</p>}
     </section>
     {failure ? <section className="panel table-empty" role="alert">{failure}</section>
       : meta ? <WorkbookView meta={meta} onOpen={() => {}} onImport={() => {}} notify={notify} readOnly onContact={setContactChannel}/>
-      : loading || opening || selected ? <section className="panel"><TableLoading label="Đang mở lịch sử khám phá…"/></section>
-      : <section className="panel empty-state"><div className="empty-illustration"><History size={32}/></div><h3>Chưa có lượt khám phá nào</h3><p>Chọn một vài từ khóa để bắt đầu. Những kênh tìm được sẽ được lưu tại đây để bạn xem lại.</p><button className="button primary" onClick={onDiscover}>Bắt đầu lượt đầu tiên</button></section>}
+      : loading || opening || selected ? <section className="panel"><TableLoading label="Loading discovery history…"/></section>
+      : <section className="panel empty-state"><div className="empty-illustration"><History size={32}/></div><h3>No discovery scans yet</h3><p>Choose a few keywords to start. Discovered channels will be saved here for you to revisit.</p><button className="button primary" onClick={onDiscover}>Start your first scan</button></section>}
     <ContactComposer channelId={contactChannel} onClose={() => setContactChannel(null)} notify={notify}/>
   </div>;
 }

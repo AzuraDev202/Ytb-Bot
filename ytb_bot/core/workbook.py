@@ -25,12 +25,12 @@ class Workbook:
 
     def _frame(self, sheet):
         if sheet not in self._sheets:
-            raise ValueError("Chọn file và sheet Excel hợp lệ.")
+            raise ValueError("Select a valid Excel file and worksheet.")
         if sheet not in self._frames:
             self._frames[sheet] = pd.read_excel(self._path, sheet_name=sheet)
         return self._frames[sheet]
 
-    def from_rows(self, rows, name="Kết quả", columns=None):
+    def from_rows(self, rows, name="Results", columns=None):
         """Present saved application data through the same paged table interface."""
         with self._lock:
             self._path = None

@@ -33,24 +33,24 @@ class ExcelViewer(ctk.CTkFrame):
         top = ctk.CTkFrame(self, fg_color="transparent")
         top.grid(row=0, column=0, sticky="ew", pady=(0, 8))
         top.grid_columnconfigure(1, weight=1)
-        t.button(top, "Mở file Excel", self.open_file, width=125).grid(row=0, column=0)
-        self.filename = t.label(top, "Chưa mở file Excel", anchor="w")
+        t.button(top, "Open Excel file", self.open_file, width=125).grid(row=0, column=0)
+        self.filename = t.label(top, "No Excel file open", anchor="w")
         self.filename.grid(row=0, column=1, padx=12, sticky="ew")
 
         options = ctk.CTkFrame(self, fg_color="transparent")
         options.grid(row=1, column=0, sticky="ew", pady=(0, 8))
         options.grid_columnconfigure((0, 1), weight=1)
-        self.sheet_menu = ctk.CTkOptionMenu(options, values=["Chọn sheet"], state="disabled", height=36,
+        self.sheet_menu = ctk.CTkOptionMenu(options, values=["Select sheet"], state="disabled", height=36,
                                            fg_color=t.color("inset"), button_color=t.color("hover"), text_color=t.color("text"),
                                            command=self._select_sheet, dynamic_resizing=False)
         self.sheet_menu.grid(row=0, column=0, padx=(0, 8), sticky="ew")
-        self.column_menu = ctk.CTkOptionMenu(options, values=["Chọn cột từ khóa"], state="disabled", height=36,
+        self.column_menu = ctk.CTkOptionMenu(options, values=["Select keyword column"], state="disabled", height=36,
                                             fg_color=t.color("inset"), button_color=t.color("hover"), text_color=t.color("text"),
                                             dynamic_resizing=False)
         self.column_menu.grid(row=0, column=1, padx=(0, 8), sticky="ew")
-        self.import_button = t.button(options, "Dùng cột làm từ khóa", self.import_keywords, state="disabled", primary=True)
+        self.import_button = t.button(options, "Use column as keywords", self.import_keywords, state="disabled", primary=True)
         self.import_button.grid(row=0, column=2)
-        self.status = t.label(self, "Mở .xlsx hoặc .xls để xem dữ liệu ngay trong app.", muted=True, size=12,
+        self.status = t.label(self, "Open an .xlsx or .xls file to view data in the app.", muted=True, size=12,
                                     anchor="w", wraplength=600, justify="left")
         self.status.grid(row=2, column=0, sticky="ew", pady=(0, 8))
 
@@ -67,26 +67,26 @@ class ExcelViewer(ctk.CTkFrame):
             fg_color=t.color("surface"), button_color=t.color("hover"), button_hover_color=t.color("border"))
         horizontal.grid(row=1, column=0, sticky="ew")
         self.table.configure(yscrollcommand=vertical.set, xscrollcommand=horizontal.set)
-        self.empty_label = t.label(table_frame, "Chưa có dữ liệu\nMở file Excel hoặc quét kênh để bắt đầu.",
+        self.empty_label = t.label(table_frame, "No data yet\nOpen an Excel file or scan channels to get started.",
                                     size=14, muted=True, fg_color=t.color("surface"))
         self.empty_label.place(relx=0.5, rely=0.5, anchor="center")
         self.table.bind("<Control-c>", lambda event: (self.copy_selected(), "break")[1])
         bottom = ctk.CTkFrame(self, fg_color="transparent")
         bottom.grid(row=4, column=0, sticky="ew", pady=(8, 0))
         bottom.grid_columnconfigure(1, weight=1)
-        self.previous = t.button(bottom, "Trang trước", lambda: self._move_page(-1), width=110, state="disabled")
+        self.previous = t.button(bottom, "Previous page", lambda: self._move_page(-1), width=110, state="disabled")
         self.previous.grid(row=0, column=0)
-        self.page_label = t.label(bottom, "0 dòng", size=12, muted=True)
+        self.page_label = t.label(bottom, "0 rows", size=12, muted=True)
         self.page_label.grid(row=0, column=1)
-        self.next = t.button(bottom, "Trang sau", lambda: self._move_page(1), width=110, state="disabled")
+        self.next = t.button(bottom, "Next page", lambda: self._move_page(1), width=110, state="disabled")
         self.next.grid(row=0, column=2)
         search_row = ctk.CTkFrame(self, fg_color="transparent")
         search_row.grid(row=2, column=0, sticky="ew", pady=(0, 8))
         search_row.grid_columnconfigure(1, weight=1)
-        t.label(search_row, "Tìm trong bảng", size=12, bold=True).grid(row=0, column=0, padx=(0, 8))
-        self.search_entry = t.entry(search_row, textvariable=self.search, placeholder_text="Tên kênh, từ khóa, lượt xem…")
+        t.label(search_row, "Search table", size=12, bold=True).grid(row=0, column=0, padx=(0, 8))
+        self.search_entry = t.entry(search_row, textvariable=self.search, placeholder_text="Channel name, keyword, views…")
         self.search_entry.grid(row=0, column=1, sticky="ew")
-        t.button(search_row, "Sao chép dòng", self.copy_selected, width=120).grid(row=0, column=2, padx=(8, 0))
+        t.button(search_row, "Copy rows", self.copy_selected, width=120).grid(row=0, column=2, padx=(8, 0))
         self.status.grid(row=3, column=0, sticky="ew", pady=(0, 8))
         table_frame.grid(row=4, column=0, sticky="nsew")
         bottom.grid(row=5, column=0, sticky="ew", pady=(8, 0))
@@ -103,7 +103,7 @@ class ExcelViewer(ctk.CTkFrame):
 
     def open_file(self, path=None):
         if path is None:
-            path = filedialog.askopenfilename(parent=self.winfo_toplevel(), title="Mở file Excel",
+            path = filedialog.askopenfilename(parent=self.winfo_toplevel(), title="Open Excel file",
                                                filetypes=[("Excel", "*.xlsx *.xls")])
         if not path:
             return
@@ -117,7 +117,7 @@ class ExcelViewer(ctk.CTkFrame):
     def _load(self, sheet=None):
         self.request_id += 1
         request_id, path = self.request_id, self.path
-        self.status.configure(text="Đang đọc Excel…")
+        self.status.configure(text="Reading Excel…")
         self.sheet_menu.configure(state="disabled")
         self.column_menu.configure(state="disabled")
         self.import_button.configure(state="disabled")
@@ -128,8 +128,8 @@ class ExcelViewer(ctk.CTkFrame):
         self.search.set("")
         self.table.delete(*self.table.get_children())
         self.table.configure(columns=())
-        self.page_label.configure(text="Đang đọc…")
-        self.empty_label.configure(text="Đang đọc workbook…")
+        self.page_label.configure(text="Reading…")
+        self.empty_label.configure(text="Reading workbook…")
         self.empty_label.place(relx=0.5, rely=0.5, anchor="center")
 
         def read():
@@ -150,20 +150,20 @@ class ExcelViewer(ctk.CTkFrame):
                 if request_id != self.request_id:
                     continue
                 if error:
-                    self.status.configure(text="Không đọc được file. Hãy chọn lại file Excel hợp lệ.")
-                    self.page_label.configure(text="0 dòng")
-                    self.empty_label.configure(text="Không đọc được file Excel.\nHãy mở lại một file hợp lệ.")
-                    messagebox.showerror("Lỗi đọc Excel", error, parent=self.winfo_toplevel())
+                    self.status.configure(text="Unable to read the file. Select a valid Excel file.")
+                    self.page_label.configure(text="0 rows")
+                    self.empty_label.configure(text="Unable to read the Excel file.\nOpen a valid file.")
+                    messagebox.showerror("Excel read error", error, parent=self.winfo_toplevel())
                     continue
                 sheets, selected, self.data = result
                 self.sheet_menu.configure(values=sheets, state="normal")
                 self.sheet_menu.set(selected)
                 self.column_names = [f"{index + 1}. {name}" for index, name in enumerate(self.data.columns)]
-                self.column_menu.configure(values=self.column_names or ["Không có cột"],
+                self.column_menu.configure(values=self.column_names or ["No columns"],
                                              state="normal" if self.column_names else "disabled")
                 default = next((index for index, name in enumerate(self.data.columns)
                                 if str(name).strip().casefold() == "keyword"), 0)
-                self.column_menu.set(self.column_names[default] if self.column_names else "Không có cột")
+                self.column_menu.set(self.column_names[default] if self.column_names else "No columns")
                 self.import_button.configure(state="normal" if len(self.data) and self.column_names else "disabled")
                 self.page = 0
                 self._render()
@@ -208,11 +208,11 @@ class ExcelViewer(ctk.CTkFrame):
     def copy_selected(self):
         rows = [self.table.item(item, "values") for item in self.table.selection()]
         if not rows:
-            self.status.configure(text="Chọn một hoặc nhiều dòng trong bảng trước khi sao chép.")
+            self.status.configure(text="Select one or more table rows before copying.")
             return
         self.clipboard_clear()
         self.clipboard_append("\n".join("\t".join(row) for row in rows))
-        self.status.configure(text=f"Đã sao chép {len(rows)} dòng. Có thể dán vào Excel hoặc tài liệu khác.")
+        self.status.configure(text=f"Copied {len(rows)} rows. Paste them into Excel or another document.")
 
     def _set_appearance_mode(self, mode_string):
         super()._set_appearance_mode(mode_string)
@@ -253,11 +253,11 @@ class ExcelViewer(ctk.CTkFrame):
         if total:
             self.empty_label.place_forget()
         else:
-            self.empty_label.configure(text="Không có dòng phù hợp.\nThử từ tìm kiếm khác hoặc chọn sheet khác.")
+            self.empty_label.configure(text="No matching rows.\nTry another search term or select a different sheet.")
             self.empty_label.place(relx=0.5, rely=0.5, anchor="center")
         pages = max(1, math.ceil(total / self.PAGE_SIZE))
-        self.status.configure(text=f"{total:,} / {len(self.data):,} dòng · {len(columns)} cột · Bấm tiêu đề cột để sắp xếp. Nhập từ khóa luôn lấy toàn bộ cột.")
-        self.page_label.configure(text=f"Trang {self.page + 1}/{pages} · {total:,} dòng")
+        self.status.configure(text=f"{total:,} / {len(self.data):,} rows · {len(columns)} columns · Click a column header to sort. Keyword import always uses the entire column.")
+        self.page_label.configure(text=f"Page {self.page + 1}/{pages} · {total:,} rows")
         self.previous.configure(state="normal" if self.page else "disabled")
         self.next.configure(state="normal" if self.page + 1 < pages else "disabled")
 
@@ -268,9 +268,9 @@ class ExcelViewer(ctk.CTkFrame):
         keywords = list(dict.fromkeys(str(value).strip() for value in self.data.iloc[:, column].dropna()
                                       if str(value).strip()))
         if not keywords:
-            messagebox.showinfo("Nhập từ khóa", "Cột này không chứa từ khóa.", parent=self.winfo_toplevel())
+            messagebox.showinfo("Import keywords", "This column contains no keywords.", parent=self.winfo_toplevel())
             return
-        if not messagebox.askyesno("Nhập từ khóa", f"Thay danh sách từ khóa hiện tại bằng {len(keywords)} từ khóa từ cột này?",
+        if not messagebox.askyesno("Import keywords", f"Replace the current keyword list with {len(keywords)} keywords from this column?",
                                    parent=self.winfo_toplevel()):
             return
         self.on_import(keywords, str(self.path))

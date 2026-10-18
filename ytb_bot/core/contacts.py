@@ -3,7 +3,7 @@ import html
 import re
 from urllib.parse import urlsplit
 
-CONTACT_COLUMNS = ["Email", "Facebook", "Liên Hệ Khác"]
+CONTACT_COLUMNS = ["Email", "Facebook", "Other Contacts"]
 _EMAIL = re.compile(r"(?<![\w.+-])[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,63}(?![\w-])", re.I)
 _SOCIAL = re.compile(
     r"(?<![\w@./-])(?:https?://)?(?:(?:www|m)\.)?"

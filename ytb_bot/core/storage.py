@@ -4,6 +4,7 @@ import datetime as dt
 import json
 from pathlib import Path
 import sqlite3
+from ytb_bot.core.result_schema import normalize_result_row
 
 
 class WorkspaceStore:
@@ -32,11 +33,11 @@ class WorkspaceStore:
     def keywords(self):
         with self._connection() as db:
             row = db.execute("SELECT value FROM settings WHERE name='keywords'").fetchone()
-        return row[0] if row else "AI Automation\nAI Agent\ntạo video bằng AI"
+        return row[0] if row else "AI Automation\nAI Agent\nAI video creation"
 
     def save_keywords(self, text):
         if not isinstance(text, str) or len(text) > 2_000_000:
-            raise ValueError("Danh sách từ khóa không hợp lệ hoặc quá lớn.")
+            raise ValueError("The keyword list is invalid or too large.")
         with self._connection() as db:
             db.execute("INSERT INTO settings VALUES ('keywords', ?) ON CONFLICT(name) DO UPDATE SET value=excluded.value", (text,))
         return text
@@ -73,5 +74,6 @@ class WorkspaceStore:
             row = db.execute("SELECT * FROM runs ORDER BY id DESC LIMIT 1" if run_id is None else "SELECT * FROM runs WHERE id=?",
                              () if run_id is None else (int(run_id),)).fetchone()
         if row is None:
-            raise ValueError("Chưa có lượt quét. Hãy bắt đầu khám phá trước.")
-        return {**dict(row), "rows": json.loads(row["rows"]), "keywords": json.loads(row["keywords"])}
+            raise ValueError("No scans yet. Start a scan first.")
+        return {**dict(row), "rows": [normalize_result_row(item) for item in json.loads(row["rows"])],
+                "keywords": json.loads(row["keywords"])}

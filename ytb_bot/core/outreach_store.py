@@ -5,6 +5,7 @@ import sqlite3
 import uuid
 
 from ytb_bot.core.storage import WorkspaceStore
+from ytb_bot.core.result_schema import normalize_result_row
 
 
 class OutreachStore(WorkspaceStore):
@@ -27,8 +28,8 @@ class OutreachStore(WorkspaceStore):
             row = db.execute('''SELECT item.value FROM runs, json_each(runs.rows) AS item
                 WHERE json_extract(item.value, '$."Channel ID"') = ? ORDER BY runs.id DESC LIMIT 1''', (channel_id,)).fetchone()
         if not row:
-            raise ValueError('Không tìm thấy kênh trong lịch sử đã lưu.')
-        return json.loads(row[0])
+            raise ValueError('Channel not found in saved history.')
+        return normalize_result_row(json.loads(row[0]))
 
     def draft(self, channel_id):
         with self._connection() as db:
@@ -49,13 +50,13 @@ class OutreachStore(WorkspaceStore):
             db.execute('BEGIN IMMEDIATE')
             row = db.execute('SELECT payload,revision FROM contact_drafts WHERE channel_id=?', (channel_id,)).fetchone()
             if not row or row[1] != revision:
-                raise ValueError('Bản nháp đã thay đổi. Hãy lưu và xem lại trước khi gửi.')
+                raise ValueError('The draft has changed. Save and review it before sending.')
             attempt = uuid.uuid4().hex
             try:
                 db.execute('INSERT INTO mail_attempts(id,channel_id,revision,created,status,payload) VALUES (?,?,?,?,?,?)',
                     (attempt, channel_id, revision, dt.datetime.now(dt.timezone.utc).isoformat(), 'sending', row[0]))
             except sqlite3.IntegrityError:
-                raise ValueError('Bản nháp này đã có lần gửi. Kiểm tra lịch sử; chỉnh sửa và lưu bản mới nếu muốn gửi lại.') from None
+                raise ValueError('This draft already has a send attempt. Check its history; edit and save a new revision to send again.') from None
         return attempt, json.loads(row[0])
 
     def finish(self, attempt, status, message_id=''):

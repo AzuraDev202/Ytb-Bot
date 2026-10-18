@@ -34,7 +34,7 @@ class DashboardTests(unittest.TestCase):
 
         def change_theme():
             observations.append((self.app.state(), self.app.winfo_viewable()))
-            self.app.view.change_theme("Sáng")
+            self.app.view.change_theme("Light")
             self.app.after(250, finish)
 
         def finish():
@@ -56,21 +56,21 @@ class DashboardTests(unittest.TestCase):
         view.api_entry.delete(0, "end")
         with patch("ytb_bot.legacy_ui.desktop.set_key") as save:
             self.app.start_scan_thread()
-            self.assertIn("API Key", view.form_error.cget("text"))
+            self.assertIn("API key", view.form_error.cget("text"))
             save.assert_not_called()
         view.api_entry.insert(0, "test-api-key")
         view.max_age_entry.delete(0, "end")
         view.max_age_entry.insert(0, "-3")
         with patch("ytb_bot.legacy_ui.desktop.set_key") as save:
             self.app.start_scan_thread()
-            self.assertIn("Tuổi kênh", view.form_error.cget("text"))
+            self.assertIn("Channel age", view.form_error.cget("text"))
             save.assert_not_called()
         view.set_progress(0.5)
         self.assertEqual(view.progress_label.cget("text"), "50%")
-        view.change_theme("Sáng")
+        view.change_theme("Light")
         self.app.update()
         self.assertEqual(view.keywords(), ["AI", "video"])
-        view.change_theme("Tối")
+        view.change_theme("Dark")
 
     def test_resize_hides_filters_and_keeps_them_accessible(self):
         self.app.geometry("920x640")
@@ -86,7 +86,7 @@ class DashboardTests(unittest.TestCase):
         view.toggle_sidebar()
         self.app.update()
         self.assertTrue(view.grid_slaves(row=0, column=0))
-        self.assertEqual(view.sidebar_toggle.cget("text"), "Ẩn bộ lọc")
+        self.assertEqual(view.sidebar_toggle.cget("text"), "Hide filters")
 
     def test_stop_scan_saves_partial_results_and_updates_real_metrics(self):
         view = self.app.view
@@ -120,10 +120,10 @@ class DashboardTests(unittest.TestCase):
             self.app.start_scan_thread()
             self.app.run_scanner("test-api-key", ["first topic", "second topic"], 90, 500, 1)
             self.app._process_ui_events()
-            workbook = Path(directory) / "danh_sach_kenh_viral_moi.xlsx"
+            workbook = Path(directory) / "channel_results.xlsx"
             self.assertEqual(len(pd.read_excel(workbook)), 1)
             self.assertEqual(view.stat_values["matches"].cget("text"), "1")
             self.assertEqual(view.stat_values["completed"].cget("text"), "1 / 2")
-            self.assertEqual(view.state_badge.cget("text"), "ĐÃ DỪNG")
+            self.assertEqual(view.state_badge.cget("text"), "STOPPED")
             self.assertFalse(self.app.is_scanning)
             self.assertEqual(view.stop_btn.cget("state"), "disabled")

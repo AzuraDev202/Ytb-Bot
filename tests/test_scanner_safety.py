@@ -72,7 +72,7 @@ class ScannerSafetyTests(unittest.TestCase):
         try:
             sheet = workbook.active
             columns = {cell.value: cell.column for cell in sheet[1]}
-            for column, value in [('Tên Kênh', '=1+1'), ('Video Gần Nhất', '=1+2')]:
+            for column, value in [('Channel Name', '=1+1'), ('Latest Video', '=1+2')]:
                 cell = sheet.cell(2, columns[column])
                 self.assertEqual(cell.data_type, 's')
                 self.assertEqual(cell.value, value)
@@ -89,7 +89,7 @@ class ScannerSafetyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             with patch('ytb_bot.legacy_ui.desktop.APP_DIR', Path(directory)), patch('ytb_bot.legacy_ui.desktop.build', return_value=youtube):
                 YtbBotApp.run_scanner(app, 'key', ['one', 'two'], 90, 300, 1)
-            output = Path(directory) / 'danh_sach_kenh_viral_moi.xlsx'
+            output = Path(directory) / 'channel_results.xlsx'
             self.assertTrue(output.exists(), 'Accepted matches must survive a later API/network error')
             self.assert_titles_are_text(output)
             self.assertTrue(any(callback is app._scan_failed for callback, _ in list(app.ui_events.queue)))

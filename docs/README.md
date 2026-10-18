@@ -1,25 +1,25 @@
-# Tài liệu YTB-BOT
+# YTB-BOT Documentation
 
-Tài liệu được chia theo người đọc. [README sản phẩm](../README.md) là điểm bắt đầu cho người mới.
+Documentation is organized by audience. The [product README](../README.md) is the starting point for new users.
 
-## Người sử dụng
+## Users
 
-- [Hướng dẫn desktop](user/DESKTOP_GUIDE.md): từ khóa, kết quả, sao lưu và cập nhật.
-- [Liên hệ kênh và Gmail](user/CONTACT_COMPOSER.md): OAuth, bản nháp và lịch sử gửi.
+- [Desktop guide](user/DESKTOP_GUIDE.md): keywords, results, backups, and updates.
+- [Channel outreach and Gmail](user/CONTACT_COMPOSER.md): OAuth, drafts, and send history.
 
-## Đội phát triển và vận hành
+## Development and operations
 
-- [Phát triển và kiểm thử](engineering/DEVELOPMENT.md): chuẩn bị môi trường và lệnh thao tác.
-- [Kiến trúc và cách đặt file](engineering/ARCHITECTURE.md): trách nhiệm từng thư mục và luồng xử lý.
-- [Thiết kế giao diện](engineering/UI_DESIGN.md): bố cục, tương tác và kiểm tra trực quan.
-- [Build và phát hành](engineering/RELEASE.md): artifact, workflow và version.
+- [Development and testing](engineering/DEVELOPMENT.md): environment setup and operational commands.
+- [Architecture and file organization](engineering/ARCHITECTURE.md): directory responsibilities and processing flow.
+- [Interface design](engineering/UI_DESIGN.md): layout, interaction, and visual checks.
+- [Build and release](engineering/RELEASE.md): artifacts, workflows, and versions.
 
-## Sản phẩm
+## Product
 
-- [Chuẩn bị thương mại hóa](product/COMMERCIALIZATION.md): định vị tạm thời và việc cần hoàn thiện.
+- [Commercialization preparation](product/COMMERCIALIZATION.md): provisional positioning and remaining preparation.
 
-## Báo cáo theo thời điểm
+## Dated reports
 
-- [Review ngày 18/10/2026](reviews/PROJECT_REVIEW_2026-10-18.md): ghi nhận tại checkout được nêu trong báo cáo. Đây là ảnh chụp kết quả review, không phải danh sách lỗi hiện còn mở; các dòng mã và đường dẫn bên trong phản ánh thời điểm kiểm tra.
+- [Review dated October 18, 2026](reviews/PROJECT_REVIEW_2026-10-18.md): findings from the checkout identified in the report. This is a snapshot of review results, not a list of currently open issues. Its code locations and paths reflect the time of inspection.
 
-Hướng dẫn thao tác cần đi cùng mã nguồn tương ứng. Báo cáo lịch sử giữ trong `reviews/`; không dùng báo cáo cũ để khẳng định trạng thái kiểm thử của bản mới.
+Operational guides should match the corresponding source version. Historical reports belong in `reviews/`; do not use older reports to assert the testing status of a newer build.

@@ -7,7 +7,7 @@ async function contactFixture(page: Page, outcome = 'accepted', configured = tru
     const sender = {id: 'sender', email: 'me@example.com'};
     let ready = configured;
     let connected = configured;
-    api.results_page = async () => ({ok: true, data: {columns: ['Tên Kênh', 'Channel ID', 'Email', 'Facebook'], rows: [['Creator', 'creator', 'creator@example.com', 'https://facebook.com/creator']], page: 0, pages: 1, total: 1, original_total: 1}});
+    api.results_page = async () => ({ok: true, data: {columns: ['Channel Name', 'Channel ID', 'Email', 'Facebook'], rows: [['Creator', 'creator', 'creator@example.com', 'https://facebook.com/creator']], page: 0, pages: 1, total: 1, original_total: 1}});
     api.get_mail_state = async () => ({ok: true, data: {configured: ready, connecting: false, error: '', accounts: connected ? [sender] : []}});
     api.configure_gmail = async () => {ready = true; return api.get_mail_state();};
     api.connect_gmail = async () => {connected = true; return {ok: true, data: true};};
@@ -25,24 +25,24 @@ async function contactFixture(page: Page, outcome = 'accepted', configured = tru
     api.send_contact_mail = async (_channel, revision) => {
       localStorage.setItem('contact-send-count', String(Number(localStorage.getItem('contact-send-count') || 0) + 1));
       localStorage.setItem('contact-history', JSON.stringify([{id: 'attempt', revision, created: '2026-10-18T03:00:00Z', status: outcome, payload: JSON.parse(localStorage.getItem('contact-draft') || '{}'), message_id: outcome === 'accepted' ? 'gmail-message' : ''}]));
-      return {ok: true, data: {status: outcome, message: outcome === 'accepted' ? 'Gmail đã nhận yêu cầu gửi.' : 'Chưa rõ Gmail đã nhận thư hay chưa. Kiểm tra thư Đã gửi trong Gmail trước khi gửi lại.'}};
+      return {ok: true, data: {status: outcome, message: outcome === 'accepted' ? 'Gmail accepted the send request.' : 'It is unclear whether Gmail accepted the message. Check Sent mail in Gmail before trying again.'}};
     };
     api.open_social_contact = async (_channel, target) => {localStorage.setItem('contact-social', String(target)); return {ok: true, data: true};};
   }, {outcome, configured});
 }
 
 async function openContact(page: Page) {
-  await page.getByRole('button', {name: /Xem kết quả trong Bot/}).click();
-  await page.getByRole('button', {name: 'Xem đầy đủ dòng 1', exact: true}).click();
-  await page.getByRole('button', {name: 'Soạn liên hệ', exact: true}).click();
-  await expect(page.getByRole('dialog', {name: 'Soạn liên hệ', exact: true})).toBeVisible();
-  await expect(page.getByRole('combobox', {name: 'Liên hệ nhận', exact: true})).toBeVisible();
+  await page.getByRole('button', {name: /View results in the bot/}).click();
+  await page.getByRole('button', {name: 'View full row 1', exact: true}).click();
+  await page.getByRole('button', {name: 'Compose contact', exact: true}).click();
+  await expect(page.getByRole('dialog', {name: 'Compose contact', exact: true})).toBeVisible();
+  await expect(page.getByRole('combobox', {name: 'Recipient contact', exact: true})).toBeVisible();
 }
 
 test('scan status changes and history errors preserve an unsaved contact draft', async ({page}) => {
   await contactFixture(page);
   await openContact(page);
-  await page.getByRole('textbox', {name: 'Nội dung liên hệ'}).fill('Bản nháp cần giữ');
+  await page.getByRole('textbox', {name: 'Contact message'}).fill('Draft to preserve');
   await page.evaluate(() => {
     const api = window.pywebview!.api;
     const previous = api.get_state;
@@ -53,30 +53,30 @@ test('scan status changes and history errors preserve an unsaved contact draft',
     api.list_results = async () => ({ok: false, error: 'Temporary history failure'});
   });
   await expect(page.getByRole('alert').filter({hasText: 'Temporary history failure'})).toBeVisible();
-  await expect(page.getByRole('dialog', {name: 'Soạn liên hệ', exact: true})).toBeVisible();
-  await expect(page.getByRole('textbox', {name: 'Nội dung liên hệ'})).toHaveValue('Bản nháp cần giữ');
+  await expect(page.getByRole('dialog', {name: 'Compose contact', exact: true})).toBeVisible();
+  await expect(page.getByRole('textbox', {name: 'Contact message'})).toHaveValue('Draft to preserve');
   await page.keyboard.press('Escape');
-  await expect(page.getByRole('button', {name: 'Lưu và đóng'})).toBeVisible();
+  await expect(page.getByRole('button', {name: 'Save and close'})).toBeVisible();
 });
 
 test('contact composer saves drafts, previews sender and sends only after explicit confirmation', async ({page}) => {
   await page.setViewportSize({width: 1280, height: 720});
   await contactFixture(page);
   await openContact(page);
-  await page.getByRole('textbox', {name: 'Tiêu đề email'}).fill('Hợp tác cùng Creator');
-  await page.getByRole('textbox', {name: 'Nội dung liên hệ'}).fill('Xin chào!\nMình muốn trao đổi về dự án.');
-  await page.getByRole('button', {name: 'Lưu bản nháp', exact: true}).click();
-  await page.getByRole('button', {name: 'Đóng hộp soạn'}).click();
-  await page.getByRole('button', {name: 'Xem đầy đủ dòng 1', exact: true}).click();
-  await page.getByRole('button', {name: 'Soạn liên hệ', exact: true}).click();
-  await expect(page.getByRole('textbox', {name: 'Nội dung liên hệ'})).toHaveValue('Xin chào!\nMình muốn trao đổi về dự án.');
+  await page.getByRole('textbox', {name: 'Email subject'}).fill('Collaboration with Creator');
+  await page.getByRole('textbox', {name: 'Contact message'}).fill('Hello!\nI would like to discuss a project.');
+  await page.getByRole('button', {name: 'Save draft', exact: true}).click();
+  await page.getByRole('button', {name: 'Close composer'}).click();
+  await page.getByRole('button', {name: 'View full row 1', exact: true}).click();
+  await page.getByRole('button', {name: 'Compose contact', exact: true}).click();
+  await expect(page.getByRole('textbox', {name: 'Contact message'})).toHaveValue('Hello!\nI would like to discuss a project.');
   await page.screenshot({animations: 'disabled', path: '../artifacts/ui/contact-composer.png'});
-  await page.getByRole('button', {name: 'Xem lại email', exact: true}).click();
-  await expect(page.getByRole('region', {name: 'Xem lại email'})).toContainText('me@example.com');
+  await page.getByRole('button', {name: 'Review email', exact: true}).click();
+  await expect(page.getByRole('region', {name: 'Review email'})).toContainText('me@example.com');
   expect(await page.evaluate(() => localStorage.getItem('contact-send-count'))).toBeNull();
-  await page.getByRole('button', {name: 'Gửi email', exact: true}).click();
-  await expect(page.getByRole('status').filter({hasText: 'Gmail đã nhận yêu cầu gửi.'})).toBeVisible();
-  await expect(page.getByRole('button', {name: 'Gửi email', exact: true})).toBeDisabled();
+  await page.getByRole('button', {name: 'Send email', exact: true}).click();
+  await expect(page.getByRole('status').filter({hasText: 'Gmail accepted the send request.'})).toBeVisible();
+  await expect(page.getByRole('button', {name: 'Send email', exact: true})).toBeDisabled();
   expect(await page.evaluate(() => localStorage.getItem('contact-send-count'))).toBe('1');
 });
 
@@ -84,31 +84,31 @@ test('contact composer handles unsaved drafts, uncertain delivery and narrow win
   await page.setViewportSize({width: 375, height: 720});
   await contactFixture(page, 'unknown');
   await openContact(page);
-  await page.getByRole('textbox', {name: 'Tiêu đề email'}).fill('Hello');
-  await page.getByRole('textbox', {name: 'Nội dung liên hệ'}).fill('Message');
+  await page.getByRole('textbox', {name: 'Email subject'}).fill('Hello');
+  await page.getByRole('textbox', {name: 'Contact message'}).fill('Message');
   await page.keyboard.press('Escape');
-  await expect(page.getByRole('button', {name: 'Lưu và đóng'})).toBeVisible();
-  await page.getByRole('button', {name: 'Tiếp tục soạn'}).click();
-  const box = await page.getByRole('dialog', {name: 'Soạn liên hệ', exact: true}).boundingBox();
+  await expect(page.getByRole('button', {name: 'Save and close'})).toBeVisible();
+  await page.getByRole('button', {name: 'Keep editing'}).click();
+  const box = await page.getByRole('dialog', {name: 'Compose contact', exact: true}).boundingBox();
   expect(box!.x + box!.width).toBeLessThanOrEqual(375);
-  await page.getByRole('button', {name: 'Xem lại email', exact: true}).click();
-  await page.getByRole('button', {name: 'Gửi email', exact: true}).click();
-  await expect(page.getByRole('status').filter({hasText: 'Chưa rõ Gmail'})).toBeVisible();
-  await expect(page.getByRole('button', {name: 'Gửi email', exact: true})).toBeDisabled();
+  await page.getByRole('button', {name: 'Review email', exact: true}).click();
+  await page.getByRole('button', {name: 'Send email', exact: true}).click();
+  await expect(page.getByRole('status').filter({hasText: 'Unclear whether Gmail'})).toBeVisible();
+  await expect(page.getByRole('button', {name: 'Send email', exact: true})).toBeDisabled();
 });
 
 test('social contact handoff and first-time Gmail setup stay separate from sending email', async ({page}) => {
   await contactFixture(page, 'accepted', false);
   await openContact(page);
-  await expect(page.getByRole('button', {name: 'Kết nối Gmail', exact: true})).toBeDisabled();
-  await page.getByRole('button', {name: 'Nhập file OAuth JSON', exact: true}).click();
-  await expect(page.getByRole('button', {name: 'Kết nối Gmail', exact: true})).toBeEnabled();
-  await page.getByRole('button', {name: 'Kết nối Gmail', exact: true}).click();
-  await expect(page.getByRole('combobox', {name: 'Tài khoản gửi'}).getByRole('option', {name: 'me@example.com'})).toBeAttached();
-  await page.getByRole('combobox', {name: 'Liên hệ nhận', exact: true}).selectOption('https://facebook.com/creator');
-  await expect(page.getByRole('textbox', {name: 'Tiêu đề email'})).toHaveCount(0);
-  await page.getByRole('textbox', {name: 'Nội dung liên hệ'}).fill('Hello on Facebook');
-  await page.getByRole('button', {name: 'Mở liên hệ', exact: true}).click();
+  await expect(page.getByRole('button', {name: 'Connect Gmail', exact: true})).toBeDisabled();
+  await page.getByRole('button', {name: 'Import OAuth JSON file', exact: true}).click();
+  await expect(page.getByRole('button', {name: 'Connect Gmail', exact: true})).toBeEnabled();
+  await page.getByRole('button', {name: 'Connect Gmail', exact: true}).click();
+  await expect(page.getByRole('combobox', {name: 'Sender account'}).getByRole('option', {name: 'me@example.com'})).toBeAttached();
+  await page.getByRole('combobox', {name: 'Recipient contact', exact: true}).selectOption('https://facebook.com/creator');
+  await expect(page.getByRole('textbox', {name: 'Email subject'})).toHaveCount(0);
+  await page.getByRole('textbox', {name: 'Contact message'}).fill('Hello on Facebook');
+  await page.getByRole('button', {name: 'Open contact', exact: true}).click();
   await expect.poll(() => page.evaluate(() => localStorage.getItem('contact-social'))).toBe('https://facebook.com/creator');
   expect(await page.evaluate(() => localStorage.getItem('contact-send-count'))).toBeNull();
 });
@@ -117,26 +117,26 @@ test('wide result tables keep trailing fields reachable inside the workspace', a
   await page.setViewportSize({width: 1280, height: 720});
   await page.evaluate(() => {
     window.pywebview!.api.results_page = async () => ({ok: true, data: {
-      columns: ['Tên Kênh', 'Channel ID', 'URL Kênh', 'Từ Khóa Quét', 'Ngày Tạo', 'Tuổi Kênh (Ngày)', 'Subscribers', 'Tổng Lượt Xem', 'Tổng Video', 'Video Gần Nhất', 'Email', 'Facebook', 'Liên Hệ Khác'],
+      columns: ['Channel Name', 'Channel ID', 'Channel URL', 'Search Keyword', 'Created Date', 'Channel Age (Days)', 'Subscribers', 'Total Views', 'Total Videos', 'Latest Video', 'Email', 'Facebook', 'Other Contacts'],
       rows: [['A channel with a long name', 'UC' + 'a'.repeat(22), 'https://www.youtube.com/channel/UC' + 'a'.repeat(22), 'AI Agent', '2026-10-06', 12, 23, 123456, 18, 'A detailed video title '.repeat(16), 'hello@example.com', 'https://facebook.com/creator', 'https://t.me/myteam']],
       page: 0, pages: 1, total: 1, original_total: 1,
     }});
   });
-  await page.getByRole('button', {name: /Xem kết quả trong Bot/}).click();
-  await expect(page.getByRole('columnheader', {name: 'Video Gần Nhất'})).toBeVisible();
+  await page.getByRole('button', {name: /View results in the bot/}).click();
+  await expect(page.getByRole('columnheader', {name: 'Latest Video'})).toBeVisible();
   const bounds = await page.locator('.workbook-panel .table-scroll').evaluate(element => {
     const rect = element.getBoundingClientRect();
     return {right: rect.right, width: rect.width, viewport: innerWidth, scrollable: element.scrollWidth > element.clientWidth};
   });
   expect(bounds.right).toBeLessThanOrEqual(bounds.viewport);
   expect(bounds.scrollable).toBe(true);
-  await page.getByRole('button', {name: 'Cuộn sang phải', exact: true}).click();
+  await page.getByRole('button', {name: 'Scroll right', exact: true}).click();
   await expect.poll(() => page.locator('.workbook-panel .table-scroll').evaluate(element => element.scrollLeft)).toBeGreaterThan(0);
   await page.locator('.workbook-panel .table-scroll').evaluate(element => {element.scrollLeft = element.scrollWidth;});
-  await expect(page.getByRole('button', {name: 'Cuộn sang phải', exact: true})).toBeDisabled();
+  await expect(page.getByRole('button', {name: 'Scroll right', exact: true})).toBeDisabled();
   await page.screenshot({animations: 'disabled', path: '../artifacts/ui/results-wide.png'});
-  await page.getByRole('button', {name: 'Xem đầy đủ dòng 1', exact: true}).click();
-  await expect(page.getByRole('dialog', {name: 'Chi tiết kết quả'})).toBeVisible();
+  await page.getByRole('button', {name: 'View full row 1', exact: true}).click();
+  await expect(page.getByRole('dialog', {name: 'Result details'})).toBeVisible();
   await expect(page.getByRole('dialog').getByText('123456', {exact: true})).toBeVisible();
   await expect(page.getByRole('dialog').locator('dd').nth(9)).toHaveText('A detailed video title '.repeat(16).trim());
   await expect(page.getByRole('dialog').getByText('hello@example.com', {exact: true})).toBeAttached();
@@ -153,25 +153,25 @@ test('wide result tables keep trailing fields reachable inside the workspace', a
 test('edit, paste, delete and reopen the keyword table without downloading files', async ({page}) => {
   const downloads: string[] = [];
   page.on('download', download => downloads.push(download.suggestedFilename()));
-  await page.getByRole('button', {name: 'Sửa bảng từ khóa', exact: true}).click();
-  await page.getByRole('textbox', {name: 'Từ khóa dòng 1', exact: true}).evaluate(element => {
+  await page.getByRole('button', {name: 'Edit keyword table', exact: true}).click();
+  await page.getByRole('textbox', {name: 'Keyword row 1', exact: true}).evaluate(element => {
     const transfer = new DataTransfer(); transfer.setData('text/plain', 'New topic\tignored\nSecond topic\nThird topic');
     element.dispatchEvent(new ClipboardEvent('paste', {clipboardData: transfer, bubbles: true, cancelable: true}));
   });
-  await expect(page.getByRole('textbox', {name: 'Từ khóa dòng 2', exact: true})).toHaveValue('Second topic');
-  await page.getByRole('textbox', {name: 'Từ khóa dòng 2', exact: true}).fill('Edited topic');
-  await page.getByRole('checkbox', {name: 'Chọn từ khóa 3', exact: true}).check();
-  await page.getByRole('button', {name: 'Xóa 1', exact: true}).click();
-  await page.getByRole('button', {name: 'Xác nhận', exact: true}).click();
-  await page.getByRole('button', {name: 'Lưu từ khóa', exact: true}).click();
-  await expect(page.getByText(/Đã lưu trong Bot ·/)).toBeVisible();
+  await expect(page.getByRole('textbox', {name: 'Keyword row 2', exact: true})).toHaveValue('Second topic');
+  await page.getByRole('textbox', {name: 'Keyword row 2', exact: true}).fill('Edited topic');
+  await page.getByRole('checkbox', {name: 'Select keyword 3', exact: true}).check();
+  await page.getByRole('button', {name: 'Delete 1', exact: true}).click();
+  await page.getByRole('button', {name: 'Confirm', exact: true}).click();
+  await page.getByRole('button', {name: 'Save keywords', exact: true}).click();
+  await expect(page.getByText(/Saved in the bot ·/)).toBeVisible();
   await page.reload();
-  await page.getByRole('button', {name: 'Sửa bảng từ khóa', exact: true}).click();
-  await expect(page.getByRole('textbox', {name: 'Từ khóa dòng 1', exact: true})).toHaveValue('New topic');
-  await expect(page.getByRole('textbox', {name: 'Từ khóa dòng 2', exact: true})).toHaveValue('Edited topic');
-  await page.getByRole('button', {name: 'Thêm dòng', exact: true}).click();
-  await expect(page.getByRole('textbox', {name: 'Từ khóa dòng 5', exact: true})).toBeFocused();
-  await expect(page.getByText(/Có thay đổi chưa lưu/)).toBeVisible();
+  await page.getByRole('button', {name: 'Edit keyword table', exact: true}).click();
+  await expect(page.getByRole('textbox', {name: 'Keyword row 1', exact: true})).toHaveValue('New topic');
+  await expect(page.getByRole('textbox', {name: 'Keyword row 2', exact: true})).toHaveValue('Edited topic');
+  await page.getByRole('button', {name: 'Add row', exact: true}).click();
+  await expect(page.getByRole('textbox', {name: 'Keyword row 5', exact: true})).toBeFocused();
+  await expect(page.getByText(/Unsaved changes/)).toBeVisible();
   expect(downloads).toEqual([]);
   await page.screenshot({animations: 'disabled', path: '../artifacts/ui/keyword-editor.png', fullPage: true});
 });
@@ -179,20 +179,20 @@ test('edit, paste, delete and reopen the keyword table without downloading files
 test('browse result history, paginate, search and sort without downloads', async ({page}) => {
   const downloads: string[] = [];
   page.on('download', download => downloads.push(download.suggestedFilename()));
-  await page.getByRole('button', {name: /Xem kết quả trong Bot/}).click();
+  await page.getByRole('button', {name: /View results in the bot/}).click();
   await expect(page.getByRole('cell', {name: 'Channel 0', exact: true})).toBeVisible();
-  await page.getByRole('button', {name: 'Trang sau', exact: true}).click();
+  await page.getByRole('button', {name: 'Next page', exact: true}).click();
   await expect(page.getByRole('cell', {name: 'Channel 100', exact: true})).toBeVisible();
-  await page.getByRole('textbox', {name: 'Tìm trong bảng'}).fill('Channel 250');
+  await page.getByRole('textbox', {name: 'Search table'}).fill('Channel 250');
   await expect(page.getByRole('cell', {name: 'Channel 250', exact: true})).toBeVisible();
-  await page.getByRole('button', {name: 'Xóa tìm kiếm'}).click();
-  await page.getByRole('button', {name: 'Lượt xem', exact: true}).click();
-  await page.getByRole('button', {name: 'Lượt xem', exact: true}).click();
+  await page.getByRole('button', {name: 'Clear search'}).click();
+  await page.getByRole('button', {name: 'Views', exact: true}).click();
+  await page.getByRole('button', {name: 'Views', exact: true}).click();
   await expect(page.getByRole('cell', {name: 'Channel 250', exact: true})).toBeVisible();
-  await page.getByRole('combobox', {name: 'Lượt quét', exact: true}).selectOption('1');
-  await expect(page.getByText('Lượt quét #1', {exact: true})).toBeVisible();
+  await page.getByRole('combobox', {name: 'Scan', exact: true}).selectOption('1');
+  await expect(page.getByText('Scan #1', {exact: true})).toBeVisible();
   await expect(page.getByRole('cell', {name: 'Earlier channel', exact: true})).toBeVisible();
-  await expect(page.getByRole('button', {name: 'Mở Excel', exact: true})).toHaveCount(0);
+  await expect(page.getByRole('button', {name: 'Open Excel', exact: true})).toHaveCount(0);
   expect(downloads).toEqual([]);
   await page.screenshot({animations: 'disabled', path: '../artifacts/ui/result-history.png', fullPage: true});
 });
@@ -200,20 +200,20 @@ test('browse result history, paginate, search and sort without downloads', async
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     let status = 'ready';
-    const state = () => ({status, completed: 0, total: 3, matches: 0, elapsed: 0, rows: [], logs: [], error: '', output: false, update: {status: 'current', message: 'Bạn đang dùng bản mới nhất.', progress: 0}});
+    const state = () => ({status, completed: 0, total: 3, matches: 0, elapsed: 0, rows: [], logs: [], error: '', output: false, update: {status: 'current', message: 'You are using the latest version.', progress: 0}});
     window.pywebview = {api: Object.fromEntries(Object.entries({
-      get_bootstrap: () => ({version: '1.0.2', build: 'ui-test', has_api_key: true, keywords: localStorage.getItem('test-keywords') ?? 'AI Automation\nAI Agent\ntạo video bằng AI'}),
+      get_bootstrap: () => ({version: '1.0.2', build: 'ui-test', has_api_key: true, keywords: localStorage.getItem('test-keywords') ?? 'AI Automation\nAI Agent\nAI video creation'}),
       get_state: state,
       save_preferences: () => true,
       set_keywords_dirty: () => true,
       save_keywords: (text: unknown) => {localStorage.setItem('test-keywords', String(text)); return text;},
       list_results: () => [{id: 2, created: '2026-10-17T00:00:00Z', status: 'stopped', count: 251, error: ''}, {id: 1, created: '2026-10-16T00:00:00Z', status: 'complete', count: 1, error: ''}],
-      open_results: (id: unknown) => ({filename: `Lượt quét #${id}`, sheets: [`Lượt quét #${id}`], internal: true, run_id: id}),
+      open_results: (id: unknown) => ({filename: `Scan #${id}`, sheets: [`Scan #${id}`], internal: true, run_id: id}),
       results_page: (_sheet: unknown, query: unknown, page: unknown, sort: unknown, descending: unknown) => {
         let rows = String(_sheet).endsWith('#1') ? [['Earlier channel', 7]] : Array.from({length: 251}, (_, i) => [`Channel ${i}`, i]);
         if (query) rows = rows.filter(row => String(row[0]).includes(String(query)));
         if (sort !== null && descending) rows.reverse();
-        return {columns: ['Tên Kênh', 'Lượt xem'], rows: rows.slice(Number(page) * 100, (Number(page) + 1) * 100), page: Number(page), pages: Math.max(1, Math.ceil(rows.length / 100)), total: rows.length, original_total: String(_sheet).endsWith('#1') ? 1 : 251};
+        return {columns: ['Channel Name', 'Views'], rows: rows.slice(Number(page) * 100, (Number(page) + 1) * 100), page: Number(page), pages: Math.max(1, Math.ceil(rows.length / 100)), total: rows.length, original_total: String(_sheet).endsWith('#1') ? 1 : 251};
       },
       check_updates: () => true,
       start_scan: () => {status = 'running'; return true;},
@@ -224,52 +224,52 @@ test.beforeEach(async ({ page }) => {
     }).map(([name, method]) => [name, async (...args: unknown[]) => ({ok: true, data: method(...args as [])})]))};
   });
   await page.goto('/');
-  await expect(page.getByText('Xử lý trên máy', {exact: true})).toBeVisible();
+  await expect(page.getByText('Local processing', {exact: true})).toBeVisible();
 });
 
 test('theme, scan lifecycle and responsive layout', async ({page}) => {
   await page.screenshot({animations: 'disabled', path: '../artifacts/ui/react-dark.png', fullPage: true});
-  await page.getByRole('button', {name: 'Chuyển giao diện sáng'}).click();
+  await page.getByRole('button', {name: 'Switch to light theme'}).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await page.screenshot({animations: 'disabled', path: '../artifacts/ui/react-light.png', fullPage: true});
-  await page.getByRole('button', {name: /Bắt đầu khám phá/}).click();
-  await expect(page.getByRole('button', {name: 'Dừng', exact: true})).toBeEnabled();
-  await page.getByRole('button', {name: 'Dừng', exact: true}).click();
-  await expect(page.getByRole('button', {name: /Bắt đầu khám phá/})).toBeEnabled();
+  await page.getByRole('button', {name: /Start discovery/}).click();
+  await expect(page.getByRole('button', {name: 'Stop', exact: true})).toBeEnabled();
+  await page.getByRole('button', {name: 'Stop', exact: true}).click();
+  await expect(page.getByRole('button', {name: /Start discovery/})).toBeEnabled();
   await page.setViewportSize({width: 800, height: 600});
-  await expect(page.getByRole('button', {name: 'Mở menu và bộ lọc'})).toBeVisible();
+  await expect(page.getByRole('button', {name: 'Open menu and filters'})).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await expect(page.locator('.sidebar')).toHaveCSS('visibility', 'hidden');
   await page.screenshot({path: '../artifacts/ui/react-compact.png', fullPage: true, animations: 'disabled'});
-  await page.getByRole('button', {name: 'Mở menu và bộ lọc'}).click();
+  await page.getByRole('button', {name: 'Open menu and filters'}).click();
   await expect(page.getByLabel('YouTube API Key', {exact: true})).toBeVisible();
-  await page.getByRole('button', {name: 'Đóng menu', exact: true}).click();
+  await page.getByRole('button', {name: 'Close menu', exact: true}).click();
   await expect(page.locator('.sidebar')).toHaveCSS('visibility', 'hidden');
 });
 
 test('Excel search and confirmed import use the original column', async ({page}) => {
-  await page.getByRole('button', {name: 'Sửa bảng từ khóa', exact: true}).click();
-  await page.getByRole('button', {name: 'Nhập từ file cũ', exact: true}).click();
+  await page.getByRole('button', {name: 'Edit keyword table', exact: true}).click();
+  await page.getByRole('button', {name: 'Import existing file', exact: true}).click();
   await expect(page.getByRole('cell', {name: 'beta', exact: true})).toBeVisible();
-  await page.getByRole('textbox', {name: 'Tìm trong bảng'}).fill('alpha');
+  await page.getByRole('textbox', {name: 'Search table'}).fill('alpha');
   await expect(page.getByRole('cell', {name: 'beta', exact: true})).toHaveCount(0);
-  await page.getByRole('button', {name: 'Nhập cột từ khóa'}).click();
+  await page.getByRole('button', {name: 'Import keyword column'}).click();
   await expect(page.getByRole('dialog')).toBeVisible();
-  await page.getByRole('button', {name: 'Xác nhận', exact: true}).click();
-  await expect(page.getByRole('textbox', {name: 'Từ khóa dòng 1', exact: true})).toHaveValue('alpha');
-  await page.getByRole('button', {name: 'Dùng để quét'}).click();
-  await expect(page.getByRole('textbox', {name: 'Danh sách từ khóa'})).toHaveValue('alpha\nbeta');
+  await page.getByRole('button', {name: 'Confirm', exact: true}).click();
+  await expect(page.getByRole('textbox', {name: 'Keyword row 1', exact: true})).toHaveValue('alpha');
+  await page.getByRole('button', {name: 'Use for scanning'}).click();
+  await expect(page.getByRole('textbox', {name: 'Keyword list'})).toHaveValue('alpha\nbeta');
 });
 
 test('drawer traps keyboard focus and returns it to the trigger', async ({page}) => {
   await page.setViewportSize({width: 800, height: 650});
-  const trigger = page.getByRole('button', {name: 'Mở menu và bộ lọc'});
+  const trigger = page.getByRole('button', {name: 'Open menu and filters'});
   await trigger.click();
   await expect(trigger).toHaveAttribute('aria-expanded', 'true');
-  const close = page.getByRole('button', {name: 'Đóng menu', exact: true});
+  const close = page.getByRole('button', {name: 'Close menu', exact: true});
   await expect(close).toBeFocused();
   await page.keyboard.press('Shift+Tab');
-  await expect(page.getByRole('button', {name: 'Kiểm tra cập nhật', exact: true})).toBeFocused();
+  await expect(page.getByRole('button', {name: 'Check for updates', exact: true})).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(close).toBeFocused();
   await page.keyboard.press('Escape');
@@ -283,27 +283,27 @@ test('short laptop layouts keep the primary action visible without page overflow
     await page.setViewportSize(viewport);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     if (viewport.width > 840) {
-      const button = await page.getByRole('button', {name: /Bắt đầu khám phá/}).boundingBox();
+      const button = await page.getByRole('button', {name: /Start discovery/}).boundingBox();
       expect(button!.y + button!.height).toBeLessThanOrEqual(viewport.height);
     }
   }
   await page.setViewportSize({width: 1280, height: 720});
   await page.screenshot({animations: 'disabled', path: '../artifacts/ui/studio-laptop.png', fullPage: true});
-  await page.getByRole('button', {name: 'Sửa bảng từ khóa', exact: true}).click();
-  await expect(page.getByRole('heading', {level: 1})).toHaveText('Danh sách từ khóa');
-  await expect(page.getByRole('region', {name: 'Số liệu lượt quét'})).toHaveCount(0);
-  await expect(page.getByRole('textbox', {name: 'Từ khóa dòng 1', exact: true})).toBeVisible();
+  await page.getByRole('button', {name: 'Edit keyword table', exact: true}).click();
+  await expect(page.getByRole('heading', {level: 1})).toHaveText('Keyword list');
+  await expect(page.getByRole('region', {name: 'Scan statistics'})).toHaveCount(0);
+  await expect(page.getByRole('textbox', {name: 'Keyword row 1', exact: true})).toBeVisible();
 });
 
 test('result errors have an inline retry and empty history offers a clear next action', async ({page}) => {
   await page.evaluate(() => {window.pywebview!.api.list_results = async () => ({ok: false, error: 'History unavailable'});});
-  await page.getByRole('button', {name: /Xem kết quả trong Bot/}).click();
-  await expect(page.getByRole('alert').filter({hasText: 'Chưa đọc được lịch sử.'})).toBeVisible();
+  await page.getByRole('button', {name: /View results in the bot/}).click();
+  await expect(page.getByRole('alert').filter({hasText: 'Could not read the history.'})).toBeVisible();
   await page.evaluate(() => {window.pywebview!.api.list_results = async () => ({ok: true, data: []});});
-  await page.getByRole('button', {name: 'Làm mới', exact: true}).click();
-  await expect(page.getByRole('heading', {name: 'Chưa có lượt khám phá nào'})).toBeVisible();
-  await page.getByRole('button', {name: 'Bắt đầu lượt đầu tiên'}).click();
-  await expect(page.getByRole('heading', {level: 1})).toHaveText('Khám phá kênh mới');
+  await page.getByRole('button', {name: 'Refresh', exact: true}).click();
+  await expect(page.getByRole('heading', {name: 'No discovery scans yet'})).toBeVisible();
+  await page.getByRole('button', {name: 'Start your first scan'}).click();
+  await expect(page.getByRole('heading', {level: 1})).toHaveText('Discover new channels');
 });
 
 test('text contrast remains readable in both themes', async ({page}) => {
@@ -327,15 +327,15 @@ test('text contrast remains readable in both themes', async ({page}) => {
     return [ratio(button.color, button.backgroundColor), ratio(nav.color, nav.backgroundColor), ratio(muted.color, panel.backgroundColor)];
   });
   for (const value of await contrast()) expect(value).toBeGreaterThanOrEqual(4.5);
-  await page.getByRole('button', {name: 'Chuyển giao diện sáng'}).click();
+  await page.getByRole('button', {name: 'Switch to light theme'}).click();
   for (const value of await contrast()) expect(value).toBeGreaterThanOrEqual(4.5);
 });
 
 test('table loading failures can be retried without showing stale rows', async ({page}) => {
   await page.evaluate(() => {window.pywebview!.api.results_page = async () => ({ok: false, error: 'Read failed'});});
-  await page.getByRole('button', {name: /Xem kết quả trong Bot/}).click();
-  await expect(page.getByRole('alert').filter({hasText: 'Chưa đọc được bảng dữ liệu.'})).toBeVisible();
-  await page.evaluate(() => {window.pywebview!.api.results_page = async () => ({ok: true, data: {columns: ['Tên Kênh'], rows: [['Recovered channel']], page: 0, pages: 1, total: 1, original_total: 1}});});
-  await page.getByRole('button', {name: 'Tải lại bảng', exact: true}).click();
+  await page.getByRole('button', {name: /View results in the bot/}).click();
+  await expect(page.getByRole('alert').filter({hasText: 'Could not read the table.'})).toBeVisible();
+  await page.evaluate(() => {window.pywebview!.api.results_page = async () => ({ok: true, data: {columns: ['Channel Name'], rows: [['Recovered channel']], page: 0, pages: 1, total: 1, original_total: 1}});});
+  await page.getByRole('button', {name: 'Reload table', exact: true}).click();
   await expect(page.getByRole('cell', {name: 'Recovered channel', exact: true})).toBeVisible();
 });

@@ -31,14 +31,14 @@ class ScanHistoryTests(unittest.TestCase):
                 run = store.begin_run(['topic'])
                 rows = [{'Channel ID': f'{status}-{i}'} for i in range(251)]
                 expected.update(row['Channel ID'] for row in rows)
-                store.save_run(run, status, rows + [{'Channel ID': ''}, {'Channel ID': None}, {'Tên Kênh': 'Legacy'}])
+                store.save_run(run, status, rows + [{'Channel ID': ''}, {'Channel ID': None}, {'Channel Name': 'Legacy'}])
             self.assertEqual(WorkspaceStore(path).known_channel_ids(), expected)
 
     def test_saved_channels_are_excluded_before_details_and_across_restarts(self):
         with tempfile.TemporaryDirectory() as directory:
             store = WorkspaceStore(Path(directory) / 'workspace.sqlite3')
             old = store.begin_run(['previous'])
-            store.save_run(old, 'error', [{'Channel ID': 'old', 'Tên Kênh': 'Renamed channel'}])
+            store.save_run(old, 'error', [{'Channel ID': 'old', 'Channel Name': 'Renamed channel'}])
             youtube = client_for({'old': 'VN', 'new': 'US'})
             # Details responses follow the requested IDs, like the real API.
             all_items = youtube.channels.return_value.list.return_value.execute.return_value['items']
@@ -66,7 +66,7 @@ class ScanHistoryTests(unittest.TestCase):
             engine.start('fake-key', ['AI', '人工知能'])
             state = engine.wait()
             self.assertEqual(state['status'], 'complete')
-            self.assertEqual({row['Quốc Gia'] for row in state['rows']}, {'VN', 'US', 'JP', 'Không công bố'})
+            self.assertEqual({row['Country'] for row in state['rows']}, {'VN', 'US', 'JP', 'Not disclosed'})
             self.assertEqual(state['matches'], 4)
             for request in youtube.search.return_value.list.call_args_list:
                 for parameter in ['regionCode', 'relevanceLanguage', 'location', 'locationRadius']:
@@ -75,4 +75,4 @@ class ScanHistoryTests(unittest.TestCase):
             sheet = api.open_results()['data']['sheets'][0]
             page = api.results_page(sheet, 'JP')['data']
             self.assertEqual(page['total'], 1)
-            self.assertEqual(page['rows'][0][page['columns'].index('Quốc Gia')], 'JP')
+            self.assertEqual(page['rows'][0][page['columns'].index('Country')], 'JP')

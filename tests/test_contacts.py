@@ -18,9 +18,9 @@ class ContactTests(unittest.TestCase):
                                     'Telegram t.me/myteam &amp; Zalo zalo.me/84912345678')
         self.assertEqual(contacts['Email'], 'hello+work@example.com')
         self.assertEqual(contacts['Facebook'], 'https://www.facebook.com/my.page')
-        self.assertIn('https://instagram.com/creator', contacts['Liên Hệ Khác'])
-        self.assertIn('https://t.me/myteam', contacts['Liên Hệ Khác'])
-        self.assertIn('https://zalo.me/84912345678', contacts['Liên Hệ Khác'])
+        self.assertIn('https://instagram.com/creator', contacts['Other Contacts'])
+        self.assertIn('https://t.me/myteam', contacts['Other Contacts'])
+        self.assertIn('https://zalo.me/84912345678', contacts['Other Contacts'])
 
     def test_mentions_generic_links_and_lookalike_domains_do_not_qualify(self):
         for text in [None, '', 'Contact us via email or Facebook', '@creator', 'example.com',

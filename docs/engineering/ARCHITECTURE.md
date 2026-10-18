@@ -1,38 +1,38 @@
-# Kiến trúc và tổ chức mã nguồn
+# Architecture and Source Organization
 
-Mục tiêu sản phẩm là một ứng dụng Windows phục vụ người nghiên cứu thị trường YouTube: khám phá kênh, sàng lọc chỉ số công khai và tổ chức kết quả. Liên hệ là chức năng hỗ trợ. Desktop React là trải nghiệm mặc định. CLI và CustomTkinter phục vụ tương thích. Các giới hạn và hướng phát triển cho nhóm khách hàng này nằm trong [định hướng sản phẩm](../product/COMMERCIALIZATION.md).
+The product is a Windows application for YouTube market researchers: discover channels, screen public metrics, and organize results. Outreach is a supporting feature. The React desktop is the default experience; the CLI and CustomTkinter interface remain for compatibility. Limitations and development direction for this audience are described in the [product direction](../product/COMMERCIALIZATION.md).
 
-## Bản đồ thư mục
+## Directory map
 
 ```text
 Ytb-Bot/
-├── frontend/                 React, bridge types và test trình duyệt
-│   ├── src/components/       Màn hình và tương tác người dùng
-│   └── tests/                Playwright với bridge giả lập
-├── ytb_bot/                  Mã Python chạy trong ứng dụng
-│   ├── core/                 Quét, liên hệ, bảng dữ liệu và SQLite
-│   ├── desktop/              WebView2, bridge, Gmail và kho đăng nhập
-│   ├── cli/                  Scanner dòng lệnh tương thích
-│   └── legacy_ui/            Giao diện CustomTkinter tương thích
-├── tests/                    Kiểm thử Python theo chức năng
+├── frontend/                 React, bridge types, and browser tests
+│   ├── src/components/       Screens and user interactions
+│   └── tests/                Playwright with a mocked bridge
+├── ytb_bot/                  Application Python code
+│   ├── core/                 Scanning, contacts, tables, and SQLite
+│   ├── desktop/              WebView2, bridge, Gmail, and credential vault
+│   ├── cli/                  Compatibility command-line scanner
+│   └── legacy_ui/            Compatibility CustomTkinter interface
+├── tests/                    Python tests organized by feature
 ├── scripts/
-│   ├── checks/               Smoke test native và EXE
-│   ├── dev/                  Công cụ xem/chụp giao diện
-│   └── release/              Chọn bản phát hành và build
-├── packaging/                Cấu hình PyInstaller
+│   ├── checks/               Native and EXE smoke tests
+│   ├── dev/                  Interface preview and screenshot tools
+│   └── release/              Release selection and builds
+├── packaging/                PyInstaller configuration
 ├── docs/
-│   ├── user/                 Hướng dẫn người sử dụng
-│   ├── engineering/          Phát triển, giao diện và phát hành
-│   ├── product/              Chuẩn bị thương mại hóa
-│   └── reviews/              Báo cáo có ngày và phạm vi
-├── .github/workflows/        Kiểm tra, build và phát hành
-├── gui_app.py                Launcher desktop tương thích
-└── bot.py                    Launcher CLI tương thích
+│   ├── user/                 User guides
+│   ├── engineering/          Development, interface, and releases
+│   ├── product/              Commercialization preparation
+│   └── reviews/              Reports with dates and defined scope
+├── .github/workflows/        Checks, builds, and releases
+├── gui_app.py                Compatibility desktop launcher
+└── bot.py                    Compatibility CLI launcher
 ```
 
-Giữ `README.md`, `LICENSE`, `.env.example`, manifest dependency và launcher ở gốc để người dùng, CI và công cụ build dễ tìm. Cấu hình frontend nằm cùng frontend.
+Keep `README.md`, `LICENSE`, `.env.example`, dependency manifests, and launchers at the root so users, CI, and build tools can find them easily. Frontend configuration stays with the frontend.
 
-## Luồng xử lý
+## Processing flow
 
 ```mermaid
 flowchart LR
@@ -41,35 +41,39 @@ flowchart LR
     Scan --> YouTube[YouTube Data API]
     Scan --> Store[(SQLite)]
     Bridge --> Store
-    Bridge --> Outreach[Soạn và gửi liên hệ]
+    Bridge --> Outreach[Compose and send outreach]
     Outreach --> Store
-    Outreach --> Vault[Kho đăng nhập Windows]
+    Outreach --> Vault[Windows credential vault]
     Outreach --> Gmail[Gmail API]
 ```
 
-`frontend/src/api.ts` mô tả dữ liệu trao đổi; `desktop/api.py` cung cấp thao tác cho giao diện. `core/engine.py` xử lý quét nền, `core/storage.py` giữ lịch sử, `core/workbook.py` đọc và trình bày bảng. Luồng gửi nằm trong `desktop/outreach.py`, tích hợp Google tại `desktop/gmail.py`, token trong `desktop/credential_vault.py` và bản nháp/lần gửi trong `core/outreach_store.py`.
+`frontend/src/api.ts` describes exchanged data; `desktop/api.py` exposes interface operations. `core/engine.py` handles background scanning, `core/storage.py` stores history, and `core/workbook.py` reads and presents tables. The sending workflow lives in `desktop/outreach.py`, Google integration in `desktop/gmail.py`, tokens in `desktop/credential_vault.py`, and drafts/send attempts in `core/outreach_store.py`.
 
-## Quy tắc bổ sung file
+## Rules for adding files
 
-- Logic quét, lọc và dữ liệu dùng chung đặt trong `core/`; không phụ thuộc giao diện.
-- Tương tác cửa sổ, bridge và tích hợp desktop đặt trong `desktop/`. Giao diện tương thích giữ trong `legacy_ui/`.
-- Script chỉ phục vụ xây dựng/kiểm tra đặt theo mục đích trong `scripts/dev`, `scripts/checks` hoặc `scripts/release`.
-- Test Python đặt tại `tests/test_<chức_năng>.py` để lệnh discovery hiện tại nhận đủ các bài. Test React đặt tại `frontend/tests/`.
-- Hướng dẫn người dùng thuộc `docs/user/`; thông tin kỹ thuật và vận hành thuộc `docs/engineering/`. README giới thiệu sản phẩm và dẫn đường.
-- Khi chuyển file, cập nhật imports, đường dẫn tính từ `__file__`, CI, test và liên kết tài liệu trong cùng thay đổi.
+- Put shared scanning, filtering, and data logic in `core/`, without interface dependencies.
+- Put window interaction, the bridge, and desktop integrations in `desktop/`. Keep the compatibility interface in `legacy_ui/`.
+- Organize build/check scripts by purpose in `scripts/dev`, `scripts/checks`, or `scripts/release`.
+- Put Python tests in `tests/test_<feature>.py` so the existing discovery command finds them all. Put React tests in `frontend/tests/`.
+- User guides belong in `docs/user/`; technical and operational information belongs in `docs/engineering/`. The README introduces the product and directs readers.
+- When moving files, update imports, paths relative to `__file__`, CI, tests, and documentation links in the same change.
 
-Chỉ tách sâu hơn khi có nhiều chức năng cần một nhóm trách nhiệm riêng; tránh thêm tầng thư mục chỉ để làm cây mã nguồn cân đối.
+Introduce deeper subdivisions only when several features need a distinct responsibility group. Avoid adding directory levels solely to make the source tree symmetrical.
 
-## Dữ liệu và file sinh tự động
+## Data and generated files
 
-| Nhóm | Vị trí | Quản lý |
+| Category | Location | Handling |
 | --- | --- | --- |
-| Build frontend | `frontend/web-dist/` | Sinh từ Vite, không commit |
-| Dependency frontend | `frontend/node_modules/` | Sinh từ `npm ci`, không commit |
-| Bản phân phối | `dist/` | EXE, checksum và metadata; không commit |
-| Trung gian build | `.release-build/`, `build/` | Không commit |
-| Kết quả kiểm tra | `artifacts/`, `frontend/test-results/`, `frontend/playwright-report/` | Không commit |
-| Dữ liệu người dùng | `%LOCALAPPDATA%/Ytb-Bot/data/` | Giữ ngoài mã nguồn |
-| Cấu hình cục bộ | `.env`, `studio-settings.json` cạnh EXE hoặc tại gốc source | Không commit |
+| Frontend build | `frontend/web-dist/` | Generated by Vite; do not commit |
+| Frontend dependencies | `frontend/node_modules/` | Generated by `npm ci`; do not commit |
+| Distribution | `dist/` | EXE, checksum, and metadata; do not commit |
+| Build intermediates | `.release-build/`, `build/` | Do not commit |
+| Check results | `artifacts/`, `frontend/test-results/`, `frontend/playwright-report/` | Do not commit |
+| User data | `%LOCALAPPDATA%/Ytb-Bot/data/` | Keep outside source control |
+| Local configuration | `.env`, `studio-settings.json` beside the EXE or at the source root | Do not commit |
 
-Các file như `keywords.xlsx` có thể thuộc luồng CLI cũ. Không di chuyển hoặc xóa tự động khi dọn mã nguồn; kiểm tra người đang sử dụng và sao lưu trước.
+Files such as `keywords.xlsx` may belong to the older CLI workflow. Do not automatically move or delete them during cleanup; check who uses them and back them up first.
+
+## Historical data compatibility
+
+Historical result column labels are normalized to English when read through `core/result_schema.py`. Stored rows and user-authored keywords, channel names, and drafts are not rewritten. `tests/test_result_schema.py` verifies legacy and mixed-language fields.

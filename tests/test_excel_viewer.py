@@ -45,9 +45,9 @@ class ExcelViewerTests(unittest.TestCase):
     def test_preview_sheet_selection_paging_and_full_column_import(self):
         with tempfile.TemporaryDirectory() as directory:
             workbook = Path(directory) / "keywords.xlsx"
-            words = [" AI Agent ", None, "AI Agent", "tạo video"] + [f"keyword {i}" for i in range(401)]
+            words = [" AI Agent ", None, "AI Agent", "video creation"] + [f"keyword {i}" for i in range(401)]
             with pd.ExcelWriter(workbook, engine="openpyxl") as writer:
-                pd.DataFrame({"Notes": ["Chọn sheet Keywords"]}).to_excel(writer, sheet_name="Overview", index=False)
+                pd.DataFrame({"Notes": ["Select the Keywords sheet"]}).to_excel(writer, sheet_name="Overview", index=False)
                 pd.DataFrame({"Keyword": words, "Other": range(len(words))}).to_excel(writer, sheet_name="Keywords", index=False)
                 pd.DataFrame().to_excel(writer, sheet_name="Empty", index=False)
             with patch.object(YtbBotApp, "check_updates"):
@@ -92,7 +92,7 @@ class ExcelViewerTests(unittest.TestCase):
                         viewer.import_keywords()
                     imported = app.view.kw_textbox.get("1.0", "end").strip().splitlines()
                     self.assertEqual(len(imported), 403)
-                    self.assertEqual(imported[:2], ["AI Agent", "tạo video"])
+                    self.assertEqual(imported[:2], ["AI Agent", "video creation"])
                     self.assertEqual(imported[-1], "keyword 400")
                     viewer.search.set("")
                     viewer._apply_search()

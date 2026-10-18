@@ -1,50 +1,50 @@
-# YTB-BOT Creator Studio: thiết kế UI
+# YTB-BOT Creator Studio: UI Design
 
-Giao diện mặc định là React + TypeScript trong cửa sổ pywebview / Edge WebView2. Python xử lý dữ liệu; giao diện CustomTkinter nằm riêng tại `ytb_bot/legacy_ui/` và được mở qua `--legacy`.
+The default interface is React + TypeScript in a pywebview / Edge WebView2 window. Python handles data; the separate CustomTkinter interface lives in `ytb_bot/legacy_ui/` and opens with `--legacy`.
 
-## Hướng thiết kế
+## Design direction
 
-- Nền graphite ở theme tối, trắng ngà ở theme sáng; một màu nhấn san hô, xanh lá chỉ dùng cho trạng thái. Không dùng gradient trang trí hoặc số liệu minh họa trong app.
-- Dải số liệu gọn chỉ xuất hiện ở màn hình quét: từ khóa duy nhất, kênh phù hợp, chủ đề đã xử lý và thời gian. Trang từ khóa/lịch sử ưu tiên diện tích bảng.
-- Một hành động chính: **Bắt đầu khám phá**. Dừng và xem kết quả là các hành động phụ.
-- Từ khóa có bảng chỉnh sửa trực tiếp, thêm/xóa/dán dòng và trạng thái chưa lưu.
-- Kết quả có lịch sử theo lượt quét, tìm kiếm, sắp xếp, chọn dòng và phân trang; không tải Excel.
-- Segoe UI Variable/Segoe UI cho nội dung, Bahnschrift cho tiêu đề và số liệu; dùng font hệ thống Windows, không tải font lúc chạy. Số liệu dùng tabular numerals.
+- Graphite backgrounds in the dark theme and warm white in the light theme; one coral accent, with green reserved for statuses. No decorative gradients or sample metrics in the application.
+- A compact metrics strip appears only on the scan screen: unique keywords, matching channels, processed topics, and elapsed time. Keyword/history screens prioritize table space.
+- One primary action: **Start discovery**. Stopping and viewing results are secondary actions.
+- Keywords use a directly editable table with add/delete/paste actions and an unsaved state.
+- Results offer scan history, search, sorting, row selection, and pagination without downloading Excel.
+- Segoe UI Variable/Segoe UI for body text, Bahnschrift for headings and metrics; use Windows system fonts without runtime font downloads. Metrics use tabular numerals.
 
-## Cấu trúc
+## Structure
 
-| Đường dẫn | Trách nhiệm |
+| Path | Responsibility |
 | --- | --- |
-| `frontend/src/App.tsx` | Màn hình chính và trạng thái UI |
-| `frontend/src/components/ConfirmDialog.tsx` | Hộp xác nhận thao tác |
-| `frontend/src/components/KeywordTable.tsx` | Bảng từ khóa có chỉnh sửa |
-| `frontend/src/components/ResultsView.tsx` | Chọn lượt quét và xem lịch sử |
-| `frontend/src/components/WorkbookView.tsx` | Bảng kết quả / đọc Excel cũ |
-| `frontend/src/api.ts` | Kiểu dữ liệu và hợp đồng bridge |
-| `frontend/src/styles.css` | Các control và bố cục dùng chung |
-| `frontend/src/studio.css` | Token graphite/san hô, bố cục studio và điều chỉnh laptop |
-| `frontend/src/components/WorkspaceHeading.tsx` | Tiêu đề và trạng thái riêng cho từng màn hình |
-| `frontend/src/components/ScanSummary.tsx` | Dải số liệu thật của lượt quét |
-| `frontend/src/components/TableLoading.tsx` | Skeleton khi đọc bảng, không giả dữ liệu |
-| `ytb_bot/desktop/app.py` | Cửa sổ native, vị trí và vòng đời |
-| `ytb_bot/desktop/api.py` | Bridge, hộp chọn file và cập nhật |
-| `ytb_bot/core/` | Quét nền, xử lý bảng và lưu SQLite |
+| `frontend/src/App.tsx` | Main screens and UI state |
+| `frontend/src/components/ConfirmDialog.tsx` | Action confirmation dialogs |
+| `frontend/src/components/KeywordTable.tsx` | Editable keyword table |
+| `frontend/src/components/ResultsView.tsx` | Scan selection and history |
+| `frontend/src/components/WorkbookView.tsx` | Results table / legacy Excel reader |
+| `frontend/src/api.ts` | Data types and bridge contract |
+| `frontend/src/styles.css` | Shared controls and layout |
+| `frontend/src/studio.css` | Graphite/coral tokens, studio layout, and laptop adjustments |
+| `frontend/src/components/WorkspaceHeading.tsx` | Screen-specific headings and statuses |
+| `frontend/src/components/ScanSummary.tsx` | Actual scan metrics strip |
+| `frontend/src/components/TableLoading.tsx` | Table-loading skeleton without fabricated data |
+| `ytb_bot/desktop/app.py` | Native window, positioning, and lifecycle |
+| `ytb_bot/desktop/api.py` | Bridge, file dialogs, and updates |
+| `ytb_bot/core/` | Background scanning, table processing, and SQLite storage |
 
-## Trạng thái và tương tác
+## States and interactions
 
-Lỗi nhập liệu hiển thị cạnh trường bị lỗi. API Key được che mặc định; khóa được dùng cho yêu cầu Google YouTube API và được che trong lỗi quét.
+Validation errors appear beside the affected field. The API key is masked by default; it is used for Google YouTube API requests and redacted from scan errors.
 
-Bộ lọc chuyển thành menu khi cửa sổ hẹp hơn 840 CSS pixel; menu đóng không nhận focus. Khi mở, focus được giữ trong menu; Esc đóng và trả focus về nút mở. Nội dung phía sau dùng inert. Có skip link tới nội dung chính. Các vùng nội dung cuộn được. Nút bắt đầu được kiểm tra nằm trong vùng nhìn thấy ở 1280×720 và 1024×768. Theme và tùy chọn chuyển động được lưu cục bộ; hiệu ứng tôn trọng reduced motion.
+Filters become a menu below 840 CSS pixels; a closed menu cannot receive focus. When open, focus stays inside the menu; Esc closes it and returns focus to its trigger. Background content uses inert. A skip link leads to the main content. Content regions scroll. Tests check that the start button remains visible at 1280×720 and 1024×768. Theme and motion preferences are stored locally; effects respect reduced motion.
 
-Bảng có skeleton trong lúc tải, thông báo lỗi nội dòng và nút thử lại. Thêm dòng đưa focus vào ô mới. Nhật ký chỉ tự cuộn bên trong vùng log, không kéo trang tới cuối. Hộp xác nhận có tên và mô tả truy cập riêng.
+Tables show loading skeletons, inline errors, and retry buttons. Adding a row focuses the new cell. Logs scroll only inside their own region, without pulling the page to the bottom. Confirmation dialogs have dedicated accessible names and descriptions.
 
-Nút **Dừng** chờ yêu cầu mạng hiện tại rồi lưu kết quả đã có. Timeout mạng là 20 giây mỗi yêu cầu, không phải giới hạn tổng lượt quét.
+**Stop** waits for the current network request and then saves collected results. The network timeout is 20 seconds per request, not a limit for the entire scan.
 
-Phím tắt và thao tác Excel được ghi tại [hướng dẫn desktop](../user/DESKTOP_GUIDE.md). Dùng nút **Sao chép** cho dòng được chọn bằng checkbox. Nhập từ khóa luôn lấy cột gốc, kể cả khi bảng đang lọc. Sửa bảng được giữ trong draft khi chuyển màn hình và chỉ lưu khi nhấn Lưu/Dùng để quét hoặc bắt đầu quét. Đóng cửa sổ với draft chưa lưu có xác nhận; handler native không chờ JavaScript trên GUI thread.
+Shortcuts and Excel operations are documented in the [desktop guide](../user/DESKTOP_GUIDE.md). Use **Copy** for rows selected by checkbox. Keyword imports always read the original column, even when the table is filtered. Table edits remain in a draft across screen changes and are saved only by Save/Use for scan or starting a scan. Closing with an unsaved draft requires confirmation; the native handler does not wait for JavaScript on the GUI thread.
 
-## Kiểm tra trực quan
+## Visual checks
 
-Bảng kết quả giữ chiều rộng trong workspace và cuộn ngang độc lập. Các nút trái/phải dưới bảng giúp xem các cột phía sau; cột chọn dòng và nút **Xem đầy đủ** luôn nằm bên trái. URL và tiêu đề dài được rút gọn trong ô, có tooltip; **Xem đầy đủ** mở toàn bộ trường của một dòng với văn bản xuống dòng và có thể sao chép. Dữ liệu gốc và thao tác sao chép dòng không bị rút gọn. Kiểm tra hồi quy dùng bảng đủ 10 cột, URL/tiêu đề dài và cửa sổ 1280, 800, 375px; ảnh kiểm tra lưu tại `artifacts/ui/results-wide.png` và `result-details.png`.
+The results table stays within the workspace width and scrolls horizontally on its own. Left/right buttons below it reveal later columns; the selection column and **View full details** action stay on the left. Long URLs and titles are truncated in cells with tooltips. **View full details** opens every field in a row with wrapping, copyable text. Original data and copied rows are not truncated. Regression checks use all 10 columns, long URLs/titles, and 1280, 800, and 375px windows; screenshots are saved at `artifacts/ui/results-wide.png` and `result-details.png`.
 
 ```powershell
 npm test --prefix frontend
@@ -52,10 +52,10 @@ python scripts/checks/smoke_react.py
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/checks/smoke_desktop.ps1
 ```
 
-Playwright tạo `artifacts/ui/react-dark.png`, `react-light.png`, `react-compact.png`, `studio-laptop.png`, `keyword-editor.png` và `result-history.png`. Kiểm tra gồm bàn phím, chuyển màn hình, các trạng thái lỗi/trống, retry và tương phản chữ của nút chính/menu/nhật ký ở cả hai theme (ít nhất 4.5:1). Đây không phải chứng nhận accessibility cho toàn bộ ứng dụng. Fixture bridge chỉ nằm trong tests; không dùng dữ liệu giả trong sản phẩm. Smoke React kiểm tra WebView2 thật, trạng thái HWND hiển thị, bridge có tham số và hủy đóng khi bảng chưa lưu. Smoke EXE kiểm tra bản đóng gói khi launcher yêu cầu Hidden, tránh hồi quy chỉ chạy ngầm.
+Playwright creates `artifacts/ui/react-dark.png`, `react-light.png`, `react-compact.png`, `studio-laptop.png`, `keyword-editor.png`, and `result-history.png`. Checks cover keyboard interaction, screen switching, error/empty states, retry, and text contrast in primary buttons/menus/logs across both themes (at least 4.5:1). This is not accessibility certification for the entire application. Bridge fixtures exist only in tests; product screens do not use fake data. The React smoke test checks real WebView2, visible HWND state, bridge arguments, and canceled closure with an unsaved table. The EXE smoke test checks the packaged application when its launcher requests Hidden, guarding against background-only startup regressions.
 
-Để chụp giao diện dự phòng: `python scripts/dev/preview_legacy_ui.py --output artifacts/ui/legacy.png`. Công cụ này dùng dữ liệu minh họa, không gọi YouTube. Các test legacy phải đi qua `CTk.mainloop()` thật vì chỉ dùng `update()` có thể che lỗi khởi tạo cửa sổ.
+To capture the fallback interface: `python scripts/dev/preview_legacy_ui.py --output artifacts/ui/legacy.png`. This tool uses sample data without calling YouTube. Legacy tests must use the actual `CTk.mainloop()`, because `update()` alone can hide window initialization errors.
 
-## Nguồn định hướng
+## Design references
 
-Taste Skill (redesign-existing-projects) dùng để rà typography, màu sắc và các chi tiết dư thừa. UI/UX Pro Max trả về hướng Data-Dense Dashboard và hướng dẫn focus bàn phím; mẫu Enterprise Gateway/landing và animation GSAP đi kèm không áp dụng cho ứng dụng desktop. mattpocock-skills:codebase-design dùng để tách tiêu đề, số liệu và trạng thái tải thành các phần có trách nhiệm rõ. Giữ React/CSS/Lucide hiện tại để không phát sinh thư viện mới hoặc tài nguyên mạng.
+Taste Skill (redesign-existing-projects) was used to review typography, colors, and unnecessary details. UI/UX Pro Max returned a Data-Dense Dashboard direction and keyboard focus guidance; its accompanying Enterprise Gateway/landing template and GSAP animations do not apply to this desktop application. mattpocock-skills:codebase-design was used to separate headings, metrics, and loading states into components with clear responsibilities. Keep the current React/CSS/Lucide stack to avoid new libraries or network resources.

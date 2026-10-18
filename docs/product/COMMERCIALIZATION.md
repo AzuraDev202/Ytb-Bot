@@ -1,62 +1,62 @@
-# Chuẩn bị thương mại hóa YTB-BOT
+# Preparing YTB-BOT for Commercialization
 
-Tài liệu này là định hướng chuẩn bị, không mô tả gói trả phí đã bán hoặc cam kết chất lượng đã đạt.
+This document describes preparation and direction, not paid packages already sold or quality commitments already achieved.
 
-## Khách hàng và định vị
+## Customers and positioning
 
-Khách hàng ưu tiên đã được chủ sản phẩm chọn: **người nghiên cứu thị trường YouTube**. Định vị là ứng dụng Windows hỗ trợ khám phá kênh theo chủ đề, sàng lọc dữ liệu công khai và tổ chức kết quả nghiên cứu. Mức giá và mô hình bán chưa được chốt.
+The product owner has selected **YouTube market researchers** as the priority audience. The positioning is a Windows application for topic-based channel discovery, public-data screening, and organizing research results. Pricing and the sales model have not been finalized.
 
-Giá trị cốt lõi là luồng **chủ đề nghiên cứu → từ khóa → sàng lọc kênh → xem xét chỉ số → lưu và xem lại**, với dữ liệu làm việc lưu trên máy. Liên hệ là chức năng hỗ trợ sau nghiên cứu.
+The core value is the workflow **research topic → keywords → channel screening → metric review → save and revisit**, with working data stored locally. Outreach supports follow-up after research.
 
-Giới hạn quan trọng của phiên bản hiện tại: scanner chỉ nhận kênh có liên hệ công khai, và bỏ qua kênh đã lưu trong các lượt sau. Điều này phù hợp với khám phá kênh mới nhưng chưa đáp ứng khảo sát thị trường đầy đủ hoặc đo tăng trưởng theo thời gian. Khi giới thiệu sản phẩm, phải nêu rõ giới hạn lấy mẫu này.
+A key limitation of the current version: the scanner accepts only channels with public contact details and skips saved channels in later scans. This suits discovery of new channels but does not yet support comprehensive market surveys or growth tracking over time. Product descriptions must disclose this sampling limitation.
 
-## Hiện trạng và kế hoạch
+## Current state and plans
 
-| Hiện có trong mã nguồn | Cần xác lập trước khi kinh doanh |
+| Present in the source code | To establish before commercial operation |
 | --- | --- |
-| Desktop Windows, quét và kho dữ liệu cục bộ | Bài toán nghiên cứu ưu tiên, gói giá và phạm vi hỗ trợ |
-| API Key do người dùng cung cấp | Trải nghiệm cấu hình key, trách nhiệm quota và thông báo lỗi |
-| Gmail OAuth qua JSON người dùng nhập | Onboarding Gmail cho khách hàng và kiểm thử tài khoản đại diện |
-| Bản nháp và lịch sử gửi | Quy trình hỗ trợ trường hợp gửi chưa rõ kết quả |
-| EXE, checksum và cập nhật GitHub | Phát hành thử, rollback và phân phối cho khách hàng |
-| LICENSE hiện tại là Apache 2.0 | Quyết định mô hình phân phối và tài liệu thương mại phù hợp |
+| Windows desktop, scanning, and local storage | Priority research problems, pricing packages, and support scope |
+| User-supplied API key | Key setup experience, quota responsibilities, and error messages |
+| Gmail OAuth using user-imported JSON | Customer Gmail onboarding and representative-account testing |
+| Drafts and send history | Support procedures for unknown send outcomes |
+| EXE, checksum, and GitHub updates | Pilot releases, rollback, and customer distribution |
+| Current Apache 2.0 LICENSE | Distribution model and appropriate commercial documentation |
 
-Hiện chưa có luồng mua hàng/kích hoạt bản quyền trong trải nghiệm được mô tả ở đây. Không quảng bá thanh toán, đồng bộ đám mây, cộng tác nhóm, thuê bao hoặc SLA như tính năng đã có.
+The experience described here currently has no purchase/license-activation workflow. Do not advertise payments, cloud sync, team collaboration, subscriptions, or an SLA as existing features.
 
-## Các mốc chuẩn bị
+## Preparation milestones
 
-### Ưu tiên sản phẩm cho người nghiên cứu
+### Product priorities for researchers
 
-Các mục sau là đề xuất cần thiết kế và xác nhận trước khi triển khai, chưa phải tính năng hiện có:
+The following proposals require design and validation before implementation; they are not existing features:
 
-- Cho phép khảo sát kênh không có liên hệ công khai, đồng thời giữ bộ lọc liên hệ như một tùy chọn.
-- Tách khám phá kênh mới khỏi việc cập nhật chỉ số của kênh đã lưu; xác định cách lưu ảnh chụp chỉ số theo thời gian nếu cần đo tăng trưởng.
-- Ghi rõ cấu hình và thời điểm khảo sát, phạm vi tìm kiếm và các giới hạn để người nghiên cứu diễn giải kết quả đúng.
-- Xác nhận nhu cầu nhóm nghiên cứu theo chủ đề, ghi chú, so sánh và xuất báo cáo bằng phỏng vấn/thử nghiệm với khách hàng mục tiêu.
+- Allow research on channels without public contact details while retaining the contact filter as an option.
+- Separate new-channel discovery from refreshing saved channel metrics; define time-based metric snapshots if growth measurement is needed.
+- Record survey settings and time, search scope, and limitations clearly so researchers can interpret results correctly.
+- Validate demand for topic-based research groups, notes, comparisons, and report exports through interviews/trials with target customers.
 
-### 1. Ổn định sản phẩm
+### 1. Stabilize the product
 
-- Đối chiếu [báo cáo review ban đầu](../reviews/PROJECT_REVIEW_2026-10-18.md) với mã mới và kiểm thử hồi quy; không coi lỗi đã sửa chỉ vì có commit mới.
-- Kiểm thử trên Windows sạch: mở EXE, quét, dừng, lưu/mở lại, soạn/gửi, cập nhật và phục hồi dữ liệu.
-- Kiểm tra nhiều phiên ứng dụng, lỗi mạng, quota hết và gửi chưa rõ kết quả.
-- Tách kết quả mock khỏi kết quả tích hợp thật trong ghi chú phát hành.
+- Compare the [initial review report](../reviews/PROJECT_REVIEW_2026-10-18.md) with newer code and regression tests; a new commit alone does not establish that a defect is fixed.
+- Test on a clean Windows installation: launch the EXE, scan, stop, save/reopen, compose/send, update, and recover data.
+- Check multiple application instances, network failures, exhausted quota, and unknown send outcomes.
+- Distinguish mocked results from real integration results in release notes.
 
-### 2. Giảm công sức thiết lập
+### 2. Reduce setup effort
 
-- Chọn rõ khách hàng tự quản lý YouTube API Key và Gmail OAuth hay được đội sản phẩm hỗ trợ cấu hình.
-- Viết hướng dẫn có ảnh cho lần chạy đầu, kết nối Gmail và xử lý lỗi thông dụng.
-- Kiểm tra yêu cầu hiện hành của Google cho phương án OAuth/phân phối được chọn trước khi triển khai rộng; tài liệu này không thay thế việc xác minh đó.
+- Decide whether customers manage their own YouTube API key and Gmail OAuth or receive setup assistance from the product team.
+- Write illustrated guides for first launch, Gmail connection, and common errors.
+- Check Google's current requirements for the chosen OAuth/distribution approach before wider rollout; this document does not replace that verification.
 
-### 3. Chuẩn hóa vận hành thương mại
+### 3. Standardize commercial operations
 
-- Xác lập giá, hình thức bán và cơ chế quyền sử dụng nếu cần; triển khai sau khi mô hình được chốt.
-- Công bố phạm vi hỗ trợ, kênh tiếp nhận, xử lý sự cố và chính sách cập nhật.
-- Chuẩn bị thông tin quyền riêng tư, điều khoản khách hàng và nội dung giấy phép cho bản phân phối đã chọn; rà soát riêng trước khi công bố.
-- Đánh giá ký số Windows, quy trình phát hành và cách khách hàng xác minh nguồn tải.
-- Giữ version/build có thể truy vết; EXE, checksum và metadata phải thuộc cùng một lần build.
+- Establish pricing, the sales model, and any required usage entitlement mechanism; implement after finalizing the model.
+- Publish support scope, contact channels, incident handling, and update policies.
+- Prepare privacy information, customer terms, and license content for the chosen distribution; review them separately before publication.
+- Assess Windows code signing, the release process, and how customers verify download sources.
+- Keep versions/builds traceable; the EXE, checksum, and metadata must come from the same build.
 
-### 4. Thử nghiệm với khách hàng nhỏ
+### 4. Run a small customer pilot
 
-Mời một nhóm người nghiên cứu thị trường YouTube khảo sát một chủ đề cụ thể: lập từ khóa, lọc kênh, xem xét chỉ số và mở lại kết quả. Đánh giá mức hữu ích của danh sách, khả năng hiểu giới hạn mẫu, thời gian đến kết quả đầu tiên, tỷ lệ hoàn thành thiết lập và nhu cầu hỗ trợ. Chỉ thu thập dữ liệu sử dụng sau khi đã quyết định cơ chế thông báo và quyền lựa chọn phù hợp; hiện không mặc định bổ sung telemetry.
+Invite a group of YouTube market researchers to investigate a specific topic: create keywords, filter channels, review metrics, and reopen results. Assess shortlist usefulness, understanding of sampling limits, time to first result, setup completion rate, and support needs. Collect usage data only after deciding appropriate notice and choice mechanisms; telemetry is not added by default.
 
-Mở rộng phân phối sau khi xử lý vấn đề từ thử nghiệm và chốt trách nhiệm vận hành. README chuyên nghiệp hỗ trợ bán hàng, nhưng không thay thế kiểm thử và quy trình hỗ trợ.
+Expand distribution after addressing pilot issues and finalizing operational responsibilities. A professional README supports sales, but does not replace testing and support procedures.

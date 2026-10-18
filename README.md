@@ -1,64 +1,64 @@
-﻿# YTB-BOT Creator Studio
+# YTB-BOT Creator Studio
 
-**Khám phá kênh YouTube mới. Sàng lọc cơ hội. Quản lý nghiên cứu trong một ứng dụng.**
+**Discover new YouTube channels. Screen opportunities. Manage your research in one application.**
 
-YTB-BOT là ứng dụng Windows dành cho người nghiên cứu thị trường YouTube và tìm kiếm nhà sáng tạo phù hợp để hợp tác. Từ danh sách chủ đề, ứng dụng tìm kênh theo tuổi kênh và tổng lượt xem, lưu kết quả có liên hệ công khai để bạn xem xét và tiếp tục trao đổi.
+YTB-BOT is a Windows application for YouTube market researchers and people seeking creators to collaborate with. Starting from a list of topics, it finds channels by channel age and total views, then saves results with public contact details for review and follow-up.
 
-[Tải cho Windows](https://github.com/AzuraDev202/Ytb-Bot/releases/latest/download/gui_app.exe) · [Hướng dẫn sử dụng](docs/user/DESKTOP_GUIDE.md) · [Tài liệu](docs/README.md) · [Báo lỗi](https://github.com/AzuraDev202/Ytb-Bot/issues)
+[Download for Windows](https://github.com/AzuraDev202/Ytb-Bot/releases/latest/download/gui_app.exe) · [User guide](docs/user/DESKTOP_GUIDE.md) · [Documentation](docs/README.md) · [Report an issue](https://github.com/AzuraDev202/Ytb-Bot/issues)
 
-## Từ chủ đề đến danh sách kênh
+## From topics to a channel shortlist
 
-1. **Chuẩn bị từ khóa:** nhập chủ đề, dán danh sách hoặc nhập cột từ Excel.
-2. **Chọn bộ lọc:** đặt tuổi kênh tối đa, lượt xem tối thiểu và độ sâu tìm kiếm.
-3. **Đánh giá kết quả:** so sánh chỉ số, tìm kiếm, sắp xếp và xem thông tin liên hệ.
-4. **Tiếp tục công việc:** xem lại lịch sử, sao chép dữ liệu hoặc soạn email từ kênh đã chọn.
+1. **Prepare keywords:** enter topics, paste a list, or import an Excel column.
+2. **Choose filters:** set the maximum channel age, minimum views, and search depth.
+3. **Review results:** compare metrics, search, sort, and inspect contact details.
+4. **Continue your work:** revisit history, copy data, or compose an email for a selected channel.
 
-## Tính năng
+## Features
 
-| Công việc | Khả năng |
+| Task | Capabilities |
 | --- | --- |
-| Khám phá | Tìm video theo từ khóa và kiểm tra kênh bằng YouTube Data API v3 |
-| Sàng lọc | Lọc tuổi kênh, tổng lượt xem và liên hệ công khai; bỏ Channel ID đã lưu trong lịch sử |
-| Quản lý từ khóa | Chỉnh sửa bảng, thêm/xóa dòng, dán nhiều dòng và nhập `.xlsx`/`.xls` |
-| Lưu kết quả | Lịch sử từng lượt quét, bao gồm kết quả một phần khi dừng hoặc gặp lỗi API |
-| Xem dữ liệu | Tìm kiếm, sắp xếp, phân trang, xem chi tiết và sao chép |
-| Liên hệ | Gmail nhiều tài khoản qua OAuth, lưu nháp, xem lại trước khi gửi và lịch sử gửi |
-| Desktop | Giao diện sáng/tối, bố cục co giãn và cập nhật từ GitHub Releases |
+| Discovery | Search videos by keyword and inspect channels through YouTube Data API v3 |
+| Screening | Filter by channel age, total views, and public contacts; exclude Channel IDs already saved in history |
+| Keyword management | Edit a table, add/delete rows, paste multiple lines, and import `.xlsx`/`.xls` |
+| Result storage | Keep scan history, including partial results when stopped or interrupted by API errors |
+| Data review | Search, sort, paginate, view details, and copy |
+| Outreach | Connect multiple Gmail accounts through OAuth, save drafts, review before sending, and view send history |
+| Desktop | Light/dark themes, responsive layouts, and updates from GitHub Releases |
 
-Các tính năng trên thuộc desktop React mặc định. CLI và giao diện `--legacy` có luồng xuất Excel riêng, được giữ để tương thích.
+These features belong to the default React desktop. The CLI and `--legacy` interface retain separate Excel export workflows for compatibility.
 
-## Bắt đầu sử dụng
+## Getting started
 
-**Yêu cầu:** Windows 10/11 x64, Microsoft Edge WebView2 Runtime, kết nối Internet và YouTube Data API v3 key còn quota.
+**Requirements:** Windows 10/11 x64, Microsoft Edge WebView2 Runtime, an Internet connection, and a YouTube Data API v3 key with available quota.
 
-1. Tải `gui_app.exe` từ [bản phát hành mới nhất](https://github.com/AzuraDev202/Ytb-Bot/releases/latest).
-2. Đặt file vào thư mục có quyền ghi và mở ứng dụng.
-3. Nhập API Key, thêm từ khóa, chọn **Bắt đầu khám phá**.
-4. Mở **Kết quả** để xem và quản lý các kênh đã lưu.
+1. Download `gui_app.exe` from the [latest release](https://github.com/AzuraDev202/Ytb-Bot/releases/latest).
+2. Place the file in a writable folder and open the application.
+3. Enter your API key, add keywords, and select **Start discovery**.
+4. Open **Results** to review and manage saved channels.
 
-Bản EXE chạy độc lập, không cần cài Python, Node.js hoặc Microsoft Excel. [Checksum SHA-256](https://github.com/AzuraDev202/Ytb-Bot/releases/latest/download/gui_app.exe.sha256) được cung cấp cùng bản phát hành.
+The standalone EXE requires no Python, Node.js, or Microsoft Excel installation. A [SHA-256 checksum](https://github.com/AzuraDev202/Ytb-Bot/releases/latest/download/gui_app.exe.sha256) accompanies each release.
 
-Gửi email cần [thiết lập Gmail OAuth](docs/user/CONTACT_COMPOSER.md) riêng. Với mạng xã hội, ứng dụng hỗ trợ sao chép nội dung và mở hồ sơ để bạn gửi thủ công.
+Sending email requires separate [Gmail OAuth setup](docs/user/CONTACT_COMPOSER.md). For social networks, the application lets you copy your message and open a profile to send it manually.
 
-## Dữ liệu và quyền truy cập
+## Data and permissions
 
-- **Từ khóa, kết quả, bản nháp và lịch sử gửi** lưu tại `%LOCALAPPDATA%/Ytb-Bot/data/workspace.sqlite3`.
-- **API Key** lưu trong `.env` cạnh EXE hoặc ở gốc dự án khi chạy mã nguồn.
-- **Thông tin đăng nhập Gmail** được mã hóa bằng Windows DPAPI theo tài khoản Windows; ứng dụng xin quyền gửi thư và xác định email, không đọc hộp thư.
-- **File Excel nhập vào** chỉ được đọc. Desktop mặc định lưu kết quả trong SQLite.
-- **Dịch vụ kết nối:** Google cho tìm kiếm, đăng nhập và gửi thư; GitHub cho cập nhật ứng dụng.
+- **Keywords, results, drafts, and send history** are stored in `%LOCALAPPDATA%/Ytb-Bot/data/workspace.sqlite3`.
+- **The API key** is stored in `.env` beside the EXE, or in the project root when running from source.
+- **Gmail credentials** are encrypted with Windows DPAPI for the Windows account. The application requests permission to send mail and identify the email address; it does not read the inbox.
+- **Imported Excel files** are read only. The default desktop stores results in SQLite.
+- **Connected services:** Google for search, sign-in, and sending mail; GitHub for application updates.
 
-Xem [hướng dẫn sao lưu và chẩn đoán](docs/user/DESKTOP_GUIDE.md#dữ-liệu-và-chẩn-đoán). Loại bỏ khóa và thông tin đăng nhập trước khi chia sẻ log hoặc báo lỗi.
+See the [backup and troubleshooting guide](docs/user/DESKTOP_GUIDE.md#data-and-troubleshooting). Remove keys and credentials before sharing logs or reporting issues.
 
-## Phạm vi kết quả
+## Result coverage
 
-YTB-BOT tập trung vào kênh mới đáp ứng bộ lọc và có email hoặc liên kết liên hệ được hỗ trợ trong mô tả công khai. Kết quả phụ thuộc từ khóa, độ sâu tìm kiếm và quota API; không đại diện toàn bộ thị trường, không dự đoán doanh thu hay khả năng viral. Chỉ số đã lưu không tự cập nhật theo thời gian.
+YTB-BOT focuses on new channels that meet the filters and have an email address or supported contact link in their public description. Results depend on keywords, search depth, and API quota. They do not represent the entire market or predict revenue or viral potential. Saved metrics do not refresh automatically over time.
 
-Thông tin liên hệ chưa được xác minh khả năng nhận thư. Trạng thái Gmail chấp nhận yêu cầu không bảo đảm email đã đến người nhận.
+Contact details have not been verified for deliverability. Gmail accepting a request does not guarantee delivery to the recipient.
 
-## Phát triển
+## Development
 
-Ứng dụng sử dụng React, TypeScript, Python, pywebview / Edge WebView2 và SQLite. Chuẩn bị Python 3.12, Node.js 22.12+ và npm, sau đó chạy tại thư mục dự án:
+The application uses React, TypeScript, Python, pywebview / Edge WebView2, and SQLite. Install Python 3.12, Node.js 22.12+, and npm, then run these commands in the project directory:
 
 ```powershell
 python -m venv .venv
@@ -69,15 +69,15 @@ npm run build --prefix frontend
 python gui_app.py
 ```
 
-Cấu hình API theo [`.env.example`](.env.example). Hướng dẫn kiểm thử, build và vận hành nằm trong các tài liệu dưới đây:
+Configure the API using [`.env.example`](.env.example). Testing, build, and operational instructions are available below:
 
-| Tài liệu | Nội dung |
+| Document | Contents |
 | --- | --- |
-| [Phát triển và kiểm thử](docs/engineering/DEVELOPMENT.md) | Môi trường, lệnh chạy và xác minh |
-| [Kiến trúc](docs/engineering/ARCHITECTURE.md) | Cấu trúc và trách nhiệm các phần |
-| [Build và phát hành](docs/engineering/RELEASE.md) | Đóng gói EXE, CI và cập nhật |
-| [Định hướng sản phẩm](docs/product/COMMERCIALIZATION.md) | Phạm vi và chuẩn bị thương mại hóa |
+| [Development and testing](docs/engineering/DEVELOPMENT.md) | Environment, commands, and verification |
+| [Architecture](docs/engineering/ARCHITECTURE.md) | Structure and component responsibilities |
+| [Build and release](docs/engineering/RELEASE.md) | EXE packaging, CI, and updates |
+| [Product direction](docs/product/COMMERCIALIZATION.md) | Scope and commercialization preparation |
 
-## Giấy phép
+## License
 
-Mã nguồn được phân phối theo [Apache License 2.0](LICENSE).
+The source code is distributed under the [Apache License 2.0](LICENSE).
