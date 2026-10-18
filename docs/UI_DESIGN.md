@@ -44,6 +44,8 @@ Phím tắt và thao tác Excel được ghi tại [hướng dẫn desktop](DESK
 
 ## Kiểm tra trực quan
 
+Bảng kết quả giữ chiều rộng trong workspace và cuộn ngang độc lập. Các nút trái/phải dưới bảng giúp xem các cột phía sau; cột chọn dòng và nút **Xem đầy đủ** luôn nằm bên trái. URL và tiêu đề dài được rút gọn trong ô, có tooltip; **Xem đầy đủ** mở toàn bộ trường của một dòng với văn bản xuống dòng và có thể sao chép. Dữ liệu gốc và thao tác sao chép dòng không bị rút gọn. Kiểm tra hồi quy dùng bảng đủ 10 cột, URL/tiêu đề dài và cửa sổ 1280, 800, 375px; ảnh kiểm tra lưu tại `artifacts/ui/results-wide.png` và `result-details.png`.
+
 ```powershell
 npm test --prefix frontend
 python scripts/smoke_react.py

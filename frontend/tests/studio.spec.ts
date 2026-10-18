@@ -1,5 +1,40 @@
 import { expect, test } from '@playwright/test';
 
+test('wide result tables keep trailing fields reachable inside the workspace', async ({page}) => {
+  await page.setViewportSize({width: 1280, height: 720});
+  await page.evaluate(() => {
+    window.pywebview!.api.results_page = async () => ({ok: true, data: {
+      columns: ['Tên Kênh', 'Channel ID', 'URL Kênh', 'Từ Khóa Quét', 'Ngày Tạo', 'Tuổi Kênh (Ngày)', 'Subscribers', 'Tổng Lượt Xem', 'Tổng Video', 'Video Gần Nhất'],
+      rows: [['A channel with a long name', 'UC' + 'a'.repeat(22), 'https://www.youtube.com/channel/UC' + 'a'.repeat(22), 'AI Agent', '2026-10-06', 12, 23, 123456, 18, 'A detailed video title '.repeat(16)]],
+      page: 0, pages: 1, total: 1, original_total: 1,
+    }});
+  });
+  await page.getByRole('button', {name: /Xem kết quả trong Bot/}).click();
+  await expect(page.getByRole('columnheader', {name: 'Video Gần Nhất'})).toBeVisible();
+  const bounds = await page.locator('.workbook-panel .table-scroll').evaluate(element => {
+    const rect = element.getBoundingClientRect();
+    return {right: rect.right, width: rect.width, viewport: innerWidth, scrollable: element.scrollWidth > element.clientWidth};
+  });
+  expect(bounds.right).toBeLessThanOrEqual(bounds.viewport);
+  expect(bounds.scrollable).toBe(true);
+  await page.getByRole('button', {name: 'Cuộn sang phải', exact: true}).click();
+  await expect.poll(() => page.locator('.workbook-panel .table-scroll').evaluate(element => element.scrollLeft)).toBeGreaterThan(0);
+  await page.locator('.workbook-panel .table-scroll').evaluate(element => {element.scrollLeft = element.scrollWidth;});
+  await expect(page.getByRole('button', {name: 'Cuộn sang phải', exact: true})).toBeDisabled();
+  await page.screenshot({animations: 'disabled', path: '../artifacts/ui/results-wide.png'});
+  await page.getByRole('button', {name: 'Xem đầy đủ dòng 1', exact: true}).click();
+  await expect(page.getByRole('dialog', {name: 'Chi tiết kết quả'})).toBeVisible();
+  await expect(page.getByRole('dialog').getByText('123456', {exact: true})).toBeVisible();
+  await expect(page.getByRole('dialog').locator('dd').last()).toHaveText('A detailed video title '.repeat(16).trim());
+  await page.screenshot({animations: 'disabled', path: '../artifacts/ui/result-details.png'});
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).not.toBeVisible();
+  for (const width of [800, 375]) {
+    await page.setViewportSize({width, height: 720});
+    expect(await page.locator('.workbook-panel .table-scroll').evaluate(element => element.getBoundingClientRect().right <= innerWidth)).toBe(true);
+  }
+});
+
 test('edit, paste, delete and reopen the keyword table without downloading files', async ({page}) => {
   const downloads: string[] = [];
   page.on('download', download => downloads.push(download.suggestedFilename()));

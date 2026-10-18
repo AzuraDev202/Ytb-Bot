@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowDownToLine, ArrowLeft, ArrowRight, ArrowUpDown, Copy, FileSpreadsheet, FolderOpen, Loader2, Plus, Search, ShieldCheck, X } from 'lucide-react';
 import { call, type WorkbookMeta, type WorkbookPage } from '../api';
 import { TableLoading } from './TableLoading';
+import { ResultDetails } from './ResultDetails';
 import { ConfirmDialog, type Confirmation, type Notice } from './ConfirmDialog';
 const format = (value: number) => new Intl.NumberFormat('vi-VN').format(value);
 
@@ -18,6 +19,25 @@ export function WorkbookView({meta, onOpen, onImport, notify, readOnly = false}:
   const [retry, setRetry] = useState(0);
   const [selection, setSelection] = useState<number[]>([]);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  const [details, setDetails] = useState<{columns: string[]; values: (string | number | null)[]} | null>(null);
+  const scroll = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({overflow: false, start: true, end: true});
+  function measureScroll() {
+    const element = scroll.current;
+    if (!element) return;
+    setEdges({overflow: element.scrollWidth > element.clientWidth + 1, start: element.scrollLeft <= 1, end: element.scrollLeft + element.clientWidth >= element.scrollWidth - 2});
+  }
+  useEffect(() => {
+    const element = scroll.current;
+    if (!element) return;
+    const observer = new ResizeObserver(measureScroll);
+    observer.observe(element);
+    if (element.querySelector('table')) observer.observe(element.querySelector('table')!);
+    measureScroll();
+    return () => observer.disconnect();
+  }, [data, loading, failure, meta]);
+  useEffect(() => {setDetails(null); if (scroll.current) scroll.current.scrollLeft = 0;}, [meta, page, query, sort, descending]);
+  function pan(direction: number) {scroll.current?.scrollBy({left: direction * Math.max(240, scroll.current.clientWidth * .8), behavior: 'instant'});}
   useEffect(() => {setSheet(meta?.sheets[0] || ''); setColumn(0); setQuery(''); setPage(0); setSort(null); setData(null);}, [meta]);
   useEffect(() => {
     if (!sheet || !meta) return;
@@ -50,9 +70,11 @@ export function WorkbookView({meta, onOpen, onImport, notify, readOnly = false}:
       <div className="file-banner"><FileSpreadsheet size={20}/><div><strong>{meta.filename}</strong><small>{meta.sheets.length} sheet · {readOnly ? 'Lưu trong Bot' : 'File gốc chỉ được đọc'}</small></div><span className="pill neutral">{readOnly ? 'BOT DATA' : 'LOCAL FILE'}</span></div>
       {!readOnly && <div className="workbook-controls"><label>Sheet<select value={sheet} onChange={event => {setSheet(event.target.value); setPage(0); setSort(null);}}>{meta.sheets.map(value => <option key={value}>{value}</option>)}</select></label><label>Cột từ khóa<select value={column} onChange={event => setColumn(Number(event.target.value))}>{data?.columns.map((name, index) => <option key={index} value={index}>{name}</option>)}</select></label><button className="button secondary import-column" disabled={!data?.columns.length || loading} onClick={importColumn}><ArrowDownToLine size={16}/> Nhập cột từ khóa</button></div>}
       <div className="table-tools"><div className="search-field"><Search size={17}/><input aria-label="Tìm trong bảng" placeholder="Tìm tên kênh, từ khóa, lượt xem…" value={query} onChange={event => {setQuery(event.target.value); setPage(0);}}/>{query && <button className="icon-button" aria-label="Xóa tìm kiếm" onClick={() => setQuery('')}><X size={14}/></button>}</div><button className="button ghost" onClick={copy} disabled={!selection.length || loading || !!failure}><Copy size={15}/> Sao chép {selection.length || ''}</button></div>
-      <div className={`table-scroll ${loading ? 'loading-table' : ''}`} aria-busy={loading}><table hidden={loading || !!failure}><thead><tr><th className="checkbox-cell"><span className="sr-only">Chọn dòng</span></th>{data?.columns.map((name, index) => <th key={index} aria-sort={sort === index ? descending ? 'descending' : 'ascending' : 'none'}><button onClick={() => {setDescending(sort === index ? !descending : false); setSort(index); setPage(0);}}>{name}<ArrowUpDown size={13}/></button></th>)}</tr></thead><tbody>{data?.rows.map((row, index) => <tr key={index} className={selection.includes(index) ? 'selected-row' : ''}><td><input type="checkbox" aria-label={`Chọn dòng ${index + 1}`} checked={selection.includes(index)} onChange={event => setSelection(values => event.target.checked ? [...values, index] : values.filter(value => value !== index))}/></td>{row.map((value, cell) => <td key={cell}>{value ?? '—'}</td>)}</tr>)}</tbody></table>{failure ? <div className="table-empty" role="alert"><span>{failure}</span><button className="button secondary" onClick={() => setRetry(value => value + 1)}>Tải lại bảng</button></div> : loading ? <TableLoading label={readOnly ? 'Đang mở kết quả…' : 'Đang đọc bảng…'}/> : !data?.rows.length ? <div className="table-empty">Không tìm thấy dòng phù hợp. Thử từ tìm kiếm khác.</div> : null}</div>
+      <div ref={scroll} tabIndex={0} role="region" aria-label="Bảng dữ liệu cuộn ngang" onScroll={measureScroll} className={`table-scroll ${loading ? 'loading-table' : ''}`} aria-busy={loading}><table hidden={loading || !!failure}><thead><tr><th className={readOnly ? "checkbox-cell row-tools" : "checkbox-cell"}><span className="sr-only">Chọn dòng và xem chi tiết</span></th>{data?.columns.map((name, index) => <th key={index} aria-sort={sort === index ? descending ? 'descending' : 'ascending' : 'none'}><button onClick={() => {setDescending(sort === index ? !descending : false); setSort(index); setPage(0);}}>{name}<ArrowUpDown size={13}/></button></th>)}</tr></thead><tbody>{data?.rows.map((row, index) => <tr key={index} className={selection.includes(index) ? 'selected-row' : ''}><td className={readOnly ? "row-tools" : undefined}><div className="row-actions"><input type="checkbox" aria-label={`Chọn dòng ${index + 1}`} checked={selection.includes(index)} onChange={event => setSelection(values => event.target.checked ? [...values, index] : values.filter(value => value !== index))}/>{readOnly && <button className="row-detail-button" aria-label={`Xem đầy đủ dòng ${index + 1}`} onClick={() => setDetails({columns: data!.columns, values: row})}>Xem đầy đủ</button>}</div></td>{row.map((value, cell) => <td key={cell}><span className="cell-value" title={String(value ?? '—')}>{value ?? '—'}</span></td>)}</tr>)}</tbody></table>{failure ? <div className="table-empty" role="alert"><span>{failure}</span><button className="button secondary" onClick={() => setRetry(value => value + 1)}>Tải lại bảng</button></div> : loading ? <TableLoading label={readOnly ? 'Đang mở kết quả…' : 'Đang đọc bảng…'}/> : !data?.rows.length ? <div className="table-empty">Không tìm thấy dòng phù hợp. Thử từ tìm kiếm khác.</div> : null}</div>
+      {edges.overflow && !loading && !failure && <div className="horizontal-controls"><span>Cuộn ngang để xem các cột phía sau · Hoặc chọn Xem đầy đủ</span><div><button className="icon-button" aria-label="Cuộn sang trái" disabled={edges.start} onClick={() => pan(-1)}><ArrowLeft size={18}/></button><button className="icon-button" aria-label="Cuộn sang phải" disabled={edges.end} onClick={() => pan(1)}><ArrowRight size={18}/></button></div></div>}
       <div className="table-footer"><span>{format(data?.total ?? 0)} / {format(data?.original_total ?? 0)} dòng · 100 dòng / trang</span><div><button className="icon-button" aria-label="Trang trước" disabled={page === 0 || loading} onClick={() => setPage(value => value - 1)}><ArrowLeft size={16}/></button><span>{(data?.page ?? 0) + 1} / {data?.pages ?? 1}</span><button className="icon-button" aria-label="Trang sau" disabled={page + 1 >= (data?.pages ?? 1) || loading} onClick={() => setPage(value => value + 1)}><ArrowRight size={16}/></button></div></div>
     </>}
+    <ResultDetails record={details} onClose={() => setDetails(null)}/>
     <ConfirmDialog request={confirmation} dismiss={() => setConfirmation(null)}/>
   </section>;
 }
