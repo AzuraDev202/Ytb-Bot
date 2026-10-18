@@ -486,3 +486,30 @@ input,textarea { caret-color: var(--accent); }
 @media (prefers-reduced-motion: reduce) { .banner-art, .contact-group-list input:checked { animation: none; } .click-feedback { display: none; } }
 :root[data-motion=off] .banner-art, :root[data-motion=off] .contact-group-list input:checked { animation: none; }
 :root[data-motion=off] .click-feedback { display: none; }
+
+.linked-accounts { margin: 20px 0; padding: 16px; border: 1px solid var(--line); border-radius: 12px; }
+.linked-accounts summary { cursor: pointer; font-weight: 600; min-height: 28px; }
+.linked-account-content { display: grid; gap: 18px; padding-top: 12px; }
+.linked-account-content section { min-width: 0; }
+.linked-account-content h3 { margin-bottom: 8px; }
+.linked-account-content p { color: var(--muted); line-height: 1.6; }
+.linked-account-content ul { list-style: none; padding: 0; }
+.linked-account-content li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; }
+.linked-account-content li span { overflow-wrap: anywhere; }
+.page-connect-form { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-top: 12px; }
+.page-connect-form label { flex: 1 1 240px; min-width: 0; }
+.page-connect-form input { width: 100%; }
+.select-all-contacts { display: flex; gap: 10px; align-items: center; min-height: 44px; cursor: pointer; }
+.select-all-contacts input { width: 18px; height: 18px; accent-color: var(--accent); }
+.facebook-channel-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.facebook-channel-actions .button { white-space: normal; overflow-wrap: anywhere; }
+.facebook-composer { max-width: min(720px, calc(100vw - 24px)); }
+.facebook-composer .composer-content { display: grid; gap: 16px; padding: 20px; overflow-y: auto; }
+.facebook-composer textarea { resize: vertical; width: 100%; }
+.facebook-composer select { width: 100%; min-width: 0; }
+.messenger-review { padding: 16px; border: 1px solid var(--line); border-radius: 10px; }
+.message-preview { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 16px; }
+@media (max-width: 600px) {
+  .page-connect-form > .button { width: 100%; }
+  .facebook-composer .composer-content { padding: 16px; }
+}

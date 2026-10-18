@@ -53,7 +53,8 @@ class LocalizationTests(unittest.TestCase):
     def test_all_app_owned_constant_exceptions_have_translations(self):
         root = Path(__file__).resolve().parents[1]
         paths = ['core/engine.py', 'core/workbook.py', 'core/storage.py', 'core/outreach_store.py',
-                 'core/bulk_store.py', 'desktop/bulk.py',
+                 'core/bulk_store.py', 'core/facebook_store.py', 'desktop/bulk.py',
+                 'desktop/facebook.py', 'desktop/facebook_outreach.py',
                  'desktop/api.py', 'desktop/outreach.py', 'desktop/gmail.py',
                  'desktop/credential_vault.py', 'desktop/app.py', 'updater.py']
         for relative in paths:

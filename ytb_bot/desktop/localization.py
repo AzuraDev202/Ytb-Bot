@@ -113,8 +113,45 @@ Closing stops the remaining emails. The current request may have an uncertain ou
 Unsaved bulk draft|Bản nháp hàng loạt chưa lưu|未保存的批量邮件草稿
 The bulk email draft has unsaved changes. Closing will discard them. Close anyway?|Bản nháp hàng loạt có thay đổi chưa lưu. Đóng sẽ bỏ các thay đổi đó. Bạn vẫn muốn đóng?|批量邮件草稿有未保存的更改。关闭将丢弃这些更改。仍要关闭吗？'''
 
+_CATALOG += '''
+Choose a verified Page conversation for this channel.|Chọn cuộc trò chuyện Trang đã xác minh cho kênh này.|请为该频道选择已验证的主页对话。
+Connect the selected Fanpage first.|Hãy kết nối Fanpage đã chọn trước.|请先关联所选公共主页。
+Conversation history is incomplete. Narrow the Page inbox before retrying.|Lịch sử trò chuyện chưa đầy đủ. Thu gọn hộp thư Trang trước khi thử lại.|对话记录不完整。请缩小主页收件箱范围后重试。
+Enter a Messenger message between 1 and 2,000 characters.|Nhập tin Messenger từ 1 đến 2.000 ký tự.|请输入 1 至 2,000 个字符的 Messenger 消息。
+Enter a valid Page access token.|Nhập Page Access Token hợp lệ.|请输入有效的主页访问令牌。
+Finish the Messenger draft before updating.|Hoàn tất bản nháp Messenger trước khi cập nhật.|更新前请完成 Messenger 草稿。
+Invalid Facebook identifier.|Mã định danh Facebook không hợp lệ.|Facebook 标识符无效。
+Invalid Messenger draft.|Bản nháp Messenger không hợp lệ.|Messenger 草稿无效。
+Invalid response|Phản hồi không hợp lệ.|响应无效。
+Link an eligible Page conversation before reviewing.|Liên kết cuộc trò chuyện đủ điều kiện trước khi xem lại.|检查消息前请关联符合条件的主页对话。
+Messenger acceptance could not be verified.|Không xác minh được Messenger đã chấp nhận gửi.|无法验证 Messenger 是否接受发送请求。
+Meta rejected the request. Check Page permissions, token expiry and messaging eligibility.|Meta từ chối yêu cầu. Kiểm tra quyền Trang, hạn token và điều kiện nhắn tin.|Meta 拒绝了请求。请检查主页权限、令牌有效期和发送资格。
+Meta response is uncertain. Check the Page inbox before trying again.|Chưa rõ phản hồi Meta. Kiểm tra hộp thư Trang trước khi thử lại.|Meta 响应不确定。重试前请检查主页收件箱。
+Response too large|Phản hồi quá lớn.|响应过大。
+Review a Messenger message before sending.|Xem lại tin Messenger trước khi gửi.|发送前请检查 Messenger 消息。
+The recipient changed. Review a new message.|Người nhận đã thay đổi. Hãy xem lại tin nhắn mới.|接收人已更改。请重新检查消息。
+The recipient is not in a verified Page conversation.|Người nhận không thuộc cuộc trò chuyện Trang đã xác minh.|接收人不在已验证的主页对话中。
+The saved channel has no Facebook contact.|Kênh đã lưu không có liên hệ Facebook.|已保存的频道没有 Facebook 联系方式。
+The standard 24-hour messaging window is closed or cannot be verified.|Đã hết hoặc chưa xác minh được thời hạn nhắn tin 24 giờ.|24 小时标准消息窗口已关闭或无法验证。
+This Page recipient already has a send attempt. Check the Page inbox before further contact.|Đã có lượt gửi tới người nhận này. Kiểm tra hộp thư Trang trước khi liên hệ tiếp.|已尝试向该主页接收人发送消息。再次联系前请检查主页收件箱。
+This channel has already been contacted.|Kênh này đã được liên hệ.|已联系过该频道。
+Unable to connect the Page. Check the Page token and messaging permissions.|Không thể kết nối Trang. Kiểm tra token và quyền nhắn tin.|无法关联主页。请检查主页令牌和消息权限。
+Unable to load Page conversations. Check permissions and reconnect the Page.|Không thể tải cuộc trò chuyện. Kiểm tra quyền và kết nối lại Trang.|无法加载主页对话。请检查权限并重新关联主页。
+Unable to verify Facebook conversation history.|Không xác minh được lịch sử trò chuyện Facebook.|无法验证 Facebook 对话记录。
+Unable to verify recipient eligibility. Refresh Page conversations.|Không xác minh được điều kiện người nhận. Hãy tải lại cuộc trò chuyện Trang.|无法验证接收人资格。请刷新主页对话。
+Unable to verify the Meta response. Check the Page inbox before trying again.|Không xác minh được phản hồi Meta. Kiểm tra hộp thư Trang trước khi thử lại.|无法验证 Meta 响应。重试前请检查主页收件箱。
+Use a Page access token, not a personal account token.|Hãy dùng token của Trang, không phải token tài khoản cá nhân.|请使用主页访问令牌，而非个人账号令牌。
+'''
+
+_CATALOG += '''
+Sending message|Đang gửi tin nhắn|正在发送消息
+Messenger is processing the request. Closing now may leave the result unknown. Close anyway?|Messenger đang xử lý yêu cầu. Đóng lúc này có thể khiến kết quả không rõ. Vẫn đóng?|Messenger 正在处理请求。此时关闭可能导致结果不确定。仍要关闭吗？
+'''
+
 _STATIC = {}
 for _line in _CATALOG.splitlines():
+    if not _line.strip():
+        continue
     _english, _vi, _zh = _line.split('|')
     _STATIC[_english] = {'vi': _vi, 'zh-CN': _zh}
 

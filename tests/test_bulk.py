@@ -81,7 +81,9 @@ class BulkTests(unittest.TestCase):
             self.assertEqual(sum(pool.map(lambda _: start(), range(2))), 1)
         self.finish()
         self.assertEqual(self.gmail.send.call_count, 2)
-        self.assertTrue(all(row['status'] == 'skipped' for row in self.bulk.prepare(self.payload)['recipients']))
+        self.assertEqual(self.bulk.groups(), [])
+        with self.assertRaises(ValueError):
+            self.bulk.prepare(self.payload)
 
     def test_unknown_cancels_rest_and_never_retries(self):
         self.gmail.send.side_effect = TimeoutError('secret')
