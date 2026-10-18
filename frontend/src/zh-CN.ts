@@ -155,4 +155,8 @@ export const zhCN: Record<string, string> = {
   'Reset filters': '重置筛选条件',
   'Your reviewed batches and send results will appear here.': '已检查的批次和发送结果将显示在此处。',
   'Email workflow': '邮件操作步骤',
+  'Start with a topic. Find your next creator connection.': '从一个主题开始，发现下一位值得联系的创作者。',
+  'Keep your ideas together, ready for your next discovery.': '整理灵感，为下一次发现做好准备。',
+  'From discovered channels to thoughtful conversations.': '从发现频道，到开启用心的交流。',
+  'Bring your existing ideas into your workspace.': '将已有灵感带入你的工作区。',
 };

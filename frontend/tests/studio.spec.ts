@@ -368,6 +368,36 @@ test('result errors have an inline retry and empty history offers a clear next a
   await expect(page.getByRole('heading', {level: 1})).toHaveText('Discover new channels');
 });
 
+test('workspace banners follow navigation and click feedback honors motion preferences', async ({page}) => {
+  await page.emulateMedia({reducedMotion: 'no-preference'});
+  await expect(page.locator('.workspace-banner')).toContainText('Start with a topic. Find your next creator connection.');
+  await page.evaluate(() => {
+    (window as any).feedbackCount = 0;
+    new MutationObserver(records => records.forEach(record => record.addedNodes.forEach(node => {
+      if (node instanceof Element && node.matches('.click-feedback')) (window as any).feedbackCount++;
+    }))).observe(document.body, {childList: true, subtree: true});
+  });
+  const motion = page.getByRole('switch', {name: 'Motion effects'});
+  if (await motion.getAttribute('aria-checked') !== 'true') await motion.click();
+  await page.getByRole('button', {name: 'Edit keyword table'}).click();
+  await expect(page.locator('.workspace-banner')).toContainText('Keep your ideas together, ready for your next discovery.');
+  await expect.poll(() => page.evaluate(() => (window as any).feedbackCount)).toBe(1);
+  await expect(page.locator('.click-feedback')).toHaveCount(0);
+  await motion.click();
+  const before = await page.evaluate(() => (window as any).feedbackCount);
+  await page.getByRole('button', {name: 'Discover channels', exact: true}).click();
+  expect(await page.evaluate(() => (window as any).feedbackCount)).toBe(before);
+  await expect(page.locator('.banner-art')).toHaveCSS('animation-name', 'none');
+  await motion.click();
+  await page.emulateMedia({reducedMotion: 'reduce'});
+  const reduced = await page.evaluate(() => (window as any).feedbackCount);
+  await page.getByRole('button', {name: 'Edit keyword table'}).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', {name: 'Keyword list', exact: true})).toBeVisible();
+  expect(await page.evaluate(() => (window as any).feedbackCount)).toBe(reduced);
+  await expect(page.locator('.banner-art')).toHaveCSS('animation-name', 'none');
+});
+
 test('text contrast remains readable in both themes', async ({page}) => {
   await page.emulateMedia({reducedMotion: 'reduce'});
   const contrast = async () => page.evaluate(() => {
