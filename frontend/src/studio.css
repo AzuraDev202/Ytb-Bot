@@ -85,6 +85,18 @@ button svg { stroke-width: 1.8; }
 .topbar { height: 66px; padding: 0 30px; background: var(--bg); }
 .breadcrumbs { font-size: 12px; gap: 12px; }
 .topbar-actions { gap: 16px; }
+.language-picker { flex-shrink: 0; max-width: 140px; }
+.language-picker select { width: 100%; min-height: 32px; padding: 4px 8px; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 7px; font: inherit; font-size: 12px; }
+.language-picker [role="alert"] { display: block; font-size: 11px; color: var(--accent); max-width: 200px; }
+.contact-composer header .language-picker { margin-left: auto; }
+@media(max-width: 560px) {
+  .topbar .breadcrumbs { min-width: 0; overflow: hidden; }
+  .topbar .breadcrumbs strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .topbar .breadcrumbs > span, .topbar .breadcrumbs > svg { display: none; }
+  .topbar-actions { gap: 8px; flex-shrink: 0; }
+  .language-picker { max-width: 112px; }
+  .contact-composer header { flex-wrap: wrap; }
+}
 .connection-status { font-size: 11px; }
 .desktop-label { color: var(--faint); font-size: 11px; border-left: 1px solid var(--line); padding-left: 16px; }
 .icon-button { width: 40px; height: 40px; border-radius: 8px; }

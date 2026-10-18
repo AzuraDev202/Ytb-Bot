@@ -6,28 +6,28 @@ The product is a Windows application for YouTube market researchers: discover ch
 
 ```text
 Ytb-Bot/
-├── frontend/                 React, bridge types, and browser tests
-│   ├── src/components/       Screens and user interactions
-│   └── tests/                Playwright with a mocked bridge
-├── ytb_bot/                  Application Python code
-│   ├── core/                 Scanning, contacts, tables, and SQLite
-│   ├── desktop/              WebView2, bridge, Gmail, and credential vault
-│   ├── cli/                  Compatibility command-line scanner
-│   └── legacy_ui/            Compatibility CustomTkinter interface
-├── tests/                    Python tests organized by feature
-├── scripts/
-│   ├── checks/               Native and EXE smoke tests
-│   ├── dev/                  Interface preview and screenshot tools
-│   └── release/              Release selection and builds
-├── packaging/                PyInstaller configuration
-├── docs/
-│   ├── user/                 User guides
-│   ├── engineering/          Development, interface, and releases
-│   ├── product/              Commercialization preparation
-│   └── reviews/              Reports with dates and defined scope
-├── .github/workflows/        Checks, builds, and releases
-├── gui_app.py                Compatibility desktop launcher
-└── bot.py                    Compatibility CLI launcher
+â”œâ”€â”€ frontend/                 React, bridge types, and browser tests
+â”‚   â”œâ”€â”€ src/components/       Screens and user interactions
+â”‚   â””â”€â”€ tests/                Playwright with a mocked bridge
+â”œâ”€â”€ ytb_bot/                  Application Python code
+â”‚   â”œâ”€â”€ core/                 Scanning, contacts, tables, and SQLite
+â”‚   â”œâ”€â”€ desktop/              WebView2, bridge, Gmail, and credential vault
+â”‚   â”œâ”€â”€ cli/                  Compatibility command-line scanner
+â”‚   â””â”€â”€ legacy_ui/            Compatibility CustomTkinter interface
+â”œâ”€â”€ tests/                    Python tests organized by feature
+â”œâ”€â”€ scripts/
+â”‚   â”œâ”€â”€ checks/               Native and EXE smoke tests
+â”‚   â”œâ”€â”€ dev/                  Interface preview and screenshot tools
+â”‚   â””â”€â”€ release/              Release selection and builds
+â”œâ”€â”€ packaging/                PyInstaller configuration
+â”œâ”€â”€ docs/
+â”‚   â”œâ”€â”€ user/                 User guides
+â”‚   â”œâ”€â”€ engineering/          Development, interface, and releases
+â”‚   â”œâ”€â”€ product/              Commercialization preparation
+â”‚   â””â”€â”€ reviews/              Reports with dates and defined scope
+â”œâ”€â”€ .github/workflows/        Checks, builds, and releases
+â”œâ”€â”€ gui_app.py                Compatibility desktop launcher
+â””â”€â”€ bot.py                    Compatibility CLI launcher
 ```
 
 Keep `README.md`, `LICENSE`, `.env.example`, dependency manifests, and launchers at the root so users, CI, and build tools can find them easily. Frontend configuration stays with the frontend.
@@ -73,6 +73,10 @@ Introduce deeper subdivisions only when several features need a distinct respons
 | Local configuration | `.env`, `studio-settings.json` beside the EXE or at the source root | Do not commit |
 
 Files such as `keywords.xlsx` may belong to the older CLI workflow. Do not automatically move or delete them during cleanup; check who uses them and back them up first.
+
+## Display language
+
+The main React desktop offers English (`en`), Vietnamese (`vi`), and Simplified Chinese (`zh-CN`). A display-language preference is retained in local storage and native preferences. Switching updates interface text, native prompts, and application-authored messages without reloading the window or replacing editor state. User keywords, channel data, and drafts are preserved as entered. Canonical result column identifiers and API field keys remain English; CLI and legacy interface text remain English.
 
 ## Historical data compatibility
 

@@ -22,7 +22,7 @@ def verify(window):
         import time
         deadline = time.monotonic() + 20
         while time.monotonic() < deadline:
-            if window.evaluate_js("document.querySelector('.connection-status')?.textContent === 'Local processing'"):
+            if window.evaluate_js("document.querySelector('.connection-status.connected') !== null"):
                 break
             time.sleep(.2)
         else:
@@ -50,14 +50,22 @@ def verify(window):
         # Exercise closing on the actual GUI thread: it must not wait for JS.
         confirmation_seen = threading.Event()
         original_confirmation = window.create_confirmation_dialog
+        original_language = window._js_api._language
+        captured = []
         def refuse_close(*args):
+            captured.append(args)
             confirmation_seen.set()
             return False
         window.create_confirmation_dialog = refuse_close
         try:
-            window._js_api.set_keywords_dirty(True)
-            window.destroy()
-            assert confirmation_seen.wait(3), "Unsaved keyword close guard was not invoked"
+            for language, title in [('en', 'Unsaved keywords'), ('vi', 'Từ khóa chưa lưu'), ('zh-CN', '未保存的关键词')]:
+                window._js_api._language = language
+                confirmation_seen.clear()
+                window._js_api.set_keywords_dirty(True)
+                window.destroy()
+                assert confirmation_seen.wait(3), "Unsaved keyword close guard was not invoked"
+                assert captured[-1][0] == title, 'Native close confirmation used the wrong language'
+            window._js_api._language = original_language
             if sys.platform == "win32":
                 assert ctypes.windll.user32.IsWindowVisible(ctypes.c_void_p(window.native.Handle.ToInt64())), "Close guard did not preserve the window"
             window._js_api.set_keywords_dirty(False)
@@ -71,11 +79,12 @@ def verify(window):
             window.destroy()
             assert confirmation_seen.wait(3), 'In-flight email close guard was not invoked'
         finally:
+            window._js_api._language = original_language
             window._js_api.set_keywords_dirty(False)
             window._js_api.set_contact_dirty(False)
             window._js_api._contact_sending = False
             window.create_confirmation_dialog = original_confirmation
-        print("PASS: native WebView2 loaded React, Gmail metadata bridge and unsaved/in-flight close guards")
+        print("PASS: native WebView2 loaded React, Gmail metadata bridge, three-language close prompts and unsaved/in-flight guards")
     except Exception as error:
         failures.append(str(error))
     finally:

@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import threading
+import tempfile
 import webbrowser
 from urllib.parse import urlparse
 
@@ -17,7 +18,18 @@ from ytb_bot.version import APP_VERSION
 from ytb_bot.core.workbook import Workbook
 from ytb_bot.core.storage import WorkspaceStore
 from ytb_bot.desktop.outreach import Outreach
+from ytb_bot.desktop.localization import SUPPORTED_LANGUAGES, translate_message
 from ytb_bot.updater import check_for_update, download_update, install_update
+
+def read_preferences():
+    try:
+        value = json.loads((APP_DIR / 'studio-settings.json').read_text(encoding='utf-8-sig'))
+    except (OSError, ValueError):
+        value = {}
+    preferences = value if isinstance(value, dict) else {}
+    if preferences.get('language') not in SUPPORTED_LANGUAGES:
+        preferences['language'] = 'en'
+    return preferences
 
 
 def reply(method):
@@ -29,7 +41,7 @@ def reply(method):
             text = str(error)
             if self._key:
                 text = text.replace(self._key, "<API_KEY>")
-            return {"ok": False, "error": text}
+            return {"ok": False, "error": self._translate(text)}
     return wrapped
 
 
@@ -45,6 +57,7 @@ class DesktopAPI:
         self._book = Workbook()
         self._outreach = Outreach(self._store.path)
         self._lock = threading.RLock()
+        self._language = read_preferences()['language']
         self._release = None
         self._staged_update = None
         self._update_committing = False
@@ -52,12 +65,40 @@ class DesktopAPI:
 
     @reply
     def get_bootstrap(self):
-        try:
-            preferences = json.loads((APP_DIR / "studio-settings.json").read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            preferences = {}
+        with self._lock:
+            preferences = {**read_preferences(), 'language': self._language}
         return {"version": APP_VERSION, "build": build_id(), "has_api_key": bool(self._key),
-                "preferences": preferences if isinstance(preferences, dict) else {}, "keywords": self._store.keywords()}
+                "preferences": preferences, "keywords": self._store.keywords()}
+
+    def _translate(self, message):
+        return translate_message(message, self._language)
+
+    def _save_preferences(self, changes):
+        preferences = {**read_preferences(), **changes}
+        descriptor, name = tempfile.mkstemp(prefix='.studio-settings-', suffix='.tmp', dir=APP_DIR)
+        temporary = Path(name)
+        try:
+            with os.fdopen(descriptor, 'w', encoding='utf-8') as output:
+                json.dump(preferences, output, ensure_ascii=False)
+                output.flush()
+                os.fsync(output.fileno())
+            temporary.replace(APP_DIR / 'studio-settings.json')
+        finally:
+            temporary.unlink(missing_ok=True)
+
+    @reply
+    def set_language(self, language):
+        if language not in SUPPORTED_LANGUAGES:
+            raise ValueError('Unsupported language.')
+        with self._lock:
+            if self._update_committing:
+                raise ValueError('The app is restarting to install an update.')
+            self._save_preferences({'language': language})
+            self._language = language
+        return True
+
+    def _localized_mail_state(self, state):
+        return {**state, 'error': self._translate(state['error'])}
 
     @reply
     def save_keywords(self, text):
@@ -75,18 +116,18 @@ class DesktopAPI:
 
     @reply
     def list_results(self):
-        return self._store.runs()
+        return [{**run, 'error': self._translate(run['error'])} for run in self._store.runs()]
 
     @reply
     def get_mail_state(self):
-        return self._outreach.state()
+        return self._localized_mail_state(self._outreach.state())
 
     @reply
     def configure_gmail(self):
         import webview
         paths = self._window.create_file_dialog(webview.FileDialog.OPEN, allow_multiple=False,
                                                file_types=('Google OAuth Desktop (*.json)',))
-        return self._outreach.configure(paths[0]) if paths else None
+        return self._localized_mail_state(self._outreach.configure(paths[0])) if paths else None
 
     @reply
     def connect_gmail(self):
@@ -94,7 +135,7 @@ class DesktopAPI:
 
     @reply
     def disconnect_gmail(self, account_id):
-        return self._outreach.disconnect(account_id)
+        return self._localized_mail_state(self._outreach.disconnect(account_id))
 
     @reply
     def contact_context(self, channel_id):
@@ -125,7 +166,8 @@ class DesktopAPI:
                 raise ValueError('An email is being sent. Please wait for the result.')
             self._contact_sending = True
         try:
-            return self._outreach.send(channel_id, revision)
+            result = self._outreach.send(channel_id, revision)
+            return {**result, 'message': self._translate(result['message'])}
         finally:
             with self._lock:
                 self._contact_sending = False
@@ -143,16 +185,16 @@ class DesktopAPI:
         if theme not in ("dark", "light") or not isinstance(motion, bool):
             raise ValueError("Invalid display preferences.")
         with self._lock:
-            path = APP_DIR / "studio-settings.json"
-            temporary = path.with_suffix(".tmp")
-            temporary.write_text(json.dumps({"theme": theme, "motion": motion}), encoding="utf-8")
-            temporary.replace(path)
+            self._save_preferences({'theme': theme, 'motion': motion})
         return True
 
     @reply
     def get_state(self):
         with self._lock:
-            return {**self._scan.snapshot(), "update": dict(self._update)}
+            state = self._scan.snapshot()
+            return {**state, 'error': self._translate(state['error']),
+                    'logs': [{**log, 'text': self._translate(log['text'])} for log in state['logs']],
+                    'update': {**self._update, 'message': self._translate(self._update['message'])}}
 
     @reply
     def start_scan(self, settings):
@@ -298,7 +340,7 @@ class DesktopAPI:
                 return False
             try:
                 self._update_committing = True
-                install_update(staged)
+                install_update(staged, language=self._language)
             except Exception as error:
                 self._update_committing = False
                 staged.unlink(missing_ok=True)

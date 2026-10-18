@@ -6,7 +6,8 @@ from pathlib import Path
 import sys
 
 from ytb_bot.build_info import build_id
-from ytb_bot.desktop.api import DesktopAPI
+from ytb_bot.desktop.api import DesktopAPI, read_preferences
+from ytb_bot.desktop.localization import translate_message
 from ytb_bot.version import APP_VERSION
 from ytb_bot.paths import PROJECT_ROOT
 
@@ -36,16 +37,19 @@ def main(on_started=None):
             background_color="#0c1018", text_select=True)
         api._window = window
 
+        def confirm(title, message):
+            return window.create_confirmation_dialog(api._translate(title), api._translate(message))
+
         def confirm_closing():
             # Closing runs on the WinForms thread: never wait for JavaScript here.
-            if api._contact_sending and not window.create_confirmation_dialog('Sending email', 'Gmail is processing the request. Closing now may leave the result unknown. Close anyway?'):
+            if api._contact_sending and not confirm('Sending email', 'Gmail is processing the request. Closing now may leave the result unknown. Close anyway?'):
                 return False
-            if api._contact_dirty and not window.create_confirmation_dialog('Unsaved contact', 'The contact draft has unsaved changes. Closing the app will discard them. Close anyway?'):
+            if api._contact_dirty and not confirm('Unsaved contact', 'The contact draft has unsaved changes. Closing the app will discard them. Close anyway?'):
                 return False
-            if api._keywords_dirty and not window.create_confirmation_dialog("Unsaved keywords", "The keyword table has unsaved changes. Closing the app will discard them. Close anyway?"):
+            if api._keywords_dirty and not confirm("Unsaved keywords", "The keyword table has unsaved changes. Closing the app will discard them. Close anyway?"):
                 return False
             if api._scan.snapshot()["status"] in ("running", "stopping"):
-                if not window.create_confirmation_dialog("Close YTB-BOT", "The scan is still running. Closing now may lose unsaved results. Close anyway?"):
+                if not confirm("Close YTB-BOT", "The scan is still running. Closing now may lose unsaved results. Close anyway?"):
                     return False
                 api._scan.stop()
             return True
@@ -71,5 +75,5 @@ def main(on_started=None):
         logging.exception("Desktop startup failed")
         if os.name == "nt":
             ctypes.windll.user32.MessageBoxW(None,
-                f"Could not open YTB-BOT. Check the Microsoft Edge WebView2 Runtime.\nDetails: {log_dir / 'desktop.log'}", "YTB-BOT", 0x10)
+                translate_message(f"Could not open YTB-BOT. Check the Microsoft Edge WebView2 Runtime.\nDetails: {log_dir / 'desktop.log'}", read_preferences()['language']), "YTB-BOT", 0x10)
         raise

@@ -11,6 +11,12 @@ The default interface is React + TypeScript in a pywebview / Edge WebView2 windo
 - Results offer scan history, search, sorting, row selection, and pagination without downloading Excel.
 - Segoe UI Variable/Segoe UI for body text, Bahnschrift for headings and metrics; use Windows system fonts without runtime font downloads. Metrics use tabular numerals.
 
+## Interface languages
+
+The main React desktop supports English (`en`), Vietnamese (`vi`), and Simplified Chinese (`zh-CN`) through a language selector. Persist the choice in browser-local storage and native preferences. Apply language changes in place without reloading or remounting editors, so unsaved keywords and contact drafts remain intact. Keep bootstrap/polling callbacks stable across language changes; changing display language must not reload saved keywords over an active edit.
+
+Localization covers interface text, native prompts, and application-authored messages. Preserve channel data, user keywords, and draft content. Canonical column identifiers and API field keys stay English. The compatibility CLI and CustomTkinter interface remain English. This describes the intended behavior; release verification must include switching languages with unsaved content.
+
 ## Structure
 
 | Path | Responsibility |
@@ -34,7 +40,7 @@ The default interface is React + TypeScript in a pywebview / Edge WebView2 windo
 
 Validation errors appear beside the affected field. The API key is masked by default; it is used for Google YouTube API requests and redacted from scan errors.
 
-Filters become a menu below 840 CSS pixels; a closed menu cannot receive focus. When open, focus stays inside the menu; Esc closes it and returns focus to its trigger. Background content uses inert. A skip link leads to the main content. Content regions scroll. Tests check that the start button remains visible at 1280×720 and 1024×768. Theme and motion preferences are stored locally; effects respect reduced motion.
+Filters become a menu below 840 CSS pixels; a closed menu cannot receive focus. When open, focus stays inside the menu; Esc closes it and returns focus to its trigger. Background content uses inert. A skip link leads to the main content. Content regions scroll. Tests check that the start button remains visible at 1280Ă—720 and 1024Ă—768. Theme and motion preferences are stored locally; effects respect reduced motion.
 
 Tables show loading skeletons, inline errors, and retry buttons. Adding a row focuses the new cell. Logs scroll only inside their own region, without pulling the page to the bottom. Confirmation dialogs have dedicated accessible names and descriptions.
 

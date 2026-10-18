@@ -4,7 +4,7 @@
 
 YTB-BOT is a Windows application for YouTube market researchers and people seeking creators to collaborate with. Starting from a list of topics, it finds channels by channel age and total views, then saves results with public contact details for review and follow-up.
 
-[Download for Windows](https://github.com/AzuraDev202/Ytb-Bot/releases/latest/download/gui_app.exe) · [User guide](docs/user/DESKTOP_GUIDE.md) · [Documentation](docs/README.md) · [Report an issue](https://github.com/AzuraDev202/Ytb-Bot/issues)
+[Download for Windows](https://github.com/AzuraDev202/Ytb-Bot/releases/latest/download/gui_app.exe) Â· [User guide](docs/user/DESKTOP_GUIDE.md) Â· [Documentation](docs/README.md) Â· [Report an issue](https://github.com/AzuraDev202/Ytb-Bot/issues)
 
 ## From topics to a channel shortlist
 
@@ -23,7 +23,7 @@ YTB-BOT is a Windows application for YouTube market researchers and people seeki
 | Result storage | Keep scan history, including partial results when stopped or interrupted by API errors |
 | Data review | Search, sort, paginate, view details, and copy |
 | Outreach | Connect multiple Gmail accounts through OAuth, save drafts, review before sending, and view send history |
-| Desktop | Light/dark themes, responsive layouts, and updates from GitHub Releases |
+| Desktop | English, Vietnamese, and Simplified Chinese interfaces; light/dark themes, responsive layouts, and updates from GitHub Releases |
 
 These features belong to the default React desktop. The CLI and `--legacy` interface retain separate Excel export workflows for compatibility.
 
@@ -37,6 +37,8 @@ These features belong to the default React desktop. The CLI and `--legacy` inter
 4. Open **Results** to review and manage saved channels.
 
 The standalone EXE requires no Python, Node.js, or Microsoft Excel installation. A [SHA-256 checksum](https://github.com/AzuraDev202/Ytb-Bot/releases/latest/download/gui_app.exe.sha256) accompanies each release.
+
+Use the desktop language selector to switch between English (`en`), Vietnamese (`vi`), and Simplified Chinese (`zh-CN`). The choice is saved locally and in desktop preferences; switching applies immediately without reloading or discarding drafts. See [language settings](docs/user/DESKTOP_GUIDE.md#interface-language) for scope.
 
 Sending email requires separate [Gmail OAuth setup](docs/user/CONTACT_COMPOSER.md). For social networks, the application lets you copy your message and open a profile to send it manually.
 

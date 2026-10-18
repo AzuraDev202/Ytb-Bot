@@ -1,6 +1,52 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 
+test('language switching persists and preserves unsaved keywords and an open contact draft', async ({page}) => {
+  await page.getByRole('textbox', {name: 'Keyword list'}).fill('My untranslated topic');
+  await page.getByRole('combobox', {name: 'Language', exact: true}).selectOption('zh-CN');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
+  await expect(page.getByRole('heading', {level: 1})).toHaveText('发现新频道');
+  await expect(page.getByRole('textbox', {name: '关键词列表'})).toHaveValue('My untranslated topic');
+  await page.getByRole('combobox', {name: '语言', exact: true}).selectOption('vi');
+  await expect(page.getByRole('heading', {level: 1})).toHaveText('Khám phá kênh mới');
+  await expect(page.getByRole('textbox', {name: 'Danh sách từ khóa'})).toHaveValue('My untranslated topic');
+  await page.getByRole('combobox', {name: 'Ngôn ngữ', exact: true}).selectOption('en');
+  await contactFixture(page);
+  await openContact(page);
+  await page.getByRole('textbox', {name: 'Contact message'}).fill('Keep this draft');
+  await page.getByRole('dialog').getByRole('combobox', {name: 'Language', exact: true}).selectOption('zh-CN');
+  await expect(page.getByRole('dialog', {name: '撰写联系消息', exact: true})).toBeVisible();
+  await expect(page.getByRole('textbox', {name: '联系内容'})).toHaveValue('Keep this draft');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('button', {name: '保存并关闭'})).toBeVisible();
+  await page.getByRole('button', {name: '放弃更改'}).click();
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
+  await page.setViewportSize({width: 375, height: 812});
+  for (const language of ['vi', 'zh-CN', 'en']) {
+    await page.locator('.topbar select').selectOption(language);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const selector = await page.locator('.topbar select').boundingBox();
+    expect(selector!.x + selector!.width).toBeLessThanOrEqual(375);
+  }
+});
+
+test('language save failure rolls back and result headers localize without changing stored values', async ({page}) => {
+  await page.evaluate(() => {window.pywebview!.api.set_language = async () => ({ok: false, error: 'Language save failed'});});
+  await page.getByRole('combobox', {name: 'Language', exact: true}).selectOption('vi');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page.getByRole('alert')).toHaveText('Language save failed');
+  expect(await page.evaluate(() => localStorage.getItem('ytb-language'))).toBe('en');
+  await page.evaluate(() => {window.pywebview!.api.set_language = async () => ({ok: true, data: true});});
+  await contactFixture(page);
+  await page.getByRole('button', {name: /View results in the bot/}).click();
+  await page.getByRole('combobox', {name: 'Language', exact: true}).selectOption('zh-CN');
+  await expect(page.getByRole('columnheader', {name: '频道名称', exact: true})).toBeVisible();
+  await expect(page.getByRole('cell', {name: 'Creator', exact: true})).toBeVisible();
+  await page.getByRole('button', {name: '查看完整行 1', exact: true}).click();
+  await expect(page.getByRole('dialog', {name: '结果详情', exact: true})).toContainText('频道名称');
+});
+
 async function contactFixture(page: Page, outcome = 'accepted', configured = true) {
   await page.evaluate(({outcome, configured}) => {
     const api = window.pywebview!.api;
@@ -205,6 +251,7 @@ test.beforeEach(async ({ page }) => {
       get_bootstrap: () => ({version: '1.0.2', build: 'ui-test', has_api_key: true, keywords: localStorage.getItem('test-keywords') ?? 'AI Automation\nAI Agent\nAI video creation'}),
       get_state: state,
       save_preferences: () => true,
+      set_language: (language: unknown) => {localStorage.setItem('test-language', String(language)); return true;},
       set_keywords_dirty: () => true,
       save_keywords: (text: unknown) => {localStorage.setItem('test-keywords', String(text)); return text;},
       list_results: () => [{id: 2, created: '2026-10-17T00:00:00Z', status: 'stopped', count: 251, error: ''}, {id: 1, created: '2026-10-16T00:00:00Z', status: 'complete', count: 1, error: ''}],

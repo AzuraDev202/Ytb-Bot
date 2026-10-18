@@ -112,7 +112,7 @@ def download_update(release, progress=lambda value: None):
         raise
 
 
-def install_update(staged):
+def install_update(staged, language='en'):
     """Start a hidden helper. Caller must close the app after this succeeds."""
     if os.name != "nt" or not getattr(sys, "frozen", False):
         raise UpdateError("Automatic updates are only supported by the Windows desktop EXE.")
@@ -124,10 +124,14 @@ def install_update(staged):
     with tempfile.TemporaryFile(dir=target.parent):
         pass
     digest = hashlib.sha256(staged.read_bytes()).hexdigest()
+    from ytb_bot.desktop.localization import translate_message
     config = staged.parent / "install.json"
     config.write_text(json.dumps({"target": str(target), "staged": str(staged),
                                   "pid": os.getpid(), "sha256": digest,
-                                  "interactive": True}), encoding="utf-8")
+                                  "interactive": True,
+                                  "close_timeout_message": translate_message('App did not close within 120 seconds.', language),
+                                  "checksum_message": translate_message('Checksum mismatch.', language),
+                                  "failure_message": translate_message('Update failed. The previous version has been preserved.', language)}), encoding="utf-8")
     helper = staged.parent / "install.ps1"
     helper.write_text(_INSTALL_SCRIPT, encoding="utf-8-sig")
     powershell = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32/WindowsPowerShell/v1.0/powershell.exe"
@@ -156,6 +160,7 @@ if ($null -ne $updateConfig.maxReplaceAttempts) {
 try {
     $oldProcess = Get-Process -Id $updateConfig.pid -ErrorAction SilentlyContinue
     if ($oldProcess -and -not $oldProcess.WaitForExit(120000)) {
+        if ($updateConfig.close_timeout_message) { throw $updateConfig.close_timeout_message }
         throw 'App did not close within 120 seconds.'
     }
     # Use .NET directly: Get-FileHash may be unavailable when launched from pwsh/CI.
@@ -168,7 +173,10 @@ try {
         if ($null -ne $hashStream) { $hashStream.Dispose() }
         $hashAlgorithm.Dispose()
     }
-    if ($actualHash -ne $updateConfig.sha256) { throw 'Checksum mismatch.' }
+    if ($actualHash -ne $updateConfig.sha256) {
+        if ($updateConfig.checksum_message) { throw $updateConfig.checksum_message }
+        throw 'Checksum mismatch.'
+    }
     Copy-Item -LiteralPath $stagedPath -Destination $candidatePath -Force
     # PyInstaller's parent bootloader may briefly keep the EXE locked.
     for ($attempt = 0; $attempt -lt $maxReplaceAttempts; $attempt++) {
@@ -197,7 +205,9 @@ try {
     [Console]::Error.WriteLine($failure)
     if ($updateConfig.interactive -eq $true) {
         Add-Type -AssemblyName System.Windows.Forms
-        [System.Windows.Forms.MessageBox]::Show("Update failed. The previous version has been preserved.`n$failure", 'Ytb-Bot') | Out-Null
+        $failureMessage = $updateConfig.failure_message
+        if (-not $failureMessage) { $failureMessage = 'Update failed. The previous version has been preserved.' }
+        [System.Windows.Forms.MessageBox]::Show("$failureMessage`n$failure", 'Ytb-Bot') | Out-Null
     }
 } finally {
     if (Test-Path -LiteralPath $candidatePath) { Remove-Item -LiteralPath $candidatePath -Force }

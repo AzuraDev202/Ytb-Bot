@@ -1,0 +1,10 @@
+const fs=require('fs'),ts=require('typescript');
+let p='src/App.tsx',s=fs.readFileSync(p,'utf8').replace('useI18n, isLanguage, resultValue','useI18n, isLanguage, resultValue, LanguageSelect').replace('const { t, locale, language, setLanguage }','const { t, locale, setLanguage }');
+s=s.replace(/<label className="language-picker">[\s\S]*?<\/label>/,'<LanguageSelect/>');fs.writeFileSync(p,s);
+p='src/components/ContactComposer.tsx';s=fs.readFileSync(p,'utf8').replace('import { useI18n }','import { useI18n, LanguageSelect }').replace('<header><div>','<header><div>').replace('<button className="icon-button" aria-label={t("Close composer")}','<LanguageSelect/><button className="icon-button" aria-label={t("Close composer")}');fs.writeFileSync(p,s);
+// Class names remain code, never translation keys.
+for(const p of ['src/App.tsx',...fs.readdirSync('src/components').filter(x=>x.endsWith('.tsx')).map(x=>'src/components/'+x)]){
+ let s=fs.readFileSync(p,'utf8');const sf=ts.createSourceFile(p,s,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX),edits=[];
+ function visit(n){if(ts.isJsxAttribute(n)&&n.name.getText(sf)==='className'&&n.initializer&&ts.isJsxExpression(n.initializer)){const c=n.initializer.expression;if(c&&ts.isCallExpression(c)&&c.expression.getText(sf)==='t'){const key=c.arguments[0].text,params=c.arguments[1];if(params&&ts.isObjectLiteralExpression(params)){let result=key;for(const prop of params.properties)result=result.replace('{'+prop.name.getText(sf)+'}','${'+prop.initializer.getText(sf)+'}');edits.push([c.getStart(sf),c.end,'`'+result+'`']);}}}ts.forEachChild(n,visit)}visit(sf);edits.sort((a,b)=>b[0]-a[0]).forEach(([a,b,v])=>s=s.slice(0,a)+v+s.slice(b));fs.writeFileSync(p,s);
+}
+const vi=JSON.parse(fs.readFileSync('src/vi.generated.json','utf8'));for(const k of Object.keys(vi))if(k.includes('{v')&&/^(sidebar|password-input|number-input|switch|connection-status|keyword-editor|log-line|toast|composer-message|history-status|table-scroll|status-pill) /.test(k))delete vi[k];delete vi['input[aria-label="Keyword row'];fs.writeFileSync('src/vi.generated.json',JSON.stringify(vi,null,2));

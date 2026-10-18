@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n';
 import { useEffect, useState } from 'react';
 import { CheckCircle2, History, RefreshCw } from 'lucide-react';
 import { call, type WorkbookMeta, type ScanStatus } from '../api';
@@ -19,6 +20,7 @@ export function ResultsView({status, notify, onDiscover}: {
   notify: (notice: Notice) => void;
   onDiscover: () => void;
 }) {
+  const { t, locale } = useI18n();
   const [runs, setRuns] = useState<Run[]>([]);
   const [selected, setSelected] = useState('');
   const [meta, setMeta] = useState<WorkbookMeta | null>(null);
@@ -74,21 +76,21 @@ export function ResultsView({status, notify, onDiscover}: {
 
   return <div className="results-workspace">
     <section className="panel history-toolbar">
-      <div><span className="eyebrow">YOUR HISTORY</span><h2>Choose a scan</h2></div>
+      <div><span className="eyebrow">{t("YOUR HISTORY")}</span><h2>{t("Choose a scan")}</h2></div>
       <div className="history-select">
-        <label>Scan<select aria-label="Scan" value={selected} disabled={loading && !runs.length} onChange={event => setSelected(event.target.value)}>
-          <option value="" disabled>Select scan</option>
-          {runs.map(item => <option key={item.id} value={item.id}>#{item.id} · {new Date(item.created).toLocaleString('en-US')} · {item.count} channels · {labels[item.status] || item.status}</option>)}
+        <label>{t("Scan")}<select aria-label={t("Scan")} value={selected} disabled={loading && !runs.length} onChange={event => setSelected(event.target.value)}>
+          <option value="" disabled>{t("Select scan")}</option>
+          {runs.map(item => <option key={item.id} value={item.id}>#{item.id} · {new Date(item.created).toLocaleString(locale)} · {item.count} {t("channels ·")} {t(labels[item.status] || item.status)}</option>)}
         </select></label>
-        <button className="button secondary" disabled={loading || opening} onClick={() => setRefresh(value => value + 1)}><RefreshCw size={15} className={loading ? 'spin' : ''}/> Refresh</button>
+        <button className="button secondary" disabled={loading || opening} onClick={() => setRefresh(value => value + 1)}><RefreshCw size={15} className={loading ? 'spin' : ''}/> {t("Refresh")}</button>
       </div>
-      {run && <span className={`history-status ${run.status}`}><CheckCircle2 size={14}/>{labels[run.status] || run.status} · {run.count.toLocaleString('en-US')} saved channels</span>}
-      {run?.error && <p role="alert" className="field-error">Scan failed: {run.error}. Previously collected channels are preserved.</p>}
+      {run && <span className={`history-status ${run.status}`}><CheckCircle2 size={14}/>{t(labels[run.status] || run.status)} · {run.count.toLocaleString(locale)} {t("saved channels")}</span>}
+      {run?.error && <p role="alert" className="field-error">{t("Scan failed:")} {run.error}{t(". Previously collected channels are preserved.")}</p>}
     </section>
-    {failure ? <section className="panel table-empty" role="alert">{failure}</section>
+    {failure ? <section className="panel table-empty" role="alert">{t(failure)}</section>
       : meta ? <WorkbookView meta={meta} onOpen={() => {}} onImport={() => {}} notify={notify} readOnly onContact={setContactChannel}/>
-      : loading || opening || selected ? <section className="panel"><TableLoading label="Loading discovery history…"/></section>
-      : <section className="panel empty-state"><div className="empty-illustration"><History size={32}/></div><h3>No discovery scans yet</h3><p>Choose a few keywords to start. Discovered channels will be saved here for you to revisit.</p><button className="button primary" onClick={onDiscover}>Start your first scan</button></section>}
+      : loading || opening || selected ? <section className="panel"><TableLoading label={t("Loading discovery history…")}/></section>
+      : <section className="panel empty-state"><div className="empty-illustration"><History size={32}/></div><h3>{t("No discovery scans yet")}</h3><p>{t("Choose a few keywords to start. Discovered channels will be saved here for you to revisit.")}</p><button className="button primary" onClick={onDiscover}>{t("Start your first scan")}</button></section>}
     <ContactComposer channelId={contactChannel} onClose={() => setContactChannel(null)} notify={notify}/>
   </div>;
 }

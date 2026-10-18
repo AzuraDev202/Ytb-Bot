@@ -63,6 +63,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/checks/smoke_desktop
 
 Real Google/OAuth checks require an environment and test mailbox controlled by the development team. Do not use channel email addresses as test recipients.
 
+## Language-switch checks
+
+Before release, check English (`en`), Vietnamese (`vi`), and Simplified Chinese (`zh-CN`) in the main React desktop. Switch while keyword edits and a contact draft are unsaved; confirm that neither is discarded and no window reload occurs. Restart and verify preference restoration. Check native prompts and application-authored messages, while ensuring channel data, user keywords, and draft content stay unchanged. Canonical column identifiers and API field keys must remain English. These are verification steps, not a record of completed test results.
+
 ## Development tools
 
 ```powershell

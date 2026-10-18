@@ -44,7 +44,7 @@ class ReactBackendTests(unittest.TestCase):
             api._update['status'] = 'downloading'
             with patch('ytb_bot.desktop.api.install_update') as install:
                 self.assertTrue(api._finish_update_close(True))
-                install.assert_called_once_with(staged)
+                install.assert_called_once_with(staged, language='en')
             with patch.object(api._outreach, 'send') as send:
                 self.assertFalse(api.send_contact_mail('channel', 1)['ok'])
                 send.assert_not_called()
@@ -133,7 +133,7 @@ class ReactBackendTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory, patch("ytb_bot.desktop.api.APP_DIR", Path(directory)):
             api = DesktopAPI(data_dir=directory)
             self.assertTrue(api.save_preferences("light", False)["ok"])
-            self.assertEqual(DesktopAPI(data_dir=directory).get_bootstrap()["data"]["preferences"], {"theme": "light", "motion": False})
+            self.assertEqual(DesktopAPI(data_dir=directory).get_bootstrap()["data"]["preferences"], {"theme": "light", "motion": False, "language": "en"})
             self.assertFalse(api.save_preferences("unknown", True)["ok"])
 
     def test_bridge_never_returns_saved_key_and_rejects_invalid_input(self):

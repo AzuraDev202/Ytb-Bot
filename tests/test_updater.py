@@ -106,10 +106,16 @@ class UpdaterTests(unittest.TestCase):
         self.run_windows_helper(checksum="0" * 64, expected_error="Checksum mismatch")
 
     @unittest.skipUnless(os.name == "nt", "Windows helper")
+    def test_windows_helper_uses_localized_checksum_message(self):
+        self.run_windows_helper(checksum='0' * 64, expected_error='checksum',
+                                checksum_message='校验和不匹配。', expected_log='校验和不匹配。')
+
+    @unittest.skipUnless(os.name == "nt", "Windows helper")
     def test_windows_helper_missing_target_fails_without_long_retry(self):
         self.run_windows_helper(target_exists=False, expected_error="Replace", max_attempts=30)
 
-    def run_windows_helper(self, checksum=None, expected_error=None, target_exists=True, max_attempts=1):
+    def run_windows_helper(self, checksum=None, expected_error=None, target_exists=True, max_attempts=1,
+                           checksum_message=None, expected_log=None):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             target = root / "installed.exe"
@@ -121,7 +127,8 @@ class UpdaterTests(unittest.TestCase):
             config.write_text(json.dumps({"target": str(target), "staged": str(staged),
                                           "pid": 2147483647,
                                           "sha256": checksum or hashlib.sha256(b"MZnew").hexdigest(),
-                                          "interactive": False, "maxReplaceAttempts": max_attempts}))
+                                          "interactive": False, "maxReplaceAttempts": max_attempts,
+                                          "checksum_message": checksum_message}))
             # Exercise actual PowerShell file replacement without launching a fake EXE.
             script = root / "test.ps1"
             script.write_text("param([string]$ConfigPath)\nImport-Module Microsoft.PowerShell.Utility, Microsoft.PowerShell.Management\n"
@@ -135,12 +142,13 @@ class UpdaterTests(unittest.TestCase):
                                     capture_output=True, text=True)
             if expected_error:
                 self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
-                self.assertIn(expected_error, result.stderr)
+                if not expected_log:
+                    self.assertIn(expected_error, result.stderr)
                 if target_exists:
                     self.assertEqual(target.read_bytes(), b"MZold")
                 else:
                     self.assertFalse(target.exists())
-                self.assertIn(expected_error, (root / "update-error.log").read_text(encoding="utf-8-sig"))
+                self.assertIn(expected_log or expected_error, (root / "update-error.log").read_text(encoding="utf-8-sig"))
             else:
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                 self.assertEqual(target.read_bytes(), b"MZnew")

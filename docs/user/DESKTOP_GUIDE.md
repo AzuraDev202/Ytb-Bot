@@ -1,5 +1,11 @@
 # YTB-BOT Desktop User Guide
 
+## Interface language
+
+Use the desktop language selector to choose **English** (`en`), **Vietnamese** (`vi`), or **Simplified Chinese** (`zh-CN`). The selection is saved in local browser storage and native desktop preferences, and restored on the next launch. It takes effect without reloading the window; keyword edits and contact drafts remain open.
+
+The setting changes interface text, native prompts, and application-authored messages. It does not translate channel data, user keywords, or draft content. Canonical result column identifiers and API field keys remain English regardless of the display language. The CLI and `--legacy` interface remain English. Button names in this guide use the English interface.
+
 ## Keywords in the application
 
 1. Open **Keywords**, or select **Edit keyword table** on the discovery screen.
@@ -13,7 +19,7 @@ To import an older file, select **Import existing file**, open `.xlsx` or `.xls`
 
 ## Scanning and reviewing results
 
-To contact a channel, choose **View full details → Compose contact**. Gmail/Google Workspace supports direct sending through a connected OAuth account, with review, drafts, and send history. For Facebook and other social networks, copy your message and open the profile. Google setup and sending statuses are described in [Channel outreach](CONTACT_COMPOSER.md).
+To contact a channel, choose **View full details â†’ Compose contact**. Gmail/Google Workspace supports direct sending through a connected OAuth account, with review, drafts, and send history. For Facebook and other social networks, copy your message and open the profile. Google setup and sending statuses are described in [Channel outreach](CONTACT_COMPOSER.md).
 
 The React desktop automatically checks **Channel ID** against all scans in local storage, including saved results from completed, stopped, failed, and running scans. Each new scan accepts only channels absent from history; renaming a channel or changing keywords does not make an existing channel appear again. A channel that previously failed the filters can be accepted later if it meets the criteria. Existing history is retained. Deduplication covers storage on the current machine; external Excel results are not read automatically.
 
