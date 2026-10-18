@@ -4,6 +4,7 @@ import { CheckCircle2, History, RefreshCw } from 'lucide-react';
 import { call, type WorkbookMeta, type ScanStatus } from '../api';
 import { WorkbookView } from './WorkbookView';
 import { ContactComposer } from './ContactComposer';
+import { ContactGroups } from './ContactGroups';
 import { TableLoading } from './TableLoading';
 import type { Notice } from './ConfirmDialog';
 
@@ -31,6 +32,7 @@ export function ResultsView({status, notify, onDiscover}: {
   const [openError, setOpenError] = useState('');
   // Keep drafts mounted across automatic history/table refreshes.
   const [contactChannel, setContactChannel] = useState<string | null>(null);
+  const [view, setView] = useState('history');
 
   useEffect(() => {
     let cancelled = false;
@@ -75,6 +77,9 @@ export function ResultsView({status, notify, onDiscover}: {
   const failure = listError || openError;
 
   return <div className="results-workspace">
+    <div className="results-view-switch" role="group" aria-label={t('Results view')}><button className="button secondary" aria-pressed={view === 'history'} onClick={() => setView('history')}>{t('Scan history')}</button><button className="button secondary" aria-pressed={view === 'contacts'} onClick={() => setView('contacts')}>{t('Grouped contacts')}</button></div>
+    <div hidden={view !== 'contacts'}><ContactGroups active={view === 'contacts'}/></div>
+    <div hidden={view !== 'history'}>
     <section className="panel history-toolbar">
       <div><span className="eyebrow">{t("YOUR HISTORY")}</span><h2>{t("Choose a scan")}</h2></div>
       <div className="history-select">
@@ -91,6 +96,6 @@ export function ResultsView({status, notify, onDiscover}: {
       : meta ? <WorkbookView meta={meta} onOpen={() => {}} onImport={() => {}} notify={notify} readOnly onContact={setContactChannel}/>
       : loading || opening || selected ? <section className="panel"><TableLoading label={t("Loading discovery history…")}/></section>
       : <section className="panel empty-state"><div className="empty-illustration"><History size={32}/></div><h3>{t("No discovery scans yet")}</h3><p>{t("Choose a few keywords to start. Discovered channels will be saved here for you to revisit.")}</p><button className="button primary" onClick={onDiscover}>{t("Start your first scan")}</button></section>}
-    <ContactComposer channelId={contactChannel} onClose={() => setContactChannel(null)} notify={notify}/>
+    </div><ContactComposer channelId={contactChannel} onClose={() => setContactChannel(null)} notify={notify}/>
   </div>;
 }

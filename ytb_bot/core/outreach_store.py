@@ -21,6 +21,10 @@ class OutreachStore(WorkspaceStore):
                     created TEXT NOT NULL, status TEXT NOT NULL, payload TEXT NOT NULL,
                     message_id TEXT NOT NULL DEFAULT '', UNIQUE(channel_id, revision)
                 );
+                CREATE TABLE IF NOT EXISTS contact_claims (
+                    sender TEXT NOT NULL, recipient TEXT NOT NULL, created TEXT NOT NULL,
+                    source TEXT NOT NULL, PRIMARY KEY(sender,recipient)
+                );
             ''')
 
     def channel(self, channel_id):
@@ -45,19 +49,27 @@ class OutreachStore(WorkspaceStore):
             db.execute('INSERT INTO contact_drafts VALUES (?,?,?) ON CONFLICT(channel_id) DO UPDATE SET payload=excluded.payload,revision=excluded.revision', (channel_id, encoded, revision))
         return {**payload, 'revision': revision}
 
-    def claim(self, channel_id, revision):
+    def claim(self, channel_id, revision, sender=None):
         with self._connection() as db:
             db.execute('BEGIN IMMEDIATE')
             row = db.execute('SELECT payload,revision FROM contact_drafts WHERE channel_id=?', (channel_id,)).fetchone()
             if not row or row[1] != revision:
                 raise ValueError('The draft has changed. Save and review it before sending.')
+            payload = json.loads(row[0])
+            if sender:
+                claimed = db.execute('SELECT 1 FROM contact_claims WHERE sender=? AND recipient=?',
+                                     (sender.strip().casefold(), payload['recipient'].strip().casefold())).fetchone()
+                if claimed:
+                    raise ValueError('This recipient already belongs to a bulk send attempt. Check the contact history.')
+                payload['sender_email'] = sender
+            encoded = json.dumps(payload, ensure_ascii=False)
             attempt = uuid.uuid4().hex
             try:
                 db.execute('INSERT INTO mail_attempts(id,channel_id,revision,created,status,payload) VALUES (?,?,?,?,?,?)',
-                    (attempt, channel_id, revision, dt.datetime.now(dt.timezone.utc).isoformat(), 'sending', row[0]))
+                    (attempt, channel_id, revision, dt.datetime.now(dt.timezone.utc).isoformat(), 'sending', encoded))
             except sqlite3.IntegrityError:
                 raise ValueError('This draft already has a send attempt. Check its history; edit and save a new revision to send again.') from None
-        return attempt, json.loads(row[0])
+        return attempt, payload
 
     def finish(self, attempt, status, message_id=''):
         with self._connection() as db:

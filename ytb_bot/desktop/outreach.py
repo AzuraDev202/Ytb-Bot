@@ -105,7 +105,7 @@ class Outreach:
                 return token, account
             # Refresh writes must not restore accounts removed in another app.
             token, account = self.vault.update(refresh)
-        attempt, snapshot = self.store.claim(channel_id, revision)
+        attempt, snapshot = self.store.claim(channel_id, revision, account['email'])
         try:
             message_id = self.gmail.send(token, account['email'], snapshot['recipient'], snapshot['subject'], snapshot['body'])
         except SendRejected as error:

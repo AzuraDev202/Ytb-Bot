@@ -22,7 +22,7 @@ YTB-BOT is a Windows application for YouTube market researchers and people seeki
 | Keyword management | Edit a table, add/delete rows, paste multiple lines, and import `.xlsx`/`.xls` |
 | Result storage | Keep scan history, including partial results when stopped or interrupted by API errors |
 | Data review | Search, sort, paginate, view details, and copy |
-| Outreach | Connect multiple Gmail accounts through OAuth, save drafts, review before sending, and view send history |
+| Outreach | Connect Gmail through OAuth, review single-channel or deduplicated bulk email, and retain per-recipient attempt history |
 | Desktop | English, Vietnamese, and Simplified Chinese interfaces; light/dark themes, responsive layouts, and updates from GitHub Releases |
 
 These features belong to the default React desktop. The CLI and `--legacy` interface retain separate Excel export workflows for compatibility.
@@ -40,7 +40,7 @@ The standalone EXE requires no Python, Node.js, or Microsoft Excel installation.
 
 Use the desktop language selector to switch between English (`en`), Vietnamese (`vi`), and Simplified Chinese (`zh-CN`). The choice is saved locally and in desktop preferences; switching applies immediately without reloading or discarding drafts. See [language settings](docs/user/DESKTOP_GUIDE.md#interface-language) for scope.
 
-Sending email requires separate [Gmail OAuth setup](docs/user/CONTACT_COMPOSER.md). For social networks, the application lets you copy your message and open a profile to send it manually.
+Sending email requires separate [Gmail OAuth setup](docs/user/CONTACT_COMPOSER.md). Bulk Gmail sends separate messages to reviewed email groups across saved channels, with an application cap of 100 groups and sequential pacing. This cap is not a Gmail daily allowance. For social networks, the application lets you copy your message and open a profile to send it manually.
 
 ## Data and permissions
 

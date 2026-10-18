@@ -78,6 +78,15 @@ class OutreachTests(unittest.TestCase):
         self.assertCountEqual(results, ['accepted', 'blocked'])
         self.assertEqual(self.gmail.send.call_count, 1)
 
+    def test_individual_send_cannot_duplicate_a_claimed_bulk_recipient(self):
+        saved = self.outreach.save('channel', self.payload)
+        with self.outreach.store._connection() as db:
+            db.execute('INSERT INTO contact_claims VALUES (?,?,?,?)',
+                       ('sender@example.com', 'creator@example.com', '2026-10-18', 'bulk:preview'))
+        with self.assertRaises(ValueError):
+            self.outreach.send('channel', saved['revision'])
+        self.gmail.send.assert_not_called()
+
     def test_timeout_and_rejection_keep_history_and_never_auto_retry(self):
         for failure, expected in [(TimeoutError('private-token'), 'unknown'), (SendRejected('Gmail rejected request'), 'failed')]:
             self.payload['body'] += '\nNew version'

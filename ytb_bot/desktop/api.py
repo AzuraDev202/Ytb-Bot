@@ -18,6 +18,7 @@ from ytb_bot.version import APP_VERSION
 from ytb_bot.core.workbook import Workbook
 from ytb_bot.core.storage import WorkspaceStore
 from ytb_bot.desktop.outreach import Outreach
+from ytb_bot.desktop.bulk import BulkOutreach
 from ytb_bot.desktop.localization import SUPPORTED_LANGUAGES, translate_message
 from ytb_bot.updater import check_for_update, download_update, install_update
 
@@ -51,11 +52,13 @@ class DesktopAPI:
         self._keywords_dirty = False
         self._contact_dirty = False
         self._contact_sending = False
+        self._bulk_dirty = False
         self._key = os.getenv("YOUTUBE_API_KEY") or dotenv_values(ENV_FILE).get("YOUTUBE_API_KEY", "")
         self._store = WorkspaceStore(Path(data_dir or DATA_DIR) / "workspace.sqlite3")
         self._scan = ScanEngine(APP_DIR, store=self._store)
         self._book = Workbook()
         self._outreach = Outreach(self._store.path)
+        self._bulk = BulkOutreach(self._outreach)
         self._lock = threading.RLock()
         self._language = read_preferences()['language']
         self._release = None
@@ -123,6 +126,54 @@ class DesktopAPI:
         return self._localized_mail_state(self._outreach.state())
 
     @reply
+    def contact_groups(self):
+        return self._bulk.groups()
+
+    @reply
+    def prepare_bulk_mail(self, payload):
+        with self._lock:
+            self._check_bulk_start()
+            result = self._bulk.prepare(payload)
+            self._bulk_dirty = False
+            return result
+
+    def _check_bulk_start(self):
+        if self._update_committing or self._update['status'] == 'downloading':
+            raise ValueError('Wait for the update to finish before sending mail.')
+        if self._contact_sending or self._bulk.is_running:
+            raise ValueError('A mail send is already running. Wait for its result.')
+
+    @reply
+    def start_bulk_mail(self, batch_id):
+        with self._lock:
+            self._check_bulk_start()
+            if self._bulk_dirty:
+                raise ValueError('Review the bulk email draft before sending.')
+            return self._bulk.start(batch_id)
+
+    @reply
+    def stop_bulk_mail(self, batch_id):
+        return self._bulk.stop(batch_id)
+
+    @reply
+    def get_bulk_mail(self, batch_id=None):
+        return self._bulk.get(batch_id)
+
+    @reply
+    def list_bulk_mail(self):
+        return self._bulk.list()
+
+    @reply
+    def set_bulk_dirty(self, dirty):
+        if not isinstance(dirty, bool):
+            raise ValueError('Invalid draft state.')
+        with self._lock:
+            if self._update_committing:
+                raise ValueError('The app is restarting to install an update.')
+            self._bulk_dirty = dirty
+        return True
+
+    @reply
     def configure_gmail(self):
         import webview
         paths = self._window.create_file_dialog(webview.FileDialog.OPEN, allow_multiple=False,
@@ -160,6 +211,8 @@ class DesktopAPI:
     @reply
     def send_contact_mail(self, channel_id, revision):
         with self._lock:
+            if self._bulk.is_running:
+                raise ValueError('A mail send is already running. Wait for its result.')
             if self._update_committing:
                 raise ValueError('The app is restarting to install an update.')
             if self._contact_sending:
@@ -293,6 +346,8 @@ class DesktopAPI:
     @reply
     def install_available_update(self):
         with self._lock:
+            if self._bulk.is_running or self._bulk_dirty:
+                raise ValueError('Finish the bulk send and save its draft before updating.')
             if self._keywords_dirty:
                 raise ValueError("Save the keyword table before updating and restarting.")
             if self._contact_dirty:

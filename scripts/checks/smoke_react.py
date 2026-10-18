@@ -78,11 +78,20 @@ def verify(window):
             window._js_api._contact_sending = True
             window.destroy()
             assert confirmation_seen.wait(3), 'In-flight email close guard was not invoked'
+            window._js_api._contact_sending = False
+            for language, title in [('en', 'Unsaved bulk draft'), ('vi', 'Bản nháp hàng loạt chưa lưu'), ('zh-CN', '未保存的批量邮件草稿')]:
+                window._js_api._language = language
+                confirmation_seen.clear()
+                window._js_api.set_bulk_dirty(True)
+                window.destroy()
+                assert confirmation_seen.wait(3), 'Unsaved bulk draft close guard was not invoked'
+                assert captured[-1][0] == title, 'Bulk close confirmation used the wrong language'
         finally:
             window._js_api._language = original_language
             window._js_api.set_keywords_dirty(False)
             window._js_api.set_contact_dirty(False)
             window._js_api._contact_sending = False
+            window._js_api.set_bulk_dirty(False)
             window.create_confirmation_dialog = original_confirmation
         print("PASS: native WebView2 loaded React, Gmail metadata bridge, three-language close prompts and unsaved/in-flight guards")
     except Exception as error:

@@ -379,3 +379,16 @@ th[aria-sort=ascending], th[aria-sort=descending] { color: var(--accent); }
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
 :root[data-motion=off] *, :root[data-motion=off] *::before, :root[data-motion=off] *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+/* Contacts retain their draft while switching history views. */
+.results-view-switch,.group-toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.results-view-switch [aria-pressed=true]{border-color:var(--accent);font-weight:700}
+.grouped-contacts{padding:24px;min-width:0}
+.group-toolbar label{display:grid;gap:6px;flex:1;min-width:0}
+.group-toolbar input,.group-toolbar select{width:100%;min-width:0}
+.contact-group-list,.bulk-recipients,.bulk-history{list-style:none;padding:0;display:grid;gap:12px}
+.contact-group-list li,.bulk-recipients li{display:grid;gap:6px;padding:14px;border:1px solid var(--border);border-radius:10px;overflow-wrap:anywhere}
+.contact-group-list li>div{display:flex;align-items:center;gap:12px}
+.contact-group-list input[type=checkbox]{width:20px;height:20px;flex-shrink:0}
+.bulk-history button{white-space:normal;text-align:left;overflow-wrap:anywhere}
+.bulk-composer footer{flex-wrap:wrap}
+@media(max-width:600px){.grouped-contacts{padding:14px}.group-toolbar>*{max-width:100%}.bulk-composer header{flex-wrap:wrap}.bulk-composer .composer-actions{flex-wrap:wrap}}

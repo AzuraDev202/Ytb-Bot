@@ -36,6 +36,26 @@ History for each Channel ID appears below the composer and shows up to the 20 mo
 
 Each draft revision permits only one send attempt, even with repeated clicks or after reopening the application. Send requests are not retried automatically. To send again, edit and save the content as a new revision, then review it. Saving unchanged content does not create a new revision.
 
+## Bulk Gmail across saved channels
+
+Open **Results > Grouped contacts** beside Scan history. Contact groups cover saved channels across scan history, using the latest saved row for each Channel ID; they are independent of the current table page, search, and sort. Equal normalized email addresses form one group with all matching channels. Normalization ignores case and surrounding whitespace; it does not merge Gmail dot or plus aliases. Social links appear as read-only groups and cannot become email recipients.
+
+1. Select email groups, choose **Compose bulk email**, and select a connected Gmail sender. Review the associated channels before selecting a shared address.
+2. Enter one subject and plain-text body. Each selected email receives a separate message with one To address, without CC/BCC or a shared recipient list.
+3. Choose **Preview batch** and review its saved sender, complete recipient list, subject, and body. Preparation does not send mail. Editing requires a fresh review.
+4. Choose **Send batch** to explicitly start the reviewed batch. The application allows at most **100 selected email groups per batch** and sends sequentially, with a **two-second pause between requests**. These are application safeguards, not Gmail provider limits or a guarantee of available quota.
+5. Watch recipient progress. **Stop batch** prevents subsequent requests after the current request finishes; it cannot retract a request already submitted to Gmail.
+
+Open **Batch history** to inspect saved batches. The application persists the reviewed batch and each recipient outcome in local SQLite storage. Previously attempted addresses for the same sender are skipped, including attempts made through the single-channel composer. A started batch cannot be started again. Restarting the desktop does not automatically resume an interrupted batch.
+
+Recipient outcomes distinguish pending/sending, Gmail accepted request, failed/rejected, outcome unknown, skipped, and canceled before sending. **Accepted means Gmail returned a message ID; it does not guarantee delivery.** A timeout or interrupted request can already have reached Gmail. Check Gmail Sent manually before further contact. The application does not retry send requests automatically or read your inbox to reconcile them. On an error or uncertain outcome it stops the remaining requests and keeps their statuses for review.
+
+### Gmail limits and responsible sending
+
+Gmail API request quotas and mailbox sending limits are separate. Mailbox limits vary by account and are shared with other clients using that account; this application cannot show a reliable remaining daily allowance. A batch below the application cap can still be rejected or limited. See Google's [API usage limits](https://developers.google.com/workspace/gmail/api/reference/quota), [mail sending errors](https://developers.google.com/workspace/gmail/api/guides/handle-errors), and [Google Workspace sending limits](https://support.google.com/a/answer/166852).
+
+Review Google's [email sender guidelines](https://support.google.com/mail/answer/81126) before outreach. Public contact availability does not establish interest in bulk mail. Relevant messages, accurate sender identity, respect for opt-outs, and domain authentication affect sender reputation and delivery. Google's additional bulk-sender requirements, including one-click unsubscribe for applicable marketing/subscription traffic, are not implemented by this plain-text outreach composer. An application cap does not certify compliance with sender requirements.
+
 ## Facebook and social contacts
 
 Select a saved link → compose text → **Copy message** → **Open contact**. Paste and send the message on that platform using your account. The application does not send social messages automatically or record opening a profile as a sent email.

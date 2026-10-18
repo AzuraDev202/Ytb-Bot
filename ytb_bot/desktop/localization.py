@@ -92,6 +92,27 @@ The keyword table has unsaved changes. Closing the app will discard them. Close 
 Close YTB-BOT|Đóng YTB-BOT|关闭 YTB-BOT
 The scan is still running. Closing now may lose unsaved results. Close anyway?|Lượt quét chưa xong. Đóng bây giờ có thể mất kết quả chưa lưu. Bạn vẫn muốn đóng?|扫描仍在进行中。现在关闭可能会丢失未保存的结果。仍要关闭吗？'''
 
+_CATALOG += '''
+Invalid batch draft.|Bản nháp gửi hàng loạt không hợp lệ.|批量邮件草稿无效。
+Select between 1 and 100 unique email groups.|Chọn từ 1 đến 100 nhóm email không trùng nhau.|请选择 1 至 100 个不重复的邮件组。
+Enter a valid account, subject (200 characters) and body (50,000 characters).|Nhập tài khoản hợp lệ, tiêu đề tối đa 200 ký tự và nội dung tối đa 50.000 ký tự.|请输入有效账户、主题（最多 200 字符）和正文（最多 50,000 字符）。
+Only saved email groups can be selected.|Chỉ chọn các nhóm email đã lưu.|只能选择已保存的邮件组。
+A mail batch is already running.|Một đợt gửi hàng loạt đang chạy.|已有批量邮件正在发送。
+This batch already started. Prepare and review a new draft.|Đợt gửi này đã bắt đầu. Hãy tạo và xem lại bản nháp mới.|此批次已开始。请准备并检查新草稿。
+The reviewed sender is no longer connected.|Tài khoản gửi đã xem lại không còn kết nối.|已确认的发件账户已断开连接。
+Batch stopped.|Đã dừng đợt gửi.|批次已停止。
+Sender account disconnected.|Tài khoản gửi đã ngắt kết nối.|发件账户已断开连接。
+Batch not found.|Không tìm thấy đợt gửi.|找不到批次。
+This recipient already belongs to a bulk send attempt. Check the contact history.|Người nhận này đã có lần gửi hàng loạt. Hãy kiểm tra lịch sử liên hệ.|此收件人已有批量发送尝试。请检查联系历史。
+Wait for the update to finish before sending mail.|Chờ cập nhật hoàn tất trước khi gửi thư.|请等待更新完成后再发送邮件。
+A mail send is already running. Wait for its result.|Một lượt gửi thư đang chạy. Hãy chờ kết quả.|邮件正在发送。请等待结果。
+Review the bulk email draft before sending.|Xem lại bản nháp gửi hàng loạt trước khi gửi.|请先检查批量邮件草稿，再发送。
+Finish the bulk send and save its draft before updating.|Hoàn tất đợt gửi và lưu bản nháp trước khi cập nhật.|请完成批量发送并保存草稿后再更新。
+Bulk email is running|Đang gửi thư hàng loạt|正在批量发送邮件
+Closing stops the remaining emails. The current request may have an uncertain outcome. Close anyway?|Đóng sẽ dừng các thư còn lại. Yêu cầu hiện tại có thể chưa rõ kết quả. Bạn vẫn muốn đóng?|关闭会停止剩余邮件。当前请求的结果可能不确定。仍要关闭吗？
+Unsaved bulk draft|Bản nháp hàng loạt chưa lưu|未保存的批量邮件草稿
+The bulk email draft has unsaved changes. Closing will discard them. Close anyway?|Bản nháp hàng loạt có thay đổi chưa lưu. Đóng sẽ bỏ các thay đổi đó. Bạn vẫn muốn đóng?|批量邮件草稿有未保存的更改。关闭将丢弃这些更改。仍要关闭吗？'''
+
 _STATIC = {}
 for _line in _CATALOG.splitlines():
     _english, _vi, _zh = _line.split('|')

@@ -42,6 +42,10 @@ def main(on_started=None):
 
         def confirm_closing():
             # Closing runs on the WinForms thread: never wait for JavaScript here.
+            if api._bulk.is_running and not confirm('Bulk email is running', 'Closing stops the remaining emails. The current request may have an uncertain outcome. Close anyway?'):
+                return False
+            if api._bulk_dirty and not confirm('Unsaved bulk draft', 'The bulk email draft has unsaved changes. Closing will discard them. Close anyway?'):
+                return False
             if api._contact_sending and not confirm('Sending email', 'Gmail is processing the request. Closing now may leave the result unknown. Close anyway?'):
                 return False
             if api._contact_dirty and not confirm('Unsaved contact', 'The contact draft has unsaved changes. Closing the app will discard them. Close anyway?'):
@@ -57,7 +61,10 @@ def main(on_started=None):
         def closing():
             # Serialize confirmation and update handoff with new sends/edits.
             with api._lock:
-                return api._finish_update_close(confirm_closing())
+                allowed = api._finish_update_close(confirm_closing())
+                if allowed and api._bulk.is_running:
+                    api._bulk.stop()
+                return allowed
 
         window.events.closing += closing
         def reveal():
