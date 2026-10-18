@@ -19,7 +19,7 @@ To import an older file, select **Import existing file**, open `.xlsx` or `.xls`
 
 ## Scanning and reviewing results
 
-To contact a channel, choose **View full details â†’ Compose contact**. Gmail/Google Workspace supports direct sending through a connected OAuth account, with review, drafts, and send history. For Facebook and other social networks, copy your message and open the profile. Google setup and sending statuses are described in [Channel outreach](CONTACT_COMPOSER.md).
+To contact a channel, choose **View full details > Compose contact**. Gmail/Google Workspace supports direct sending through a connected OAuth account, with review, drafts, and send history. For Facebook and other social networks, copy your message and open the profile. Google setup and sending statuses are described in [Channel outreach](CONTACT_COMPOSER.md).
 
 The React desktop automatically checks **Channel ID** against all scans in local storage, including saved results from completed, stopped, failed, and running scans. Each new scan accepts only channels absent from history; renaming a channel or changing keywords does not make an existing channel appear again. A channel that previously failed the filters can be accepted later if it meets the criteria. Existing history is retained. Deduplication covers storage on the current machine; external Excel results are not read automatically.
 
@@ -34,6 +34,12 @@ Open **Results** or **View results in the bot** to review scans by time, status,
 Results are written to local storage in batches and when the scan ends; no `.xlsx` file is created. Select **Refresh** when viewing a scan still in progress. If the application closes unexpectedly, saved batches remain available; the request being processed may not yet have been recorded.
 
 Shortcuts: `Ctrl+Enter` starts discovery, `Ctrl+O` imports a legacy file, and `Esc` closes filters or requests a stop. Normal `Ctrl+C` copies selected text; use **Copy** for checked rows.
+
+## Grouped contacts and bulk email
+
+Open **Results > Grouped contacts** to view shared email addresses and social links across saved scans. Search by contact or channel name, filter by contact type, and select email groups. **Clear selection** removes the current selection; **Reset filters** restores the contact list after a search with no matches.
+
+Choose **Compose bulk email**, enter the sender and message, then select **Preview batch**. Review the saved recipients and content before choosing **Send batch**. **Batch history** retains drafts and per-recipient outcomes. Social groups are read-only in this workflow. See the [contact composer guide](CONTACT_COMPOSER.md#bulk-gmail-across-saved-channels) for duplicate protection, stop behavior, and uncertain outcomes.
 
 ## Data and troubleshooting
 

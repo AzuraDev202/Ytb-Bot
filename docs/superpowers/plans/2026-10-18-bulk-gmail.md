@@ -38,9 +38,9 @@ API quota measures request units (`messages.send` currently costs 100 units). Th
 
 Google documents distinct authorization, rate, mailbox, concurrency, and server errors. Mailbox sending limits are shared across clients, and even a successful HTTP response cannot establish delivery. Google's generic retry/backoff guidance does not supply a send idempotency guarantee. Our engineering decision is to stop and persist uncertain side effects without automatic retries. [Gmail error handling](https://developers.google.com/workspace/gmail/api/guides/handle-errors).
 
-Workspace account limits can differ for trial and paid accounts and can change; Google applies daily limits over a rolling period. Consult the current table rather than advertise one allowance for all senders. [Workspace sending limits](https://support.google.com/a/answer/166852) (the English direct fetch failed during research; the official Portuguese version was available at https://support.google.com/a/answer/166852?hl=pt).
+Mailbox sending limits depend on account configuration and may change. Consult the provider's current documentation rather than displaying one fixed allowance for every sender. [Workspace sending limits](https://support.google.com/a/answer/166852).
 
-Google's sender guidance covers authentication, reputation, accurate headers, opt-outs, and additional requirements for bulk traffic to personal Gmail accounts. The composer does not implement a subscription service or one-click unsubscribe infrastructure. [Email sender guidelines](https://support.google.com/mail/answer/81126).
+Google's sender guidance covers authentication, sender identity, and recipient preferences. The composer provides plain-text messages without automated recipient-preference management. [Email sender guidelines](https://support.google.com/mail/answer/81126).
 
 ## File responsibilities
 
@@ -101,7 +101,7 @@ Google's sender guidance covers authentication, reputation, accurate headers, op
 
 **Files:** Modify `README.md`, `docs/user/CONTACT_COMPOSER.md`; retain this plan.
 
-**Interfaces:** Document final shipped labels and behaviors from Tasks 1?3, including provider references above.
+**Interfaces:** Document final shipped labels and behaviors from Tasks 1-3, including provider references above.
 
 - Verify existing single-channel drafts, send protection, social copy/open actions, saved Results, and account setup still work in mocked tests.
 - Run `python -m unittest discover -s tests -v`, frontend build, and Playwright. Report environment-related failures separately from assertion failures; never describe planned commands as completed checks.
@@ -110,7 +110,7 @@ Google's sender guidance covers authentication, reputation, accurate headers, op
 
 ## Self-review
 
-Coverage includes grouping, persisted claims/snapshots, explicit authorization boundary, sequential pacing, stop/recovery, bridge lifecycle guards, three languages, regression tests, and user/provider documentation. The five Review Focus cases belong to Tasks 1?3. Backend/frontend names must be reconciled with the final bridge before completing the implementation.
+Coverage includes grouping, persisted claims/snapshots, explicit authorization boundary, sequential pacing, stop/recovery, bridge lifecycle guards, three languages, regression tests, and user/provider documentation. The five Review Focus cases belong to Tasks 1-3. Backend/frontend names must be reconciled with the final bridge before completing the implementation.
 
 
 ## Implementation handoff

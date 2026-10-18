@@ -1,6 +1,6 @@
 # YTB-BOT Documentation
 
-Documentation is organized by audience. The [product README](../README.md) is the starting point for new users.
+Documentation covers running the application, understanding its implementation, and contributing changes. Start with the [project README](../README.md) for an overview and setup instructions.
 
 ## Users
 
@@ -13,10 +13,6 @@ Documentation is organized by audience. The [product README](../README.md) is th
 - [Architecture and file organization](engineering/ARCHITECTURE.md): directory responsibilities and processing flow.
 - [Interface design](engineering/UI_DESIGN.md): layout, interaction, and visual checks.
 - [Build and release](engineering/RELEASE.md): artifacts, workflows, and versions.
-
-## Product
-
-- [Commercialization preparation](product/COMMERCIALIZATION.md): provisional positioning and remaining preparation.
 
 ## Dated reports
 

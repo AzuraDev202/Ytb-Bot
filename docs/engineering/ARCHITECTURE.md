@@ -1,33 +1,33 @@
 # Architecture and Source Organization
 
-The product is a Windows application for YouTube market researchers: discover channels, screen public metrics, and organize results. Outreach is a supporting feature. The React desktop is the default experience; the CLI and CustomTkinter interface remain for compatibility. Limitations and development direction for this audience are described in the [product direction](../product/COMMERCIALIZATION.md).
+YTB-BOT combines a React desktop interface with Python application services for YouTube channel discovery, local data exploration, and reviewed email messaging. The main desktop uses pywebview with Edge WebView2. A CLI and a CustomTkinter interface remain available for compatibility.
 
 ## Directory map
 
 ```text
 Ytb-Bot/
-â”œâ”€â”€ frontend/                 React, bridge types, and browser tests
-â”‚   â”œâ”€â”€ src/components/       Screens and user interactions
-â”‚   â””â”€â”€ tests/                Playwright with a mocked bridge
-â”œâ”€â”€ ytb_bot/                  Application Python code
-â”‚   â”œâ”€â”€ core/                 Scanning, contacts, tables, and SQLite
-â”‚   â”œâ”€â”€ desktop/              WebView2, bridge, Gmail, and credential vault
-â”‚   â”œâ”€â”€ cli/                  Compatibility command-line scanner
-â”‚   â””â”€â”€ legacy_ui/            Compatibility CustomTkinter interface
-â”œâ”€â”€ tests/                    Python tests organized by feature
-â”œâ”€â”€ scripts/
-â”‚   â”œâ”€â”€ checks/               Native and EXE smoke tests
-â”‚   â”œâ”€â”€ dev/                  Interface preview and screenshot tools
-â”‚   â””â”€â”€ release/              Release selection and builds
-â”œâ”€â”€ packaging/                PyInstaller configuration
-â”œâ”€â”€ docs/
-â”‚   â”œâ”€â”€ user/                 User guides
-â”‚   â”œâ”€â”€ engineering/          Development, interface, and releases
-â”‚   â”œâ”€â”€ product/              Commercialization preparation
-â”‚   â””â”€â”€ reviews/              Reports with dates and defined scope
-â”œâ”€â”€ .github/workflows/        Checks, builds, and releases
-â”œâ”€â”€ gui_app.py                Compatibility desktop launcher
-â””â”€â”€ bot.py                    Compatibility CLI launcher
+|-- frontend/                 React, bridge types, and browser tests
+|   |-- src/components/       Screens and user interactions
+|   `-- tests/                Playwright with a mocked bridge
+|-- ytb_bot/                  Application Python code
+|   |-- core/                 Scanning, contacts, tables, and SQLite
+|   |-- desktop/              WebView2, bridge, Gmail, and credential vault
+|   |-- cli/                  Compatibility command-line scanner
+|   `-- legacy_ui/            Compatibility CustomTkinter interface
+|-- tests/                    Python tests organized by feature
+|-- scripts/
+|   |-- checks/               Native and EXE smoke tests
+|   |-- dev/                  Interface preview and screenshot tools
+|   `-- release/              Release selection and builds
+|-- packaging/                PyInstaller configuration
+|-- docs/
+|   |-- user/                 User guides
+|   |-- engineering/          Architecture, development, interface, and releases
+|   |-- superpowers/plans/    Implementation plans and dated verification notes
+|   `-- reviews/              Reports with dates and defined scope
+|-- .github/workflows/        Checks, builds, and releases
+|-- gui_app.py                Desktop launcher
+`-- bot.py                    Compatibility CLI launcher
 ```
 
 Keep `README.md`, `LICENSE`, `.env.example`, dependency manifests, and launchers at the root so users, CI, and build tools can find them easily. Frontend configuration stays with the frontend.
@@ -41,7 +41,7 @@ flowchart LR
     Scan --> YouTube[YouTube Data API]
     Scan --> Store[(SQLite)]
     Bridge --> Store
-    Bridge --> Outreach[Compose and send outreach]
+    Bridge --> Outreach[Reviewed email messaging]
     Outreach --> Store
     Outreach --> Vault[Windows credential vault]
     Outreach --> Gmail[Gmail API]
@@ -49,13 +49,15 @@ flowchart LR
 
 `frontend/src/api.ts` describes exchanged data; `desktop/api.py` exposes interface operations. `core/engine.py` handles background scanning, `core/storage.py` stores history, and `core/workbook.py` reads and presents tables. The sending workflow lives in `desktop/outreach.py`, Google integration in `desktop/gmail.py`, tokens in `desktop/credential_vault.py`, and drafts/send attempts in `core/outreach_store.py`.
 
+Contact grouping lives in `core/contact_groups.py`. `core/bulk_store.py` persists reviewed batches and recipient claims; `desktop/bulk.py` controls sequential sending, cancellation, and restart recovery. Individual and bulk workflows share duplicate-attempt checks. Preparation saves a review snapshot; only an explicit start operation initiates sending.
+
 ## Rules for adding files
 
 - Put shared scanning, filtering, and data logic in `core/`, without interface dependencies.
 - Put window interaction, the bridge, and desktop integrations in `desktop/`. Keep the compatibility interface in `legacy_ui/`.
 - Organize build/check scripts by purpose in `scripts/dev`, `scripts/checks`, or `scripts/release`.
 - Put Python tests in `tests/test_<feature>.py` so the existing discovery command finds them all. Put React tests in `frontend/tests/`.
-- User guides belong in `docs/user/`; technical and operational information belongs in `docs/engineering/`. The README introduces the product and directs readers.
+- User guides belong in `docs/user/`; technical and operational information belongs in `docs/engineering/`. The README introduces the project and directs readers.
 - When moving files, update imports, paths relative to `__file__`, CI, tests, and documentation links in the same change.
 
 Introduce deeper subdivisions only when several features need a distinct responsibility group. Avoid adding directory levels solely to make the source tree symmetrical.

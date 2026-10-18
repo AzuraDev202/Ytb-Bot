@@ -54,7 +54,7 @@ Recipient outcomes distinguish pending/sending, Gmail accepted request, failed/r
 
 Gmail API request quotas and mailbox sending limits are separate. Mailbox limits vary by account and are shared with other clients using that account; this application cannot show a reliable remaining daily allowance. A batch below the application cap can still be rejected or limited. See Google's [API usage limits](https://developers.google.com/workspace/gmail/api/reference/quota), [mail sending errors](https://developers.google.com/workspace/gmail/api/guides/handle-errors), and [Google Workspace sending limits](https://support.google.com/a/answer/166852).
 
-Review Google's [email sender guidelines](https://support.google.com/mail/answer/81126) before outreach. Public contact availability does not establish interest in bulk mail. Relevant messages, accurate sender identity, respect for opt-outs, and domain authentication affect sender reputation and delivery. Google's additional bulk-sender requirements, including one-click unsubscribe for applicable marketing/subscription traffic, are not implemented by this plain-text outreach composer. An application cap does not certify compliance with sender requirements.
+Review Google's [email sender guidelines](https://support.google.com/mail/answer/81126) before sending. Use relevant messages, an accurate sender identity, and respect requests to stop contact. Public contact availability does not establish interest in receiving email. This plain-text composer does not manage recipient preferences or provide automated unsubscribe handling.
 
 ## Facebook and social contacts
 
