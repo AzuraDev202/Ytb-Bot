@@ -78,6 +78,8 @@ Files such as `keywords.xlsx` may belong to the older CLI workflow. Do not autom
 
 The main React desktop offers English (`en`), Vietnamese (`vi`), and Simplified Chinese (`zh-CN`). A display-language preference is retained in local storage and native preferences. Switching updates interface text, native prompts, and application-authored messages without reloading the window or replacing editor state. User keywords, channel data, and drafts are preserved as entered. Canonical result column identifiers and API field keys remain English; CLI and legacy interface text remain English.
 
+React uses `frontend/src/i18n.tsx` with the curated `vi.json` and `zh-CN.ts` catalogs. Python translates known display messages through `desktop/localization.py`; unknown provider and operating-system diagnostics retain their original wording. Run `npm run check:locales --prefix frontend` after editing interface copy or catalogs.
+
 ## Historical data compatibility
 
 Historical result column labels are normalized to English when read through `core/result_schema.py`. Stored rows and user-authored keywords, channel names, and drafts are not rewritten. `tests/test_result_schema.py` verifies legacy and mixed-language fields.

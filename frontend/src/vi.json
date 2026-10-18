@@ -1,4 +1,7 @@
 {
+  "Gmail accepted the send request. This status does not confirm delivery to the recipient.": "Gmail đã nhận yêu cầu gửi. Trạng thái này không xác nhận thư đã đến người nhận.",
+  "It is unknown whether Gmail accepted the email. Check Sent in Gmail before sending again.": "Chưa rõ Gmail đã nhận thư hay chưa. Kiểm tra thư Đã gửi trong Gmail trước khi gửi lại.",
+  "Facebook": "Facebook",
   "AI Automation\nAI Agent\nAI video creation": "AI Automation\nAI Agent\ntạo video bằng AI",
   "Keywords saved in the bot.": "Đã lưu từ khóa trong Bot.",
   "Enter a YouTube API key to start.": "Nhập YouTube API Key để bắt đầu.",

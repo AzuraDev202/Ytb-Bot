@@ -57,6 +57,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/checks/smoke_desktop
 
 - Python tests cover data, the scanner, bridge, outreach, updater, and legacy interface. Some require working Tk/Tcl, a Windows desktop, or DPAPI.
 - Playwright uses a mocked bridge; it does not verify YouTube quota, real OAuth, or actual mail delivery.
+- `npm run check:locales --prefix frontend` checks required interface labels and translation placeholders. The frontend build runs this check automatically.
 - `smoke_react.py` requires a built frontend and an interactive desktop session to check WebView2 and the real bridge.
 - `smoke_desktop.ps1` requires `dist/gui_app.exe` and checks the window of the process it launches.
 - Report results only after the process exits and returns an exit code. Successful test lines alone are insufficient if the runner remains hung.

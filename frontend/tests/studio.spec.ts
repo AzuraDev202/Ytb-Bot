@@ -85,6 +85,21 @@ async function openContact(page: Page) {
   await expect(page.getByRole('combobox', {name: 'Recipient contact', exact: true})).toBeVisible();
 }
 
+test('delivery status follows language changes without sending again', async ({page}) => {
+  await contactFixture(page);
+  await openContact(page);
+  await page.getByRole('textbox', {name: 'Email subject'}).fill('Collaboration');
+  await page.getByRole('textbox', {name: 'Contact message'}).fill('Keep this message');
+  await page.getByRole('button', {name: 'Review email', exact: true}).click();
+  await page.getByRole('button', {name: 'Send email', exact: true}).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('combobox', {name: 'Language', exact: true}).selectOption('vi');
+  await expect(dialog.getByRole('status')).toContainText('Gmail đã nhận yêu cầu gửi');
+  await dialog.getByRole('combobox', {name: 'Ngôn ngữ', exact: true}).selectOption('zh-CN');
+  await expect(dialog.getByRole('status')).toContainText('Gmail 已接受发送请求');
+  expect(await page.evaluate(() => localStorage.getItem('contact-send-count'))).toBe('1');
+});
+
 test('scan status changes and history errors preserve an unsaved contact draft', async ({page}) => {
   await contactFixture(page);
   await openContact(page);
@@ -139,7 +154,7 @@ test('contact composer handles unsaved drafts, uncertain delivery and narrow win
   expect(box!.x + box!.width).toBeLessThanOrEqual(375);
   await page.getByRole('button', {name: 'Review email', exact: true}).click();
   await page.getByRole('button', {name: 'Send email', exact: true}).click();
-  await expect(page.getByRole('status').filter({hasText: 'Unclear whether Gmail'})).toBeVisible();
+  await expect(page.getByRole('status').filter({hasText: 'unknown whether Gmail'})).toBeVisible();
   await expect(page.getByRole('button', {name: 'Send email', exact: true})).toBeDisabled();
 });
 

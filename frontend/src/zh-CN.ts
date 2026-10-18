@@ -1,4 +1,7 @@
 export const zhCN: Record<string, string> = {
+  'Gmail accepted the send request. This status does not confirm delivery to the recipient.': 'Gmail 已接受发送请求。此状态并不表示邮件已送达收件人。',
+  'It is unknown whether Gmail accepted the email. Check Sent in Gmail before sending again.': '无法确定 Gmail 是否已接受邮件。再次发送前，请检查 Gmail 的“已发送”文件夹。',
+  'Facebook': 'Facebook',
   'Downloading {v0}%': '正在下载 {v0}%', 'Open channel {v0}': '打开频道 {v0}',
   'Imported {v0} keywords. Click Save keywords to keep them in the bot.': '已导入 {v0} 个关键词。点击“保存关键词”将其保存在应用中。',
   'Select keyword {v0}': '选择关键词 {v0}', 'Keyword row {v0}': '关键词行 {v0}',

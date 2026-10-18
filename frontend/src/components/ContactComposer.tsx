@@ -30,6 +30,11 @@ export function ContactComposer({channelId, onClose, notify}: {channelId: string
   const email = context?.contacts.find(contact => contact.value === form.recipient)?.kind === 'email';
   const account = mail.accounts.find(item => item.id === form.account_id);
   const attempted = context?.history.some(item => item.revision === revision);
+  const resultMessage = result?.status === 'accepted'
+    ? 'Gmail accepted the send request. This status does not confirm delivery to the recipient.'
+    : result?.status === 'unknown'
+      ? 'It is unknown whether Gmail accepted the email. Check Sent in Gmail before sending again.'
+      : result?.message || '';
 
   useEffect(() => {
     if (!channelId) {dialog.current?.close(); return;}
@@ -93,7 +98,7 @@ export function ContactComposer({channelId, onClose, notify}: {channelId: string
       {context && !context.contacts.length && <div className="composer-message">{t("This channel has no supported email or contact link in its saved data. Choose another channel or visit its page to contact it manually.")}</div>}
       {context && !!context.contacts.length && <>
         {review ? <section className="mail-review" aria-label={t("Review email")}><div className="review-heading"><Check size={18}/><strong>{t("Review before sending")}</strong></div><dl><div><dt>{t("From")}</dt><dd>{account?.email}</dd></div><div><dt>{t("To")}</dt><dd>{form.recipient}</dd></div><div><dt>{t("Subject")}</dt><dd>{form.subject}</dd></div></dl><div className="message-preview">{form.body}</div></section> : <>
-          <label className="composer-field">{t("Recipient contact")}<select aria-label={t("Recipient contact")} value={form.recipient} disabled={working} onChange={event => change('recipient', event.target.value)}>{context.contacts.map(contact => <option key={contact.value} value={contact.value}>{contact.label} · {contact.value}</option>)}</select></label>
+          <label className="composer-field">{t("Recipient contact")}<select aria-label={t("Recipient contact")} value={form.recipient} disabled={working} onChange={event => change('recipient', event.target.value)}>{context.contacts.map(contact => <option key={contact.value} value={contact.value}>{t(contact.label)} · {contact.value}</option>)}</select></label>
           {email && <section className="sender-section" aria-label={t("Sender account")}><div className="sender-heading"><Mail size={18}/><strong>Gmail / Google Workspace</strong><span className="pill neutral">OAUTH</span></div>
             <label className="composer-field">{t("Sender account")}<select aria-label={t("Sender account")} value={form.account_id} disabled={working} onChange={event => change('account_id', event.target.value)}><option value="">{t("Choose a connected account")}</option>{mail.accounts.map(item => <option key={item.id} value={item.id}>{item.email}</option>)}</select></label>
             <div className="sender-actions"><button className="button secondary" disabled={working || mail.connecting || !mail.configured} onClick={() => void task(async () => {await call('connect_gmail'); setMail(await call<MailState>('get_mail_state'));})}>{mail.connecting ? <Loader2 size={15} className="spin"/> : <UserPlus size={15}/>} {mail.connecting ? t("Waiting for Google sign-in…") : t("Connect Gmail")}</button>{account && <button className="button ghost" disabled={working || mail.connecting} onClick={() => void task(async () => {setMail(await call<MailState>('disconnect_gmail', account.id)); change('account_id', '');})}>{t("Remove account from the bot")}</button>}</div>
@@ -104,7 +109,7 @@ export function ContactComposer({channelId, onClose, notify}: {channelId: string
           {email && <label className="composer-field">{t("Subject")}<input aria-label={t("Email subject")} maxLength={200} value={form.subject} disabled={working} onChange={event => change('subject', event.target.value)} placeholder={t("Example: Content collaboration proposal")}/></label>}
           <label className="composer-field">{t("Message")}<textarea aria-label={t("Contact message")} maxLength={50000} rows={8} value={form.body} disabled={working} onChange={event => change('body', event.target.value)} placeholder={t("Introduce yourself and explain what you would like to discuss with the channel…")}/><span className="composer-hint">{form.body.length.toLocaleString(locale)} {t("/ 50,000 characters ·")} {dirty ? t("Unsaved changes") : t("The draft matches the open content")}</span></label>
         </>}
-        {result && <div className={`composer-message ${result.status === 'accepted' ? 'success' : 'error'}`} role="status">{t(result.message)}</div>}
+        {result && <div className={`composer-message ${result.status === 'accepted' ? 'success' : 'error'}`} role="status">{t(resultMessage)}</div>}
         {!!context.history.length && <details className="contact-history"><summary>{t("Channel send history ·")} {context.history.length} {t("most recent attempts")}</summary><ul>{context.history.map(item => <li key={item.id}><strong>{t(statusLabels[item.status] || item.status)}</strong><span>{new Date(item.created).toLocaleString(locale)} · {item.payload.recipient}</span><span>{item.payload.subject}</span></li>)}</ul><p>{t("Delivery is uncertain: check Sent mail in Gmail before trying again. To create a new send attempt, edit the content and save a new version.")}</p></details>}
       </>}
     </div>
