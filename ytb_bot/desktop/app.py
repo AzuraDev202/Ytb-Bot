@@ -36,7 +36,7 @@ def main(on_started=None):
             background_color="#0c1018", text_select=True)
         api._window = window
 
-        def closing():
+        def confirm_closing():
             # Closing runs on the WinForms thread: never wait for JavaScript here.
             if api._contact_sending and not window.create_confirmation_dialog('Email đang gửi', 'Gmail đang xử lý yêu cầu. Đóng bây giờ có thể khiến kết quả chưa rõ. Bạn vẫn muốn đóng?'):
                 return False
@@ -49,6 +49,11 @@ def main(on_started=None):
                     return False
                 api._scan.stop()
             return True
+
+        def closing():
+            # Serialize confirmation and update handoff with new sends/edits.
+            with api._lock:
+                return api._finish_update_close(confirm_closing())
 
         window.events.closing += closing
         def reveal():

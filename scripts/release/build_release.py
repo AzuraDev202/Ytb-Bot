@@ -6,7 +6,7 @@ from pathlib import Path
 import subprocess
 import sys
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from ytb_bot.version import APP_VERSION
 from ytb_bot.updater import version_tuple

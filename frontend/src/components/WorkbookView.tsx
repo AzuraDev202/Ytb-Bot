@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowDownToLine, ArrowLeft, ArrowRight, ArrowUpDown, Copy, FileSpreadsheet, FolderOpen, Loader2, Plus, Search, ShieldCheck, X } from 'lucide-react';
+import { ArrowDownToLine, ArrowLeft, ArrowRight, ArrowUpDown, Copy, FileSpreadsheet, FolderOpen, Loader2, Plus, Search, X } from 'lucide-react';
 import { call, type WorkbookMeta, type WorkbookPage } from '../api';
 import { TableLoading } from './TableLoading';
 import { ResultDetails } from './ResultDetails';
@@ -7,7 +7,7 @@ import { ContactComposer } from './ContactComposer';
 import { ConfirmDialog, type Confirmation, type Notice } from './ConfirmDialog';
 const format = (value: number) => new Intl.NumberFormat('vi-VN').format(value);
 
-export function WorkbookView({meta, onOpen, onImport, notify, readOnly = false}: {meta: WorkbookMeta | null; onOpen: () => void; onImport: (words: string[]) => void; notify: (notice: Notice) => void; readOnly?: boolean}) {
+export function WorkbookView({meta, onOpen, onImport, notify, readOnly = false, onContact}: {meta: WorkbookMeta | null; onOpen: () => void; onImport: (words: string[]) => void; notify: (notice: Notice) => void; readOnly?: boolean; onContact?: (channelId: string) => void}) {
   const [sheet, setSheet] = useState('');
   const [column, setColumn] = useState(0);
   const [query, setQuery] = useState('');
@@ -68,8 +68,8 @@ export function WorkbookView({meta, onOpen, onImport, notify, readOnly = false}:
     } catch (error) {notify({text: String(error), error: true});}
   }
   return <section className="panel workbook-panel" aria-label="Bảng Excel">
-    <div className="section-heading"><div><span className="eyebrow">{readOnly ? "DỮ LIỆU LƯỢT QUÉT" : "NHẬP TỪ FILE CŨ"}</span><h2>{readOnly ? 'Bảng kết quả' : 'Nhập dữ liệu cũ'}</h2><p>{readOnly ? 'Tìm kiếm, sắp xếp và sao chép ngay trong Bot.' : 'Đọc file có sẵn để đưa từ khóa vào kho nội bộ.'}</p></div>{!readOnly && <button className="button primary" onClick={onOpen}><FolderOpen size={17}/> Mở Excel</button>}</div>
-    {!meta ? <div className="empty-state workbook-empty"><div className="empty-illustration"><FileSpreadsheet size={38}/><span className="small-orbit"><Plus size={16}/></span></div><h3>Bắt đầu với một bảng dữ liệu</h3><p>Mở file .xlsx hoặc .xls, chọn sheet và cột từ khóa.<br/>Không cần cài Microsoft Excel.</p><button className="button secondary" onClick={onOpen}><FolderOpen size={16}/> Chọn file từ máy</button><span className="quiet-note"><ShieldCheck size={13}/> File được xử lý trên máy của bạn</span></div> : <>
+    <div className="section-heading"><div><span className="eyebrow">{readOnly ? "DỮ LIỆU LƯỢT QUÉT" : "NHẬP TỪ FILE CŨ"}</span><h2>{readOnly ? 'Bảng kết quả' : 'Nhập dữ liệu cũ'}</h2></div>{!readOnly && <button className="button primary" onClick={onOpen}><FolderOpen size={17}/> Mở Excel</button>}</div>
+    {!meta ? <div className="empty-state workbook-empty"><div className="empty-illustration"><FileSpreadsheet size={38}/><span className="small-orbit"><Plus size={16}/></span></div><h3>Bắt đầu với một bảng dữ liệu</h3><p>Mở file .xlsx hoặc .xls, chọn sheet và cột từ khóa.<br/>Không cần cài Microsoft Excel.</p><button className="button secondary" onClick={onOpen}><FolderOpen size={16}/> Chọn file từ máy</button></div> : <>
       <div className="file-banner"><FileSpreadsheet size={20}/><div><strong>{meta.filename}</strong><small>{meta.sheets.length} sheet · {readOnly ? 'Lưu trong Bot' : 'File gốc chỉ được đọc'}</small></div><span className="pill neutral">{readOnly ? 'BOT DATA' : 'LOCAL FILE'}</span></div>
       {!readOnly && <div className="workbook-controls"><label>Sheet<select value={sheet} onChange={event => {setSheet(event.target.value); setPage(0); setSort(null);}}>{meta.sheets.map(value => <option key={value}>{value}</option>)}</select></label><label>Cột từ khóa<select value={column} onChange={event => setColumn(Number(event.target.value))}>{data?.columns.map((name, index) => <option key={index} value={index}>{name}</option>)}</select></label><button className="button secondary import-column" disabled={!data?.columns.length || loading} onClick={importColumn}><ArrowDownToLine size={16}/> Nhập cột từ khóa</button></div>}
       <div className="table-tools"><div className="search-field"><Search size={17}/><input aria-label="Tìm trong bảng" placeholder="Tìm tên kênh, từ khóa, lượt xem…" value={query} onChange={event => {setQuery(event.target.value); setPage(0);}}/>{query && <button className="icon-button" aria-label="Xóa tìm kiếm" onClick={() => setQuery('')}><X size={14}/></button>}</div><button className="button ghost" onClick={copy} disabled={!selection.length || loading || !!failure}><Copy size={15}/> Sao chép {selection.length || ''}</button></div>
@@ -77,8 +77,8 @@ export function WorkbookView({meta, onOpen, onImport, notify, readOnly = false}:
       {edges.overflow && !loading && !failure && <div className="horizontal-controls"><span>Cuộn ngang để xem các cột phía sau · Hoặc chọn Xem đầy đủ</span><div><button className="icon-button" aria-label="Cuộn sang trái" disabled={edges.start} onClick={() => pan(-1)}><ArrowLeft size={18}/></button><button className="icon-button" aria-label="Cuộn sang phải" disabled={edges.end} onClick={() => pan(1)}><ArrowRight size={18}/></button></div></div>}
       <div className="table-footer"><span>{format(data?.total ?? 0)} / {format(data?.original_total ?? 0)} dòng · 100 dòng / trang</span><div><button className="icon-button" aria-label="Trang trước" disabled={page === 0 || loading} onClick={() => setPage(value => value - 1)}><ArrowLeft size={16}/></button><span>{(data?.page ?? 0) + 1} / {data?.pages ?? 1}</span><button className="icon-button" aria-label="Trang sau" disabled={page + 1 >= (data?.pages ?? 1) || loading} onClick={() => setPage(value => value + 1)}><ArrowRight size={16}/></button></div></div>
     </>}
-    <ResultDetails record={details} onClose={() => setDetails(null)} onContact={readOnly && detailChannelId ? () => {setDetails(null); setContactChannel(String(detailChannelId));} : undefined}/>
-    <ContactComposer channelId={contactChannel} onClose={() => setContactChannel(null)} notify={notify}/>
+    <ResultDetails record={details} onClose={() => setDetails(null)} onContact={readOnly && detailChannelId ? () => {setDetails(null); (onContact || setContactChannel)(String(detailChannelId));} : undefined}/>
+    {!onContact && <ContactComposer channelId={contactChannel} onClose={() => setContactChannel(null)} notify={notify}/>}
     <ConfirmDialog request={confirmation} dismiss={() => setConfirmation(null)}/>
   </section>;
 }

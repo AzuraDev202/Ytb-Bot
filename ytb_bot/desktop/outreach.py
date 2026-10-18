@@ -28,10 +28,8 @@ class Outreach:
         with self._lock:
             if self._connecting:
                 raise ValueError('Chờ kết nối tài khoản hiện tại hoàn tất.')
-            value = self.vault.read()
             # Existing accounts retain their own OAuth client in credentials.
-            value['client'] = client
-            self.vault.write(value)
+            self.vault.update(lambda value: value.update({'client': client}))
         return self.state()
 
     def connect(self):
@@ -49,9 +47,7 @@ class Outreach:
                     raise ValueError('Invalid account identity')
                 key = hashlib.sha256(account['email'].casefold().encode()).hexdigest()
                 with self._lock:
-                    value = self.vault.read()
-                    value['accounts'][key] = account
-                    self.vault.write(value)
+                    self.vault.update(lambda value: value['accounts'].update({key: account}))
             except Exception:
                 with self._lock:
                     self._error = 'Chưa kết nối được Gmail. Kiểm tra cấu hình, quyền gửi và tài khoản thử nghiệm rồi thử lại. Phiên đăng nhập hết hạn sau 3 phút.'
@@ -63,9 +59,7 @@ class Outreach:
 
     def disconnect(self, account_id):
         with self._lock:
-            value = self.vault.read()
-            value['accounts'].pop(account_id, None)
-            self.vault.write(value)
+            self.vault.update(lambda value: value['accounts'].pop(account_id, None))
         return self.state()
 
     def context(self, channel_id):
@@ -100,15 +94,17 @@ class Outreach:
         if draft['recipient'] not in recipients:
             raise ValueError('Người nhận phải là email đã lưu của kênh.')
         with self._lock:
-            value = self.vault.read()
-            account = value['accounts'].get(draft['account_id'])
-            if not account:
-                raise ValueError('Chọn tài khoản Gmail đã kết nối.')
-            try:
-                token = self.gmail.access(account)
-            except Exception:
-                raise ValueError('Không làm mới được đăng nhập. Kết nối lại tài khoản Gmail.') from None
-            self.vault.write(value)
+            def refresh(value):
+                account = value['accounts'].get(draft['account_id'])
+                if not account:
+                    raise ValueError('Chọn tài khoản Gmail đã kết nối.')
+                try:
+                    token = self.gmail.access(account)
+                except Exception:
+                    raise ValueError('Không làm mới được đăng nhập. Kết nối lại tài khoản Gmail.') from None
+                return token, account
+            # Refresh writes must not restore accounts removed in another app.
+            token, account = self.vault.update(refresh)
         attempt, snapshot = self.store.claim(channel_id, revision)
         try:
             message_id = self.gmail.send(token, account['email'], snapshot['recipient'], snapshot['subject'], snapshot['body'])

@@ -1,4 +1,4 @@
-# Sử dụng và phát hành YTB-BOT Desktop
+# Hướng dẫn sử dụng YTB-BOT Desktop
 
 ## Từ khóa trong Bot
 
@@ -46,18 +46,6 @@ App kiểm tra GitHub Releases sau khi mở, mỗi 6 giờ và khi nhấn **Ki�
 Bản EXE so sánh SHA-256 cả khi Release có cùng version, nên có thể nhận một build khác mà không tăng version. Bản chạy mã nguồn không tự thay Python. Bản EXE cũ chưa hỗ trợ cơ chế này cần tải lại thủ công một lần.
 
 Updater giữ bản trước thành `<tên EXE>.previous`. Helper khôi phục file cũ nếu thay thế hoặc khởi chạy thất bại. Nếu app mới mở được nhưng lỗi sau đó, đóng app rồi khôi phục file `.previous` thủ công. Log helper ở `%TEMP%/ytb-update-*/update-error.log`. SHA-256 kiểm tra toàn vẹn, không phải chữ ký số Windows.
-
-## Phát hành GitHub Releases
-
-[Workflow](../.github/workflows/release.yml) chạy khi push lên `main`, push tag `v*` hoặc chạy thủ công. Repo/Releases cần công khai để app tải cập nhật mà không nhúng GitHub token vào EXE.
-
-- Giữ version cho thay đổi nhỏ, sửa lỗi và sắp xếp file; push `main` sẽ thay asset của Release cùng version.
-- Khi có thay đổi lớn cần version mới, sửa `ytb_bot/version.py` theo định dạng `X.Y.Z`. Nếu dùng tag, tag phải khớp `vX.Y.Z`.
-- Version thấp hơn không được phát hành; push lại tag bằng version hiện tại không ghi đè build từ `main`.
-- Workflow kiểm thử Python, build React/EXE, test UI, bridge và cửa sổ EXE trước khi publish.
-- Asset gồm `gui_app.exe`, `gui_app.exe.sha256` và `build-info.json`.
-
-Không commit file build hoặc khóa thật. Khi phát hành thủ công, giữ EXE, checksum và metadata từ cùng một lần build. Trước khi phân phối rộng, kiểm tra cập nhật giữa hai EXE trên Windows và xác nhận dữ liệu cục bộ vẫn còn.
 
 ## Lọc kênh có liên hệ công khai
 

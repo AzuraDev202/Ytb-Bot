@@ -4,6 +4,9 @@ from ctypes import wintypes
 import json
 import os
 from pathlib import Path
+from contextlib import contextmanager
+import tempfile
+import time
 
 
 class _Blob(ctypes.Structure):
@@ -33,8 +36,42 @@ def _protect(data, decrypt=False):
 
 
 class CredentialVault:
-    def __init__(self, path):
+    def __init__(self, path, lock_timeout=10):
         self.path = Path(path)
+        self.lock_timeout = lock_timeout
+
+    @contextmanager
+    def _transaction_lock(self):
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        # Keep this file in place: unlinking it can split concurrent locks.
+        with self.path.with_suffix('.lock').open('a+b') as handle:
+            handle.seek(0, os.SEEK_END)
+            if not handle.tell():
+                handle.write(b'\0')
+                handle.flush()
+            deadline = time.monotonic() + self.lock_timeout
+            while True:
+                try:
+                    handle.seek(0)
+                    if os.name == 'nt':
+                        import msvcrt
+                        msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+                    else:
+                        import fcntl
+                        fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except OSError:
+                    if time.monotonic() >= deadline:
+                        raise TimeoutError('Kho đăng nhập đang được cửa sổ khác sử dụng. Thử lại sau.') from None
+                    time.sleep(0.025)
+            try:
+                yield
+            finally:
+                handle.seek(0)
+                if os.name == 'nt':
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+                else:
+                    fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
 
     def read(self):
         if not self.path.exists():
@@ -42,7 +79,27 @@ class CredentialVault:
         return json.loads(_protect(self.path.read_bytes(), decrypt=True))
 
     def write(self, value):
+        with self._transaction_lock():
+            self._write(value)
+
+    def update(self, change):
+        """Read, mutate and commit under one process-wide file transaction."""
+        with self._transaction_lock():
+            value = self.read()
+            result = change(value)
+            self._write(value)
+            return result
+
+    def _write(self, value):
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        temporary = self.path.with_suffix('.tmp')
-        temporary.write_bytes(_protect(json.dumps(value).encode('utf-8')))
-        temporary.replace(self.path)
+        encrypted = _protect(json.dumps(value).encode('utf-8'))
+        descriptor, name = tempfile.mkstemp(prefix=self.path.stem + '-', suffix='.tmp', dir=self.path.parent)
+        temporary = Path(name)
+        try:
+            with os.fdopen(descriptor, 'wb') as output:
+                output.write(encrypted)
+                output.flush()
+                os.fsync(output.fileno())
+            temporary.replace(self.path)
+        finally:
+            temporary.unlink(missing_ok=True)

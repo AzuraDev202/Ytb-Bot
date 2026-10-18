@@ -13,6 +13,57 @@ from ytb_bot.desktop.api import DesktopAPI
 
 
 class ReactBackendTests(unittest.TestCase):
+    def test_canceling_update_restart_does_not_start_helper_and_allows_retry(self):
+        with tempfile.TemporaryDirectory() as directory:
+            api = DesktopAPI(data_dir=directory)
+            staged = Path(directory) / 'gui_app.exe'
+            staged.write_bytes(b'MZtest')
+            api._release = object()
+            api._window = MagicMock()
+            def cancel_close():
+                self.assertTrue(api.set_keywords_dirty(True)['ok'])
+                api._finish_update_close(False)
+            api._window.destroy.side_effect = cancel_close
+            class ImmediateThread:
+                def __init__(self, target, **kwargs): self.target = target
+                def start(self): self.target()
+            with patch('ytb_bot.desktop.api.threading.Thread', ImmediateThread), \
+                    patch('ytb_bot.desktop.api.download_update', return_value=staged), \
+                    patch('ytb_bot.desktop.api.install_update') as install:
+                self.assertTrue(api.install_available_update()['ok'])
+                install.assert_not_called()
+                self.assertEqual(api.get_state()['data']['update']['status'], 'available')
+                self.assertFalse(staged.exists())
+
+    def test_update_helper_starts_only_after_accepted_close_and_blocks_new_send(self):
+        with tempfile.TemporaryDirectory() as directory:
+            api = DesktopAPI(data_dir=directory)
+            staged = Path(directory) / 'gui_app.exe'
+            staged.write_bytes(b'MZtest')
+            api._staged_update = staged
+            api._update['status'] = 'downloading'
+            with patch('ytb_bot.desktop.api.install_update') as install:
+                self.assertTrue(api._finish_update_close(True))
+                install.assert_called_once_with(staged)
+            with patch.object(api._outreach, 'send') as send:
+                self.assertFalse(api.send_contact_mail('channel', 1)['ok'])
+                send.assert_not_called()
+            self.assertFalse(api.set_keywords_dirty(True)['ok'])
+            self.assertFalse(api.set_contact_dirty(True)['ok'])
+
+    def test_failed_update_handoff_keeps_window_open_and_unblocks_edits(self):
+        with tempfile.TemporaryDirectory() as directory:
+            api = DesktopAPI(data_dir=directory)
+            staged = Path(directory) / 'gui_app.exe'
+            staged.write_bytes(b'MZtest')
+            api._staged_update = staged
+            api._update['status'] = 'downloading'
+            with patch('ytb_bot.desktop.api.install_update', side_effect=OSError('launch failed')):
+                self.assertFalse(api._finish_update_close(True))
+            self.assertEqual(api.get_state()['data']['update']['status'], 'error')
+            self.assertTrue(api.set_keywords_dirty(True)['ok'])
+            self.assertFalse(staged.exists())
+
     def test_workbook_pagination_search_sort_and_original_import(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "input.xlsx"

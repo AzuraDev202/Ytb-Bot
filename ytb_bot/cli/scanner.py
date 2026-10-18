@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from ytb_bot.core.contacts import extract_contacts
+from ytb_bot.core.excel import write_results_excel
 
 load_dotenv()
 API_KEY = os.getenv("YOUTUBE_API_KEY")
@@ -125,8 +126,7 @@ def scan_channels_from_excel(input_excel="keywords.xlsx", output_excel="danh_sac
         df.sort_values(by="Tổng Lượt Xem", ascending=False, inplace=True)
         df.insert(0, "STT", range(1, len(df) + 1))
 
-        with pd.ExcelWriter(output_excel, engine="openpyxl") as writer:
-            df.to_excel(writer, sheet_name="Kênh Mới Viral", index=False)
+        write_results_excel(df, output_excel, "Kênh Mới Viral")
         print(f"\n[+] HOÀN TẤT! Đã lưu {len(results)} kênh vào '{output_excel}'.")
     else:
         print("\n[-] Không tìm thấy kênh nào thỏa điều kiện.")

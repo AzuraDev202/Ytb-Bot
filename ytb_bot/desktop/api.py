@@ -46,6 +46,8 @@ class DesktopAPI:
         self._outreach = Outreach(self._store.path)
         self._lock = threading.RLock()
         self._release = None
+        self._staged_update = None
+        self._update_committing = False
         self._update = {"status": "idle", "message": "Kiểm tra bản cập nhật khi bạn cần.", "progress": 0}
 
     @reply
@@ -65,7 +67,10 @@ class DesktopAPI:
     def set_keywords_dirty(self, dirty):
         if not isinstance(dirty, bool):
             raise ValueError("Trạng thái chỉnh sửa không hợp lệ.")
-        self._keywords_dirty = dirty
+        with self._lock:
+            if self._update_committing:
+                raise ValueError('Ứng dụng đang khởi động lại để cập nhật.')
+            self._keywords_dirty = dirty
         return True
 
     @reply
@@ -105,19 +110,25 @@ class DesktopAPI:
     def set_contact_dirty(self, dirty):
         if not isinstance(dirty, bool):
             raise ValueError('Trạng thái bản nháp không hợp lệ.')
-        self._contact_dirty = dirty
+        with self._lock:
+            if self._update_committing:
+                raise ValueError('Ứng dụng đang khởi động lại để cập nhật.')
+            self._contact_dirty = dirty
         return True
 
     @reply
     def send_contact_mail(self, channel_id, revision):
         with self._lock:
+            if self._update_committing:
+                raise ValueError('Ứng dụng đang khởi động lại để cập nhật.')
             if self._contact_sending:
                 raise ValueError('Một email đang được gửi. Hãy chờ kết quả.')
             self._contact_sending = True
         try:
             return self._outreach.send(channel_id, revision)
         finally:
-            self._contact_sending = False
+            with self._lock:
+                self._contact_sending = False
 
     @reply
     def open_gmail_setup(self):
@@ -261,12 +272,38 @@ class DesktopAPI:
             staged = None
             try:
                 staged = download_update(release, progress)
-                install_update(staged)
+                with self._lock:
+                    self._staged_update = staged
                 self._window.destroy()
             except Exception as error:
                 if staged:
                     staged.unlink(missing_ok=True)
                 with self._lock:
+                    self._staged_update = None
                     self._update.update(status="error", message=str(error))
         threading.Thread(target=install, daemon=True).start()
         return True
+
+    def _finish_update_close(self, allowed):
+        """Called under the close handler's lock, after all confirmations."""
+        with self._lock:
+            staged = self._staged_update
+            if staged is None:
+                return allowed
+            if not allowed:
+                staged.unlink(missing_ok=True)
+                self._staged_update = None
+                self._update.update(status='available', progress=0,
+                                    message='Đã hủy khởi động lại. Bạn có thể cập nhật lại khi sẵn sàng.')
+                return False
+            try:
+                self._update_committing = True
+                install_update(staged)
+            except Exception as error:
+                self._update_committing = False
+                staged.unlink(missing_ok=True)
+                self._update.update(status='error', message=str(error))
+                return False
+            finally:
+                self._staged_update = None
+            return True

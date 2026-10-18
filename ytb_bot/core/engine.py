@@ -48,7 +48,7 @@ class ScanEngine:
         if max_days < 1 or min_views < 0 or not 1 <= max_pages <= 5:
             raise ValueError("Tuổi kênh từ 1, lượt xem từ 0, độ sâu từ 1 đến 5 trang.")
         with self._lock:
-            if self._state["status"] in ("running", "stopping"):
+            if self._state["status"] in ("running", "stopping") or (self._thread is not None and self._thread.is_alive()):
                 raise ValueError("Một lượt quét đang chạy.")
             self._stop.clear()
             self._run_id = self._store.begin_run(keywords)

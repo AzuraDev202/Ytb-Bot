@@ -1,6 +1,6 @@
 # Launch the packaged application, require a persistent visible main window,
 # then close only the process tree started by this check.
-param([string]$Executable = "$PSScriptRoot\..\dist\gui_app.exe")
+param([string]$Executable = "$PSScriptRoot\..\..\dist\gui_app.exe")
 $ErrorActionPreference = 'Stop'
 $exePath = (Resolve-Path -LiteralPath $Executable).Path
 Add-Type -TypeDefinition @'

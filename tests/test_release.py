@@ -19,7 +19,7 @@ class ReleaseTests(unittest.TestCase):
                    "GITHUB_REF_TYPE": "tag" if tag else "branch", "GITHUB_REF_NAME": "v1.0.2" if tag else "main"}
             with patch.dict(os.environ, env), patch("urllib.request.urlopen",
                     side_effect=error, return_value=io.BytesIO(json.dumps({"tag_name": latest}).encode())):
-                runpy.run_path(str(Path(__file__).resolve().parents[1] / "scripts/prepare_release.py"))
+                runpy.run_path(str(Path(__file__).resolve().parents[1] / "scripts/release/prepare_release.py"))
             return dict(line.split("=", 1) for line in output.read_text().splitlines())
 
     def test_push_main_refreshes_existing_version(self):

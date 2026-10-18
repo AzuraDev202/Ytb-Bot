@@ -39,6 +39,26 @@ async function openContact(page: Page) {
   await expect(page.getByRole('combobox', {name: 'Liên hệ nhận', exact: true})).toBeVisible();
 }
 
+test('scan status changes and history errors preserve an unsaved contact draft', async ({page}) => {
+  await contactFixture(page);
+  await openContact(page);
+  await page.getByRole('textbox', {name: 'Nội dung liên hệ'}).fill('Bản nháp cần giữ');
+  await page.evaluate(() => {
+    const api = window.pywebview!.api;
+    const previous = api.get_state;
+    api.get_state = async () => {
+      const reply = await previous();
+      return {...reply, data: {...reply.data as object, status: 'complete'}};
+    };
+    api.list_results = async () => ({ok: false, error: 'Temporary history failure'});
+  });
+  await expect(page.getByRole('alert').filter({hasText: 'Temporary history failure'})).toBeVisible();
+  await expect(page.getByRole('dialog', {name: 'Soạn liên hệ', exact: true})).toBeVisible();
+  await expect(page.getByRole('textbox', {name: 'Nội dung liên hệ'})).toHaveValue('Bản nháp cần giữ');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('button', {name: 'Lưu và đóng'})).toBeVisible();
+});
+
 test('contact composer saves drafts, previews sender and sends only after explicit confirmation', async ({page}) => {
   await page.setViewportSize({width: 1280, height: 720});
   await contactFixture(page);
@@ -270,7 +290,7 @@ test('short laptop layouts keep the primary action visible without page overflow
   await page.setViewportSize({width: 1280, height: 720});
   await page.screenshot({animations: 'disabled', path: '../artifacts/ui/studio-laptop.png', fullPage: true});
   await page.getByRole('button', {name: 'Sửa bảng từ khóa', exact: true}).click();
-  await expect(page.getByRole('heading', {level: 1})).toHaveText('Mọi ý tưởng, một nơi lưu.');
+  await expect(page.getByRole('heading', {level: 1})).toHaveText('Danh sách từ khóa');
   await expect(page.getByRole('region', {name: 'Số liệu lượt quét'})).toHaveCount(0);
   await expect(page.getByRole('textbox', {name: 'Từ khóa dòng 1', exact: true})).toBeVisible();
 });
@@ -283,7 +303,7 @@ test('result errors have an inline retry and empty history offers a clear next a
   await page.getByRole('button', {name: 'Làm mới', exact: true}).click();
   await expect(page.getByRole('heading', {name: 'Chưa có lượt khám phá nào'})).toBeVisible();
   await page.getByRole('button', {name: 'Bắt đầu lượt đầu tiên'}).click();
-  await expect(page.getByRole('heading', {level: 1})).toHaveText('Khám phá kênh mới.');
+  await expect(page.getByRole('heading', {level: 1})).toHaveText('Khám phá kênh mới');
 });
 
 test('text contrast remains readable in both themes', async ({page}) => {

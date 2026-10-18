@@ -40,7 +40,7 @@ Bảng có skeleton trong lúc tải, thông báo lỗi nội dòng và nút th�
 
 Nút **Dừng** chờ yêu cầu mạng hiện tại rồi lưu kết quả đã có. Timeout mạng là 20 giây mỗi yêu cầu, không phải giới hạn tổng lượt quét.
 
-Phím tắt và thao tác Excel được ghi tại [hướng dẫn desktop](DESKTOP_GUIDE.md). Dùng nút **Sao chép** cho dòng được chọn bằng checkbox. Nhập từ khóa luôn lấy cột gốc, kể cả khi bảng đang lọc. Sửa bảng được giữ trong draft khi chuyển màn hình và chỉ lưu khi nhấn Lưu/Dùng để quét hoặc bắt đầu quét. Đóng cửa sổ với draft chưa lưu có xác nhận; handler native không chờ JavaScript trên GUI thread.
+Phím tắt và thao tác Excel được ghi tại [hướng dẫn desktop](../user/DESKTOP_GUIDE.md). Dùng nút **Sao chép** cho dòng được chọn bằng checkbox. Nhập từ khóa luôn lấy cột gốc, kể cả khi bảng đang lọc. Sửa bảng được giữ trong draft khi chuyển màn hình và chỉ lưu khi nhấn Lưu/Dùng để quét hoặc bắt đầu quét. Đóng cửa sổ với draft chưa lưu có xác nhận; handler native không chờ JavaScript trên GUI thread.
 
 ## Kiểm tra trực quan
 
@@ -48,13 +48,13 @@ Bảng kết quả giữ chiều rộng trong workspace và cuộn ngang độc 
 
 ```powershell
 npm test --prefix frontend
-python scripts/smoke_react.py
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/smoke_desktop.ps1
+python scripts/checks/smoke_react.py
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/checks/smoke_desktop.ps1
 ```
 
 Playwright tạo `artifacts/ui/react-dark.png`, `react-light.png`, `react-compact.png`, `studio-laptop.png`, `keyword-editor.png` và `result-history.png`. Kiểm tra gồm bàn phím, chuyển màn hình, các trạng thái lỗi/trống, retry và tương phản chữ của nút chính/menu/nhật ký ở cả hai theme (ít nhất 4.5:1). Đây không phải chứng nhận accessibility cho toàn bộ ứng dụng. Fixture bridge chỉ nằm trong tests; không dùng dữ liệu giả trong sản phẩm. Smoke React kiểm tra WebView2 thật, trạng thái HWND hiển thị, bridge có tham số và hủy đóng khi bảng chưa lưu. Smoke EXE kiểm tra bản đóng gói khi launcher yêu cầu Hidden, tránh hồi quy chỉ chạy ngầm.
 
-Để chụp giao diện dự phòng: `python scripts/preview_legacy_ui.py --output artifacts/ui/legacy.png`. Công cụ này dùng dữ liệu minh họa, không gọi YouTube. Các test legacy phải đi qua `CTk.mainloop()` thật vì chỉ dùng `update()` có thể che lỗi khởi tạo cửa sổ.
+Để chụp giao diện dự phòng: `python scripts/dev/preview_legacy_ui.py --output artifacts/ui/legacy.png`. Công cụ này dùng dữ liệu minh họa, không gọi YouTube. Các test legacy phải đi qua `CTk.mainloop()` thật vì chỉ dùng `update()` có thể che lỗi khởi tạo cửa sổ.
 
 ## Nguồn định hướng
 

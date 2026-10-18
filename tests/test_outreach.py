@@ -29,6 +29,12 @@ class MemoryVault:
     def write(self, value):
         self.value = json.loads(json.dumps(value))
 
+    def update(self, change):
+        value = self.read()
+        result = change(value)
+        self.write(value)
+        return result
+
 
 class OutreachTests(unittest.TestCase):
     def setUp(self):

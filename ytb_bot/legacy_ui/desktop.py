@@ -14,6 +14,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from ytb_bot.version import APP_VERSION
 from ytb_bot.core.contacts import extract_contacts
+from ytb_bot.core.excel import write_results_excel
 from ytb_bot.build_info import build_id
 from ytb_bot.updater import check_for_update, download_update, install_update
 from ytb_bot.paths import APP_DIR, ENV_FILE
@@ -285,13 +286,13 @@ class YtbBotApp(ctk.CTk):
         self.destroy()
 
     def run_scanner(self, api_key, keywords, max_days, min_views, max_pages):
+        collected_channels = {}
         try:
             youtube = build("youtube", "v3", developerKey=api_key, http=httplib2.Http(timeout=20))
             cutoff_date = (
                 datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=max_days)
             ).strftime('%Y-%m-%dT%H:%M:%SZ')
 
-            collected_channels = {}
             total_kw = len(keywords)
 
             for idx, kw in enumerate(keywords, 1):
@@ -371,24 +372,6 @@ class YtbBotApp(ctk.CTk):
                 if not self.stop_requested.is_set():
                     self.ui_events.put((self._scan_progress, (idx, total_kw)))
 
-            # Lưu kết quả ra Excel
-            if collected_channels:
-                results = list(collected_channels.values())
-                df = pd.DataFrame(results)
-                df.sort_values(by="Tổng Lượt Xem", ascending=False, inplace=True)
-                df.insert(0, "STT", range(1, len(df) + 1))
-
-                output_excel = str(APP_DIR / "danh_sach_kenh_viral_moi.xlsx")
-                with pd.ExcelWriter(output_excel, engine="openpyxl") as writer:
-                    df.to_excel(writer, sheet_name="Kênh Mới Viral", index=False)
-
-                self.log(f"\n🎉 HOÀN TẤT! Đã lưu {len(results)} kênh vào '{output_excel}'.")
-                self.ui_events.put((self._show_excel, (output_excel,)))
-                self.ui_events.put((self._scan_notice, (f"Đã lưu {len(results)} kênh vào Excel.",)))
-            else:
-                self.log("\n[-] Không tìm thấy kênh nào thỏa mãn điều kiện.")
-                self.ui_events.put((self._scan_notice, ("Chưa có kênh phù hợp. Thử mở rộng bộ lọc hoặc thêm chủ đề mới.",)))
-
         except HttpError as err:
             detail = str(err).replace(api_key, "<API_KEY>")
             self.log(f"\n[!] Lỗi YouTube API: {detail}")
@@ -397,7 +380,27 @@ class YtbBotApp(ctk.CTk):
             self.log(f"\n[!] Lỗi hệ thống: {str(e).replace(api_key, '<API_KEY>')}")
             self.ui_events.put((self._scan_failed, ("Lượt quét gặp lỗi. Xem nhật ký để biết chi tiết.",)))
         finally:
-            self.ui_events.put((self._scan_finished, ()))
+            try:
+                if collected_channels:
+                    results = list(collected_channels.values())
+                    df = pd.DataFrame(results)
+                    df.sort_values(by="Tổng Lượt Xem", ascending=False, inplace=True)
+                    df.insert(0, "STT", range(1, len(df) + 1))
+
+                    output_excel = str(APP_DIR / "danh_sach_kenh_viral_moi.xlsx")
+                    write_results_excel(df, output_excel, "Kênh Mới Viral")
+
+                    self.log(f"\n[+] Đã lưu {len(results)} kênh vào '{output_excel}'.")
+                    self.ui_events.put((self._show_excel, (output_excel,)))
+                    self.ui_events.put((self._scan_notice, (f"Đã lưu {len(results)} kênh vào Excel.",)))
+                else:
+                    self.log("\n[-] Không tìm thấy kênh nào thỏa mãn điều kiện.")
+                    self.ui_events.put((self._scan_notice, ("Chưa có kênh phù hợp. Thử mở rộng bộ lọc hoặc thêm chủ đề mới.",)))
+            except Exception as error:
+                self.log("[!] Excel: " + str(error).replace(api_key, "<API_KEY>"))
+                self.ui_events.put((self._scan_failed, ("Không lưu được kết quả Excel. Đóng file đang mở và kiểm tra quyền ghi.",)))
+            finally:
+                self.ui_events.put((self._scan_finished, ()))
 
     def _scan_progress(self, done, total):
         self.view.set_progress(done / total)
