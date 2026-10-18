@@ -58,13 +58,44 @@ Review Google's [email sender guidelines](https://support.google.com/mail/answer
 
 ## Facebook and social contacts
 
-Select a saved link → compose text → **Copy message** → **Open contact**. Paste and send the message on that platform using your account. The application does not send social messages automatically or record opening a profile as a sent email.
+### Connect your accounts
+
+Open **Results → Grouped contacts → Linked accounts**. Gmail accounts can be configured, connected and disconnected here as well as in the email composer.
+
+For Facebook, use a **Fanpage**, a Meta developer application configured for Messenger, and a **Page access token** with the Page's messaging permissions (`pages_messaging`, and the permissions required by Meta for reading Page conversations). Your account must have the appropriate Page task/access. Development mode is limited to permitted app roles/test recipients; broader use may require Meta App Review and advanced access.
+
+Generate a Page access token for the intended Page through your Meta application setup / Graph API Explorer. Enter it in **Page access token → Connect Fanpage**. The bot validates Page identity and conversation access before saving it. This version uses developer-token setup; it does not provide a Facebook login popup. An expired or revoked token must be replaced by reconnecting the Page. Never share the token in screenshots, support messages or source control.
+
+### Match a recipient and send
+
+1. In a saved Facebook contact group, choose **Message [channel name]**.
+2. Select your sending Fanpage and the existing Page conversation that belongs to that channel. Check the participant identity carefully: matching is your explicit decision, not an automatic guess based on names or public links.
+3. Enter a plain-text Messenger message of up to 2,000 characters.
+4. Select **Review Messenger message** to link the conversation and inspect the Page, recipient and immutable message snapshot.
+5. Select **Send Messenger message**. The bot verifies eligibility again and submits the request automatically. Scanning does not send messages.
+
+The standard send flow requires the recipient to have messaged the Page in the preceding **24 hours**. A public Facebook URL alone is not enough to obtain a Page-scoped recipient ID or initiate an API conversation. Ineligible conversations are disabled. If no conversation appears, ask the recipient to message the Page, then reopen the composer. The desktop synchronizes through Meta's Conversations API; no public webhook server is required. Large or unverifiable conversation histories are blocked conservatively.
+
+**Accepted** means Meta returned a message ID, not confirmed delivery. Failed or uncertain sends remain in the queue. Check your Page inbox after an uncertain send; the application never automatically retries it. A durable Page/recipient claim prevents another attempt to the same recipient, including after restarting the bot. A failed request also requires reviewing the inbox and resolving the issue outside this version's send workflow; there is no reset-claim button.
+
+Other social platforms retain the manual flow in the channel composer: compose → **Copy message** → **Open contact**. Opening a profile is not recorded as successful contact.
+
+### Select all and automatic cleanup
+
+**Select all visible email groups** applies to the current search/type filter. Selections outside the filter remain selected; deselecting all removes only visible email groups. The checkbox shows a mixed state for partial selection, and total selection remains limited to 100 groups.
+
+When Gmail or Messenger accepts a send request, the contacted channels and **all their alternative email/social contacts** disappear from Grouped contacts. Accepted recipients in a shared email batch remove every channel in that recipient's reviewed snapshot. Other channels remain. This applies to accepted historical sends too, including sends recorded before this feature was installed.
+
+Cleanup is persistent across refreshes, new scans and restarts. It removes channels from the contact work queue, preserving scan results and immutable send history. Unknown, failed, canceled and skipped outcomes do not trigger cleanup. Refresh contacts or close the send composer to see the updated queue.
+
+See Meta's [Messenger API documentation](https://www.postman.com/meta/messenger-platform-api/documentation/iyp204x/messenger-platform-api) and [Conversations API](https://www.postman.com/meta/messenger-platform-api/folder/22794852-255610cd-47f5-4f4d-b3fa-71aec360be9a). The client pins Graph API `v25.0`; recheck Meta's version support and application permissions when setting up your Page.
 
 ## Local data
 
 - Drafts and send history share local storage at `%LOCALAPPDATA%/Ytb-Bot/data/workspace.sqlite3`. Each channel has one current draft.
 - OAuth configuration and tokens are stored at `%LOCALAPPDATA%/Ytb-Bot/data/mail/credentials.bin`, encrypted with Windows DPAPI for the current Windows account. They are not stored in SQLite, `.env`, the frontend, or the EXE.
 - The account list sent to React includes only account IDs and email addresses, without tokens or client secrets.
+- Fanpage tokens use a separate DPAPI vault at `%LOCALAPPDATA%/Ytb-Bot/data/facebook/credentials.bin`. Public Page state contains only IDs and names. The masked input is cleared on submission; tokens are not retained in browser storage or SQLite.
 - **Remove account from the bot** deletes local credentials. To revoke permission at Google, use [Google account connections](https://myaccount.google.com/connections).
 - Credential protection currently supports Windows. Before configuring OAuth, you can still compose/save drafts and use social contact actions.
 
@@ -73,5 +104,7 @@ Select a saved link → compose text → **Copy message** → **Open contact**. 
 Python tests use mocked Gmail: OAuth/PKCE identity, Vietnamese MIME data, real DPAPI encryption, draft storage, duplicate-send protection, network errors, and link protection. Browser tests use a mocked bridge to check composing/saving/reviewing/sending and narrow layouts. Tests do not send real email.
 
 Real sign-in and sending checks require your OAuth client and a test mailbox you control; do not use channel addresses for testing.
+
+Messenger tests mock Meta requests and cover Page validation, pagination, eligibility, explicit matching, immutable reviews, concurrent submissions, uncertain outcomes and accepted-only cleanup. Browser tests mock the desktop bridge. Live Page connection and delivery require your Meta application, permissions and a test conversation; automated tests do not send real Facebook messages.
 
 Official documentation: [Sending with Gmail](https://developers.google.com/workspace/gmail/api/guides/sending), [Gmail OAuth for Python desktop applications](https://developers.google.com/workspace/gmail/api/quickstart/python), [Desktop OAuth](https://developers.google.com/identity/protocols/oauth2/native-app).

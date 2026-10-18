@@ -31,14 +31,14 @@ test.beforeEach(async ({page}) => {
 test('contact filtering preserves selection and supports clear and reset actions', async ({page}) => {
   await expect(page.getByText('Your reviewed batches and send results will appear here.')).toBeVisible();
   await page.locator('.contact-group-label', {hasText: 'shared@example.com'}).click();
-  await expect(page.getByRole('checkbox')).toBeChecked();
+  await expect(page.getByRole('checkbox', {name: 'shared@example.com'})).toBeChecked();
   await page.getByRole('textbox', {name: 'Search contacts'}).fill('missing address');
   await expect(page.getByRole('heading', {name: 'No matching contacts'})).toBeVisible();
   await expect(page.locator('.contact-selection-bar [role=status]')).toContainText('1 selected');
   await page.getByRole('button', {name: 'Reset filters'}).click();
-  await expect(page.getByRole('checkbox')).toBeChecked();
+  await expect(page.getByRole('checkbox', {name: 'shared@example.com'})).toBeChecked();
   await page.getByRole('button', {name: 'Clear selection'}).click();
-  await expect(page.getByRole('checkbox')).not.toBeChecked();
+  await expect(page.getByRole('checkbox', {name: 'shared@example.com'})).not.toBeChecked();
   await expect(page.getByRole('button', {name: /Compose bulk email/})).toBeDisabled();
 });
 
@@ -47,16 +47,16 @@ test('contact controls remain reachable on a narrow light workspace', async ({pa
   await page.getByRole('button', {name: 'Switch to light theme'}).click();
   const filter = page.getByRole('textbox', {name: 'Search contacts'});
   expect((await filter.boundingBox())!.height).toBeGreaterThanOrEqual(40);
-  await page.getByRole('checkbox').focus();
+  await page.getByRole('checkbox', {name: 'shared@example.com'}).focus();
   await page.keyboard.press('Space');
-  await expect(page.getByRole('checkbox')).toBeChecked();
+  await expect(page.getByRole('checkbox', {name: 'shared@example.com'})).toBeChecked();
   const width = await page.evaluate(() => ({client: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth}));
   expect(width.scroll).toBeLessThanOrEqual(width.client);
   await expect(page.getByRole('button', {name: /Compose bulk email/})).toBeEnabled();
 });
 
 test('shared address has one selection, explicit preview/start, stop and uncertain history', async ({page}) => {
-  await expect(page.getByRole('checkbox')).toHaveCount(1);
+  await expect(page.getByRole('checkbox', {name: 'shared@example.com'})).toHaveCount(1);
   await expect(page.locator('.contact-group-list')).toContainText('Creator One, Creator Two');
   await page.getByRole('checkbox', {name: 'shared@example.com'}).check();
   await page.getByRole('button', {name: /Compose bulk email/}).click();

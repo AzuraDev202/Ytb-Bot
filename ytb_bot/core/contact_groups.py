@@ -4,9 +4,11 @@ import json
 from urllib.parse import urlsplit, urlunsplit
 from ytb_bot.core.contacts import extract_contacts
 from ytb_bot.core.result_schema import normalize_result_row
+from ytb_bot.core.contact_completion import ContactCompletion
 
 
 def contact_groups(store):
+    completed = ContactCompletion(store).completed_ids()
     with store._connection() as db:
         rows = db.execute('SELECT rows FROM runs ORDER BY id DESC').fetchall()
     channels, groups = set(), {}
@@ -14,7 +16,7 @@ def contact_groups(store):
         for raw in json.loads(record[0]):
             row = normalize_result_row(raw)
             channel_id = row.get('Channel ID')
-            if not channel_id or channel_id in channels:
+            if not channel_id or channel_id in channels or channel_id in completed:
                 continue
             channels.add(channel_id)
             contacts = extract_contacts('\n'.join(str(row.get(key) or '') for key in ('Email', 'Facebook', 'Other Contacts')))

@@ -19,6 +19,7 @@ from ytb_bot.core.workbook import Workbook
 from ytb_bot.core.storage import WorkspaceStore
 from ytb_bot.desktop.outreach import Outreach
 from ytb_bot.desktop.bulk import BulkOutreach
+from ytb_bot.desktop.facebook_outreach import FacebookOutreach
 from ytb_bot.desktop.localization import SUPPORTED_LANGUAGES, translate_message
 from ytb_bot.updater import check_for_update, download_update, install_update
 
@@ -52,6 +53,7 @@ class DesktopAPI:
         self._keywords_dirty = False
         self._contact_dirty = False
         self._contact_sending = False
+        self._facebook_sending = False
         self._bulk_dirty = False
         self._key = os.getenv("YOUTUBE_API_KEY") or dotenv_values(ENV_FILE).get("YOUTUBE_API_KEY", "")
         self._store = WorkspaceStore(Path(data_dir or DATA_DIR) / "workspace.sqlite3")
@@ -59,6 +61,8 @@ class DesktopAPI:
         self._book = Workbook()
         self._outreach = Outreach(self._store.path)
         self._bulk = BulkOutreach(self._outreach)
+        self._facebook = FacebookOutreach(self._store.path)
+        self._facebook_dirty = False
         self._lock = threading.RLock()
         self._language = read_preferences()['language']
         self._release = None
@@ -128,6 +132,57 @@ class DesktopAPI:
     @reply
     def contact_groups(self):
         return self._bulk.groups()
+
+    @reply
+    def facebook_state(self):
+        return self._facebook.state()
+
+    @reply
+    def connect_facebook(self, token):
+        return self._facebook.connect(token)
+
+    @reply
+    def disconnect_facebook(self, page_id):
+        return self._facebook.disconnect(page_id)
+
+    @reply
+    def facebook_conversations(self, page_id):
+        return self._facebook.conversations(page_id)
+
+    @reply
+    def bind_facebook_contact(self, channel_id, page_id, conversation_id, recipient_id):
+        return self._facebook.bind(channel_id, page_id, conversation_id, recipient_id)
+
+    @reply
+    def prepare_facebook_message(self, channel_id, payload):
+        return self._facebook.prepare(channel_id, payload)
+
+    @reply
+    def facebook_history(self, channel_id):
+        return self._facebook.history(channel_id)
+
+    @reply
+    def set_facebook_dirty(self, dirty):
+        if not isinstance(dirty, bool):
+            raise ValueError('Invalid draft state.')
+        with self._lock:
+            if self._update_committing:
+                raise ValueError('The app is restarting to install an update.')
+            self._facebook_dirty = dirty
+        return True
+
+    @reply
+    def send_facebook_message(self, draft_id):
+        with self._lock:
+            self._check_bulk_start()
+            self._contact_sending = True
+            self._facebook_sending = True
+        try:
+            return self._facebook.send(draft_id)
+        finally:
+            with self._lock:
+                self._contact_sending = False
+                self._facebook_sending = False
 
     @reply
     def prepare_bulk_mail(self, payload):
@@ -346,6 +401,8 @@ class DesktopAPI:
     @reply
     def install_available_update(self):
         with self._lock:
+            if self._facebook_dirty:
+                raise ValueError('Finish the Messenger draft before updating.')
             if self._bulk.is_running or self._bulk_dirty:
                 raise ValueError('Finish the bulk send and save its draft before updating.')
             if self._keywords_dirty:
