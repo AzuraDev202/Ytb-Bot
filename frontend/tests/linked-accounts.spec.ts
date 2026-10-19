@@ -45,6 +45,32 @@ test('select all respects filters, mixed state, hidden selection and 100 limit',
   await expect(all).toBeDisabled();
 });
 
+test('Gmail callback completion is polled and updates the sender list', async ({page}) => {
+  await page.evaluate(() => {
+    let connecting = false;
+    let connected = false;
+    window.pywebview!.api.get_mail_state = async () => ({ok: true, data: {
+      configured: true, connecting, error: '',
+      accounts: connected ? [{id: 'oauth', email: 'oauth@example.com'}] : [],
+    }});
+    window.pywebview!.api.connect_gmail = async () => {
+      connecting = true;
+      return {ok: true, data: true};
+    };
+    window.pywebview!.api.test_finish_gmail = async () => {
+      connecting = false; connected = true;
+      return {ok: true, data: true};
+    };
+  });
+  await page.getByText('Linked accounts', {exact: true}).click();
+  await page.getByRole('button', {name: 'Connect Gmail', exact: true}).click();
+  await expect(page.getByRole('button', {name: 'Connecting…', exact: true})).toBeDisabled();
+  await page.evaluate(() => window.pywebview!.api.test_finish_gmail());
+  await expect(page.getByText('oauth@example.com', {exact: true})).toBeVisible();
+  await expect(page.getByRole('button', {name: 'Connect Gmail', exact: true})).toBeEnabled();
+  await expect(page.getByText('Connect a Gmail sender in Linked accounts first.', {exact: true})).toHaveCount(0);
+});
+
 test('connect a Page, match a conversation, review and submit a Messenger message', async ({page}) => {
   await page.getByText('Linked accounts', {exact: true}).click();
   const token = page.getByLabel('Page access token', {exact: true});

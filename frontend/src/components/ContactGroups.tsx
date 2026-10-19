@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Mail, Search, RefreshCw, Users, ArrowUpRight, Inbox } from 'lucide-react';
 import { call } from '../api';
 import { useI18n } from '../i18n';
@@ -18,6 +18,8 @@ export function ContactGroups({active}: {active: boolean}) {
   const [history, setHistory] = useState<BulkSnapshot[]>([]);
   const [composer, setComposer] = useState<{initial: BulkSnapshot | null} | null>(null);
   const [refresh, setRefresh] = useState(0);
+  // Keep LinkedAccounts' polling effect alive across the desktop's state updates.
+  const accountsChanged = useCallback(() => setRefresh(value => value + 1), []);
   const [loading, setLoading] = useState(true);
   const selectAll = useRef<HTMLInputElement>(null);
   const [facebookChannel, setFacebookChannel] = useState<{id: string; name: string} | null>(null);
@@ -35,7 +37,7 @@ export function ContactGroups({active}: {active: boolean}) {
   useEffect(() => {if (selectAll.current) selectAll.current.indeterminate = visibleSelected > 0 && !allChecked;}, [visibleSelected, allChecked]);
   return <section className="panel grouped-contacts" aria-label={t('Grouped contacts')}>
     <header className="contacts-heading"><div><h2>{t('Grouped contacts')}</h2><p>{t('Contact channels by Gmail or a linked Fanpage. Accepted sends remove channels and their other contacts from this list.')}</p></div><button className="button secondary" disabled={loading} onClick={() => setRefresh(value => value + 1)}><RefreshCw size={16} className={loading ? 'spin' : ''}/>{t('Refresh contacts')}</button></header>
-    <LinkedAccounts onChanged={() => setRefresh(value => value + 1)}/>
+    <LinkedAccounts onChanged={accountsChanged}/>
     {!loading && !accounts.length && <p className="composer-message"><Mail size={18}/>{t('Connect a Gmail sender in Linked accounts first.')}</p>}
     {error && <p role="alert" className="field-error">{error}</p>}
     <div className="group-toolbar contacts-filters"><label>{t('Search contacts')}<div className="search-field"><Search size={17} aria-hidden="true"/><input aria-label={t('Search contacts')} value={search} onChange={event => setSearch(event.target.value)}/></div></label><label>{t('Contact type')}<select aria-label={t('Contact type')} value={kind} onChange={event => setKind(event.target.value)}><option value="all">{t('All contacts')}</option><option value="email">{t('Email')}</option><option value="social">{t('Social contacts')}</option></select></label></div>
