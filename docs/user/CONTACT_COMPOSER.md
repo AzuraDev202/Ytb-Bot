@@ -4,6 +4,8 @@ This feature is in the React desktop: **Results → View full details → Compos
 
 ## Gmail / Google Workspace
 
+For a step-by-step Vietnamese setup and token lifecycle guide, see [Cách dùng Google OAuth 2.0](GOOGLE_OAUTH_VI.md).
+
 ### Initial Google setup
 
 1. Open [Google Cloud Console](https://console.cloud.google.com/), create/select a project, and enable **Gmail API**. A YouTube API key does not replace Gmail OAuth configuration.

@@ -6,6 +6,7 @@ Documentation covers running the application, understanding its implementation, 
 
 - [Desktop guide](user/DESKTOP_GUIDE.md): keywords, results, backups, and updates.
 - [Channel outreach and Gmail](user/CONTACT_COMPOSER.md): OAuth, drafts, and send history.
+- [Google OAuth — hướng dẫn tiếng Việt](user/GOOGLE_OAUTH_VI.md): Google Cloud setup, Gmail connection, token refresh, and troubleshooting.
 
 ## Development and operations
 

@@ -22,7 +22,7 @@ def client_configuration(path):
         raise ValueError('Select a Google OAuth Client JSON file for a Desktop app.')
     # Never trust endpoints supplied by a local configuration file.
     return {'installed': {'client_id': client_id, 'client_secret': secret,
-            'auth_uri': 'https://accounts.google.com/o/oauth2/auth',
+            'auth_uri': 'https://accounts.google.com/o/oauth2/v2/auth',
             'token_uri': 'https://oauth2.googleapis.com/token', 'redirect_uris': ['http://localhost']}}
 
 
@@ -34,7 +34,8 @@ class Gmail:
         # The library's INFO request log contains the loopback authorization code.
         logging.getLogger('google_auth_oauthlib.flow').disabled = True
         flow = InstalledAppFlow.from_client_config(client, SCOPES, autogenerate_code_verifier=True)
-        credentials = flow.run_local_server(port=0, timeout_seconds=180, open_browser=True,
+        # Desktop loopback flow: https://developers.google.com/identity/protocols/oauth2/native-app
+        credentials = flow.run_local_server(host='127.0.0.1', port=0, timeout_seconds=180, open_browser=True,
             authorization_prompt_message='', success_message='YTB-BOT: Connected. You can close this tab.',
             access_type='offline', prompt='consent select_account')
         identity = id_token.verify_oauth2_token(credentials.id_token, GoogleRequest(), client['installed']['client_id'])
