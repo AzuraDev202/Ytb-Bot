@@ -1,5 +1,6 @@
 import base64
 import concurrent.futures
+from datetime import datetime, timedelta, timezone
 from email import policy
 from email.parser import BytesParser
 import json
@@ -179,8 +180,70 @@ class OutreachTests(unittest.TestCase):
             self.assertNotIn('https://mail.google.com/', factory.call_args.args[1])
             self.assertTrue(factory.return_value.run_local_server.call_args.kwargs['open_browser'])
             self.assertEqual(factory.return_value.run_local_server.call_args.kwargs['port'], 0)
+            self.assertEqual(factory.return_value.run_local_server.call_args.kwargs['host'], '127.0.0.1')
+            self.assertEqual(factory.return_value.run_local_server.call_args.kwargs['access_type'], 'offline')
             self.assertEqual(verify.call_args.args[2], 'client-id')
             verify.return_value = {'email': 'sender@example.com', 'email_verified': False}
+            with self.assertRaises(ValueError):
+                Gmail().connect({'installed': {'client_id': 'client-id'}})
+
+    def oauth_account(self, expired=False):
+        expiry = datetime.now(timezone.utc) + timedelta(hours=-1 if expired else 1)
+        return {'email': 'sender@example.com', 'credentials': {
+            'token': 'old-access', 'refresh_token': 'saved-refresh',
+            'token_uri': 'https://oauth2.googleapis.com/token',
+            'client_id': 'desktop-client', 'client_secret': 'desktop-secret',
+            'expiry': expiry.strftime('%Y-%m-%dT%H:%M:%SZ')}}
+
+    def test_valid_access_token_is_reused_without_refresh(self):
+        account = self.oauth_account()
+        with patch('google.auth.transport.requests.Request') as transport:
+            self.assertEqual(Gmail().access(account), 'old-access')
+        transport.assert_not_called()
+
+    def test_expired_token_refresh_is_persisted_before_send_and_survives_reopen(self):
+        account = self.oauth_account(expired=True)
+        self.outreach.vault.value['accounts']['account'] = account
+        self.outreach.gmail = Gmail()
+        transport = MagicMock()
+        transport.return_value.status = 200
+        # Google need not return a new refresh token on refresh.
+        transport.return_value.data = json.dumps({'access_token': 'new-access',
+            'expires_in': 3600, 'token_type': 'Bearer'}).encode()
+        def send(token, *args):
+            reopened = Outreach(self.path, self.outreach.vault, Gmail())
+            saved = reopened.vault.read()['accounts']['account']['credentials']
+            self.assertEqual(saved['token'], 'new-access')
+            self.assertEqual(saved['refresh_token'], 'saved-refresh')
+            self.assertEqual(token, 'new-access')
+            return 'provider-id'
+        saved = self.outreach.save('channel', self.payload)
+        with patch('google.auth.transport.requests.Request', return_value=transport), \
+                patch.object(self.outreach.gmail, 'send', side_effect=send):
+            self.assertEqual(self.outreach.send('channel', saved['revision'])['status'], 'accepted')
+        self.assertEqual(transport.call_count, 1)
+        self.assertEqual(transport.call_args.kwargs['url'], 'https://oauth2.googleapis.com/token')
+        self.assertIn(b'grant_type=refresh_token', transport.call_args.kwargs['body'])
+
+    def test_revoked_refresh_token_blocks_send_without_exposing_provider_details(self):
+        self.outreach.vault.value['accounts']['account'] = self.oauth_account(expired=True)
+        self.outreach.gmail = Gmail()
+        transport = MagicMock()
+        transport.return_value.status = 400
+        transport.return_value.data = b'{"error":"invalid_grant","error_description":"saved-refresh revoked"}'
+        saved = self.outreach.save('channel', self.payload)
+        with patch('google.auth.transport.requests.Request', return_value=transport), \
+                patch.object(self.outreach.gmail, 'send') as send:
+            with self.assertRaisesRegex(ValueError, '^Unable to refresh sign-in. Reconnect the Gmail account.$'):
+                self.outreach.send('channel', saved['revision'])
+        send.assert_not_called()
+        self.assertEqual(self.outreach.context('channel')['history'], [])
+
+    def test_connection_requires_refresh_token_for_offline_access(self):
+        credentials = MagicMock(id_token='signed-id-token', refresh_token=None)
+        with patch('google_auth_oauthlib.flow.InstalledAppFlow.from_client_config') as factory, \
+                patch('google.oauth2.id_token.verify_oauth2_token', return_value={'email': 'sender@example.com', 'email_verified': True}):
+            factory.return_value.run_local_server.return_value = credentials
             with self.assertRaises(ValueError):
                 Gmail().connect({'installed': {'client_id': 'client-id'}})
 

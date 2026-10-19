@@ -31,6 +31,8 @@ The packaged application includes the frontend and Python runtime; Python, Node.
 
 Gmail is optional and uses [separate OAuth configuration](docs/user/CONTACT_COMPOSER.md). A YouTube API key does not authorize email sending. OAuth lets you grant account permissions through Google's browser sign-in flow.
 
+Hướng dẫn tiếng Việt: [Thiết lập Google OAuth, kết nối Gmail và tự làm mới token](docs/user/GOOGLE_OAUTH_VI.md).
+
 ### Run from source
 
 Use Python 3.12 and Node.js 22.12+ with npm on Windows. From PowerShell:
