@@ -35,7 +35,7 @@ python gui_app.py
 2. Chọn **Import Google OAuth file / Nhập tệp Google OAuth**, chọn file JSON vừa tải.
 3. Chọn **Connect Gmail / Kết nối Gmail**.
 4. Trong trình duyệt, chọn đúng tài khoản đã thêm vào Test users và đồng ý cấp quyền gửi Gmail. Hoàn thành trong ba phút; nếu hết thời gian thì kết nối lại.
-5. Khi trình duyệt hiện `YTB-BOT: Connected. You can close this tab.`, quay lại bot. Email tài khoản xuất hiện trong danh sách.
+5. Khi trình duyệt báo `YTB-BOT: Google response received.`, quay lại bot và chờ email xuất hiện trong danh sách. Đây mới là dấu hiệu bot đã đổi mã lấy token, xác minh danh tính và lưu tài khoản thành công. Bản cũ có thể hiện `YTB-BOT: Connected. You can close this tab.` ngay khi nhận callback, trước khi hoàn tất các bước này.
 
 Bạn cũng có thể nhập cấu hình và kết nối từ phần Gmail trong cửa sổ **Compose contact**. Có thể kết nối nhiều tài khoản gửi.
 
@@ -92,6 +92,8 @@ Cấu hình và token nằm tại `%LOCALAPPDATA%\Ytb-Bot\data\mail\credentials.
 | `access_denied` hoặc tài khoản thử nghiệm bị chặn | Thêm đúng email vào Audience → Test users; kiểm tra hạn chế của quản trị viên Workspace nếu có. |
 | `redirect_uri_mismatch` | Kiểm tra đã chọn Desktop app; tải lại JSON đúng project và nhập lại. |
 | Đăng nhập xong nhưng bot chưa kết nối | Kiểm tra trang callback local có mở được không; hoàn thành trong ba phút rồi thử lại. |
+| Trình duyệt đã báo nhận phản hồi nhưng bot vẫn đang kết nối | Bot còn phải đổi code lấy token và xác minh email qua mạng. Bản cập nhật đặt timeout 30 giây cho mỗi yêu cầu ở hai bước này; nếu lỗi, bot trở về trạng thái cho phép kết nối lại. Nếu đang chạy EXE cũ, cần bản build mới để nhận sửa đổi. |
+| Bot vẫn hiện “Đang kết nối…” dù tài khoản đã lưu | Bản cũ có lỗi bộ đếm kiểm tra trạng thái bị khởi động lại mỗi lần trang cha render. Bản cập nhật giữ callback ổn định để email tự xuất hiện sau khi kết nối xong. Với bản cũ, đóng rồi mở lại mục Tài khoản đã liên kết để tải lại danh sách. |
 | Không lấy được quyền offline | Kết nối lại và đồng ý các quyền yêu cầu. Bot chỉ lưu tài khoản khi có Refresh Token và email được xác minh. |
 | `Unable to refresh sign-in. Reconnect the Gmail account.` | Kiểm tra mạng; nếu quyền đã hết hạn hoặc bị thu hồi, kết nối lại Gmail. Bot không gửi thư khi bước refresh lỗi. |
 | Mỗi tuần cần kết nối lại | Kiểm tra External/Testing và thời hạn 7 ngày; đọc điều kiện Production/xác minh ở trên. |

@@ -195,6 +195,51 @@ class OutreachTests(unittest.TestCase):
             'client_id': 'desktop-client', 'client_secret': 'desktop-secret',
             'expiry': expiry.strftime('%Y-%m-%dT%H:%M:%SZ')}}
 
+    def test_post_callback_token_timeout_clears_connecting_and_does_not_save_account(self):
+        from requests.exceptions import Timeout
+        completed = threading.Event()
+        self.outreach.gmail = Gmail()
+        with patch('google_auth_oauthlib.flow.InstalledAppFlow.from_client_config') as factory:
+            flow = factory.return_value
+            fetch = flow.fetch_token
+            def exchange(**kwargs):
+                try:
+                    self.assertEqual(kwargs['timeout'], 30)
+                finally:
+                    completed.set()
+                raise Timeout('sensitive-provider-details')
+            fetch.side_effect = exchange
+            flow.run_local_server.side_effect = lambda **_: flow.fetch_token(code='private-code')
+            self.outreach.connect()
+            self.assertTrue(completed.wait(3))
+            # Synchronize on the worker's final state, not the simulated HTTP response.
+            import time
+            deadline = time.monotonic() + 3
+            while self.outreach.state()['connecting'] and time.monotonic() < deadline:
+                time.sleep(0.01)
+            state = self.outreach.state()
+            self.assertEqual(fetch.call_args.kwargs['timeout'], 30)
+        self.assertFalse(state['connecting'])
+        self.assertTrue(state['error'])
+        self.assertNotIn('sensitive-provider-details', str(state))
+        self.assertEqual(len(state['accounts']), 1)
+
+    def test_identity_verification_transport_has_bounded_timeout(self):
+        credentials = MagicMock(id_token='signed-id-token', refresh_token='refresh-token')
+        credentials.to_json.return_value = '{}'
+        with patch('google_auth_oauthlib.flow.InstalledAppFlow.from_client_config') as factory, \
+                patch('google.auth.transport.requests.Request') as request, \
+                patch('google.oauth2.id_token.verify_oauth2_token') as verify:
+            factory.return_value.run_local_server.return_value = credentials
+            def identity(token, transport, audience):
+                transport('https://www.googleapis.com/oauth2/v1/certs')
+                return {'email': 'sender@example.com', 'email_verified': True}
+            verify.side_effect = identity
+            Gmail().connect({'installed': {'client_id': 'test-client'}})
+            self.assertEqual(request.return_value.call_args.kwargs['timeout'], 30)
+            message = factory.return_value.run_local_server.call_args.kwargs['success_message']
+            self.assertNotIn('Connected.', message)
+
     def test_valid_access_token_is_reused_without_refresh(self):
         account = self.oauth_account()
         with patch('google.auth.transport.requests.Request') as transport:

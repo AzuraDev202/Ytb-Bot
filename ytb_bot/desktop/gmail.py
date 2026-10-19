@@ -2,6 +2,7 @@
 import base64
 from email.message import EmailMessage
 from email.policy import SMTP
+from functools import partial
 import json
 import logging
 import re
@@ -9,6 +10,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 SCOPES = ['openid', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/gmail.send']
+OAUTH_REQUEST_TIMEOUT = 30
 
 
 def client_configuration(path):
@@ -34,11 +36,14 @@ class Gmail:
         # The library's INFO request log contains the loopback authorization code.
         logging.getLogger('google_auth_oauthlib.flow').disabled = True
         flow = InstalledAppFlow.from_client_config(client, SCOPES, autogenerate_code_verifier=True)
+        # run_local_server's timeout only covers the callback, not token exchange.
+        flow.fetch_token = partial(flow.fetch_token, timeout=OAUTH_REQUEST_TIMEOUT)
         # Desktop loopback flow: https://developers.google.com/identity/protocols/oauth2/native-app
         credentials = flow.run_local_server(host='127.0.0.1', port=0, timeout_seconds=180, open_browser=True,
-            authorization_prompt_message='', success_message='YTB-BOT: Connected. You can close this tab.',
+            authorization_prompt_message='', success_message='YTB-BOT: Google response received. Return to the app to check whether account connection completed. You can close this tab.',
             access_type='offline', prompt='consent select_account')
-        identity = id_token.verify_oauth2_token(credentials.id_token, GoogleRequest(), client['installed']['client_id'])
+        identity = id_token.verify_oauth2_token(credentials.id_token,
+            partial(GoogleRequest(), timeout=OAUTH_REQUEST_TIMEOUT), client['installed']['client_id'])
         if not identity.get('email_verified') or not credentials.refresh_token:
             raise ValueError('The account could not be verified or offline access was not granted.')
         return {'email': identity['email'], 'credentials': json.loads(credentials.to_json())}
