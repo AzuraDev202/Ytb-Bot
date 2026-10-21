@@ -6,6 +6,7 @@ import { WorkbookView } from './WorkbookView';
 import { ContactComposer } from './ContactComposer';
 import { ContactGroups } from './ContactGroups';
 import { TableLoading } from './TableLoading';
+import { EmailHistory } from './EmailHistory';
 import { ConfirmDialog, type Confirmation, type Notice } from './ConfirmDialog';
 
 type Run = {id: number; created: string; status: string; count: number; error: string};
@@ -92,6 +93,8 @@ export function ResultsView({status, notify, onDiscover}: {
 
   return <div className="results-workspace">
     <div className="results-view-switch" role="group" aria-label={t('Results view')}><button className="button secondary" aria-pressed={view === 'history'} onClick={() => setView('history')}>{t('Scan history')}</button><button className="button secondary" aria-pressed={view === 'contacts'} onClick={() => setView('contacts')}>{t('Grouped contacts')}</button></div>
+    <button className="button secondary" aria-pressed={view === 'email'} onClick={() => setView('email')}>{t('Email contact history')}</button>
+    {view === 'email' && <EmailHistory/>}
     <div hidden={view !== 'contacts'}><ContactGroups active={view === 'contacts'}/></div>
     <div hidden={view !== 'history'}>
     <section className="panel history-toolbar">

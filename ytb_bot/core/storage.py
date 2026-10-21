@@ -14,6 +14,7 @@ class WorkspaceStore:
         with self._connection() as db:
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS settings (name TEXT PRIMARY KEY, value TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS email_channel_claims (channel_id TEXT PRIMARY KEY, source TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS runs (
                     id INTEGER PRIMARY KEY, created TEXT NOT NULL, status TEXT NOT NULL,
                     keywords TEXT NOT NULL, rows TEXT NOT NULL, error TEXT NOT NULL DEFAULT ''

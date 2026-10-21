@@ -7,6 +7,37 @@ from ytb_bot.core.storage import WorkspaceStore
 
 
 class ClearHistoryTests(unittest.TestCase):
+    def test_same_keywords_restart_at_first_page_after_clear(self):
+        for reopen in (False, True):
+            with self.subTest(reopen=reopen), tempfile.TemporaryDirectory() as directory:
+                client = MagicMock()
+                client.search.return_value.list.return_value.execute.side_effect = [
+                    {'items': []},
+                    {'items': [], 'nextPageToken': 'saved-page'},
+                    {'items': []},
+                    {'items': []},
+                ]
+                keywords = ['first', 'second']
+                engine = ScanEngine(directory, lambda _: client)
+                engine.start('test-key', keywords, search_budget=2)
+                state = engine.wait()
+                self.assertTrue(state['can_resume'])
+                self.assertEqual(engine._store.scan_checkpoint()['index'], 1)
+                self.assertEqual(engine._store.scan_checkpoint()['token'], 'saved-page')
+
+                engine.clear_history()
+                if reopen:
+                    engine = ScanEngine(directory, lambda _: client)
+                with self.assertRaisesRegex(ValueError, 'No saved scan'):
+                    engine.resume('test-key')
+                engine.start('test-key', keywords)
+                self.assertEqual(engine.wait()['status'], 'complete')
+                requests = client.search.return_value.list.call_args_list
+                self.assertEqual(requests[2].kwargs['q'], 'first')
+                self.assertIsNone(requests[2].kwargs['pageToken'])
+                self.assertEqual(requests[3].kwargs['q'], 'second')
+                self.assertIsNone(requests[3].kwargs['pageToken'])
+
     def test_clear_removes_runs_and_resume_but_keeps_keywords(self):
         with tempfile.TemporaryDirectory() as directory:
             engine = ScanEngine(directory)

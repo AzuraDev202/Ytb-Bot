@@ -238,4 +238,12 @@ export const zhCN: Record<string, string> = {
 "This permanently deletes all scan results and saved resume progress. Previously found channels may appear again. Keywords and API keys are kept.": "这将永久删除所有扫描结果和已保存的继续进度。之前发现的频道可能再次出现。关键词和 API 密钥将保留。",
 "Scan history cleared.": "扫描历史已清除。",
 "Stop the scan before clearing history.": "请先停止扫描再清除历史。",
+"Email contact history": "邮件联系历史",
+"Search email history": "搜索邮件历史",
+"Loading email history…": "正在加载邮件历史…",
+"No email history found.": "未找到邮件历史。",
+"Email attempt time": "邮件请求时间",
+"Email status": "邮件状态",
+"Accepted and uncertain email attempts block another send to this channel, even after clearing scan history.": "已被 Gmail 接受或结果不确定的邮件请求会阻止再次向此频道发送，即使扫描历史已清除。",
+"This channel already has an accepted or uncertain email attempt. Check email history before further contact.": "此频道已有被接受或结果不确定的邮件请求。请先检查邮件历史。",
 };

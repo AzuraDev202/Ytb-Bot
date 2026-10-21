@@ -126,6 +126,12 @@ class DesktopAPI:
         return [{**run, 'error': self._translate(run['error'])} for run in self._store.runs()]
 
     @reply
+    def email_contact_history(self):
+        from ytb_bot.core.email_history import email_records
+        with self._store._connection() as db:
+            return email_records(db)
+
+    @reply
     def clear_scan_history(self):
         with self._lock:
             self._scan.clear_history()

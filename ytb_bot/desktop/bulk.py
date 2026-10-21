@@ -187,7 +187,7 @@ class BulkOutreach:
                 if current['status'] != 'running':
                     break
                 attempted = self.store.attempted(batch['sender'], batch['account_id'])
-                if recipient['email'] in attempted or not self.store.claim_contact(batch['sender'], recipient['email'], batch_id, batch['account_id']):
+                if recipient['email'] in attempted or not self.store.claim_contact(batch['sender'], recipient['email'], batch_id, batch['account_id'], [channel['id'] for channel in recipient['channels']]):
                     self.store.change(batch_id, lambda value: value['recipients'][index].update(status='skipped', error='Previously attempted for this sender.'))
                     continue
                 def sending(value):
