@@ -30,6 +30,19 @@ class WorkspaceStore:
         finally:
             db.close()
 
+    def scan_checkpoint(self):
+        with self._connection() as db:
+            row = db.execute("SELECT value FROM settings WHERE name='scan_checkpoint'").fetchone()
+        return json.loads(row[0]) if row else None
+
+    def save_scan_checkpoint(self, checkpoint):
+        with self._connection() as db:
+            if checkpoint is None:
+                db.execute("DELETE FROM settings WHERE name='scan_checkpoint'")
+            else:
+                db.execute("INSERT INTO settings VALUES ('scan_checkpoint', ?) ON CONFLICT(name) DO UPDATE SET value=excluded.value",
+                           (json.dumps(checkpoint, ensure_ascii=False),))
+
     def keywords(self):
         with self._connection() as db:
             row = db.execute("SELECT value FROM settings WHERE name='keywords'").fetchone()

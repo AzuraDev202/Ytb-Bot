@@ -1,6 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 from pathlib import Path
-from PyInstaller.utils.hooks import collect_data_files
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 ROOT = Path(SPECPATH).resolve().parent
 
@@ -9,8 +9,8 @@ a = Analysis(
     pathex=[str(ROOT)],
     binaries=[],
     datas=[(str(ROOT / '.release-build' / 'build-info.json'), 'ytb_bot'),
-           (str(ROOT / 'frontend' / 'web-dist'), 'frontend/web-dist')] + collect_data_files('webview'),
-    hiddenimports=['openpyxl', 'xlrd', 'webview.platforms.winforms', 'webview.platforms.edgechromium'],
+           (str(ROOT / 'frontend' / 'web-dist'), 'frontend/web-dist')] + collect_data_files('webview') + collect_data_files('tzdata'),
+    hiddenimports=['openpyxl', 'xlrd', 'webview.platforms.winforms', 'webview.platforms.edgechromium'] + collect_submodules('tzdata'),
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

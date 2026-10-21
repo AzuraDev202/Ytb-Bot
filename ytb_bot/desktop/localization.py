@@ -13,6 +13,11 @@ SUPPORTED_LANGUAGES = ('en', 'vi', 'zh-CN')
 # English | Vietnamese | Simplified Chinese. These are application-owned strings,
 # never workbook headings, channel values, saved keywords, drafts, or mail history.
 _CATALOG = '''Enter an API key and at least one keyword.|Nhập API Key và ít nhất một từ khóa.|请输入 API 密钥和至少一个关键词。
+Search budget must be between 1 and 10000 calls.|Ngân sách tìm kiếm phải từ 1 đến 10000 lượt.|搜索预算必须在 1 到 10000 次之间。
+No saved scan to resume.|Không có tiến độ quét đã lưu để tiếp tục.|没有可继续的已保存扫描。
+YouTube daily quota is exhausted. Resume after the reset.|Đã hết quota YouTube trong ngày. Hãy tiếp tục sau khi reset.|YouTube 每日配额已用尽，请在重置后继续。
+Search budget reached. Progress saved; resume to continue.|Đã dùng hết ngân sách tìm kiếm. Tiến độ đã lưu; bấm tiếp tục để quét tiếp.|已达到搜索预算，进度已保存，请点击继续。
+YouTube daily quota exhausted. Progress saved; resume after the reset.|Đã hết quota YouTube trong ngày. Tiến độ đã lưu; hãy tiếp tục sau khi reset.|YouTube 每日配额已用尽，进度已保存，请在重置后继续。
 Channel age must be at least 1 day, views at least 0, and depth between 1 and 5 pages.|Tuổi kênh phải từ 1 ngày, lượt xem từ 0 và độ sâu từ 1 đến 5 trang.|频道创建天数必须至少为 1 天，观看次数至少为 0，搜索深度为 1 至 5 页。
 A scan is already running.|Một lượt quét đang chạy.|已有扫描正在运行。
 Stopping after the current request; collected results will be saved.|Đang dừng sau yêu cầu hiện tại; kết quả đã thu thập sẽ được lưu.|当前请求完成后将停止；已收集的结果会被保存。

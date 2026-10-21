@@ -398,5 +398,17 @@
   "Unable to verify recipient eligibility. Refresh Page conversations.": "Không xác minh được điều kiện người nhận. Hãy tải lại cuộc trò chuyện Trang.",
   "Review a Messenger message before sending.": "Xem lại tin Messenger trước khi gửi.",
   "Finish the Messenger draft before updating.": "Hoàn tất bản nháp Messenger trước khi cập nhật.",
-  "Copy the message and open the profile to send manually. To send from a Fanpage, use Grouped contacts.": "Sao chép nội dung rồi mở hồ sơ để gửi thủ công. Để gửi bằng Fanpage, hãy dùng mục Liên hệ đã nhóm."
+  "Copy the message and open the profile to send manually. To send from a Fanpage, use Grouped contacts.": "Sao chép nội dung rồi mở hồ sơ để gửi thủ công. Để gửi bằng Fanpage, hãy dùng mục Liên hệ đã nhóm.",
+  "Search calls per scan": "Số lượt tìm kiếm mỗi lần quét",
+  "Search budget must be between 1 and 10000 calls.": "Ngân sách tìm kiếm phải từ 1 đến 10000 lượt.",
+  "Search calls used": "Lượt tìm kiếm đã dùng",
+  "Quota resets in": "Quota reset sau",
+  "This budget limits this scan, not your project's remaining Google quota.": "Ngân sách giới hạn lần quét này, không phản ánh quota Google còn lại của project.",
+  "Saved keyword": "Từ khóa đã lưu tiến độ",
+  "Resume saved scan": "Tiếp tục lần quét đã lưu",
+  "Starting a new scan replaces the saved progress.": "Bắt đầu lần quét mới sẽ thay thế tiến độ đã lưu.",
+  "No saved scan to resume.": "Không có tiến độ quét đã lưu để tiếp tục.",
+  "YouTube daily quota is exhausted. Resume after the reset.": "Đã hết quota YouTube trong ngày. Hãy tiếp tục sau khi reset.",
+  "Search budget reached. Progress saved; resume to continue.": "Đã dùng hết ngân sách tìm kiếm. Tiến độ đã lưu; bấm tiếp tục để quét tiếp.",
+  "YouTube daily quota exhausted. Progress saved; resume after the reset.": "Đã hết quota YouTube trong ngày. Tiến độ đã lưu; hãy tiếp tục sau khi reset."
 }

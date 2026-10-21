@@ -1,5 +1,5 @@
 export type ScanStatus = 'ready' | 'running' | 'stopping' | 'complete' | 'stopped' | 'error';
-export interface Snapshot { status: ScanStatus; completed: number; total: number; matches: number; elapsed: number; rows: Record<string, string | number>[]; logs: {text: string; kind: string; time: string}[]; error: string; output: boolean; update: {status: string; message: string; progress: number} }
+export interface Snapshot { search_budget?: number; search_used?: number; can_resume?: boolean; resume_available?: boolean; resume_keyword?: string; reset_at?: string; reset_seconds?: number; status: ScanStatus; completed: number; total: number; matches: number; elapsed: number; rows: Record<string, string | number>[]; logs: {text: string; kind: string; time: string}[]; error: string; output: boolean; update: {status: string; message: string; progress: number} }
 export interface Bootstrap {version: string; build: string; has_api_key: boolean; keywords: string; preferences?: {theme?: string; motion?: boolean; language?: string}}
 export interface WorkbookMeta {filename: string; sheets: string[]; internal?: boolean; run_id?: number}
 export interface WorkbookPage {columns: string[]; rows: (string | number | null)[][]; page: number; pages: number; total: number; original_total: number}
