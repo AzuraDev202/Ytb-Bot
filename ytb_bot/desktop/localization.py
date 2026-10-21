@@ -18,6 +18,11 @@ No saved scan to resume.|Không có tiến độ quét đã lưu để tiếp t�
 YouTube daily quota is exhausted. Resume after the reset.|Đã hết quota YouTube trong ngày. Hãy tiếp tục sau khi reset.|YouTube 每日配额已用尽，请在重置后继续。
 Search budget reached. Progress saved; resume to continue.|Đã dùng hết ngân sách tìm kiếm. Tiến độ đã lưu; bấm tiếp tục để quét tiếp.|已达到搜索预算，进度已保存，请点击继续。
 YouTube daily quota exhausted. Progress saved; resume after the reset.|Đã hết quota YouTube trong ngày. Tiến độ đã lưu; hãy tiếp tục sau khi reset.|YouTube 每日配额已用尽，进度已保存，请在重置后继续。
+Clear scan history|Xóa lịch sử quét|清除扫描历史
+Clear scan history?|Xóa lịch sử quét?|清除扫描历史？
+This permanently deletes all scan results and saved resume progress. Previously found channels may appear again. Keywords and API keys are kept.|Thao tác này xóa vĩnh viễn toàn bộ kết quả quét và tiến độ tiếp tục đã lưu. Các kênh đã tìm thấy có thể xuất hiện lại. Danh sách từ khóa và API key được giữ nguyên.|这将永久删除所有扫描结果和已保存的继续进度。之前发现的频道可能再次出现。关键词和 API 密钥将保留。
+Scan history cleared.|Đã xóa lịch sử quét.|扫描历史已清除。
+Stop the scan before clearing history.|Hãy dừng quét trước khi xóa lịch sử.|请先停止扫描再清除历史。
 Channel age must be at least 1 day, views at least 0, and depth between 1 and 5 pages.|Tuổi kênh phải từ 1 ngày, lượt xem từ 0 và độ sâu từ 1 đến 5 trang.|频道创建天数必须至少为 1 天，观看次数至少为 0，搜索深度为 1 至 5 页。
 A scan is already running.|Một lượt quét đang chạy.|已有扫描正在运行。
 Stopping after the current request; collected results will be saved.|Đang dừng sau yêu cầu hiện tại; kết quả đã thu thập sẽ được lưu.|当前请求完成后将停止；已收集的结果会被保存。

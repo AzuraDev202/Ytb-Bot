@@ -233,4 +233,9 @@ export const zhCN: Record<string, string> = {
 "Saved keyword": "已保存的关键词",
 "Resume saved scan": "继续已保存的扫描",
 "Starting a new scan replaces the saved progress.": "开始新扫描将替换已保存的进度。",
+"Clear scan history": "清除扫描历史",
+"Clear scan history?": "清除扫描历史？",
+"This permanently deletes all scan results and saved resume progress. Previously found channels may appear again. Keywords and API keys are kept.": "这将永久删除所有扫描结果和已保存的继续进度。之前发现的频道可能再次出现。关键词和 API 密钥将保留。",
+"Scan history cleared.": "扫描历史已清除。",
+"Stop the scan before clearing history.": "请先停止扫描再清除历史。",
 };

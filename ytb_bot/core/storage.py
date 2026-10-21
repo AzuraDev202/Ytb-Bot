@@ -66,6 +66,11 @@ class WorkspaceStore:
             db.execute("UPDATE runs SET status=?, rows=?, error=? WHERE id=?",
                        (status, json.dumps(rows, ensure_ascii=False), error, run_id))
 
+    def clear_history(self):
+        with self._connection() as db:
+            db.execute("DELETE FROM runs")
+            db.execute("DELETE FROM settings WHERE name='scan_checkpoint'")
+
     def runs(self):
         with self._connection() as db:
             records = db.execute("SELECT id,created,status,json_array_length(rows) AS count,error FROM runs ORDER BY id DESC").fetchall()

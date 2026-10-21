@@ -1,12 +1,12 @@
 import { useI18n } from '../i18n';
 import { useEffect, useState } from 'react';
-import { CheckCircle2, History, RefreshCw } from 'lucide-react';
+import { CheckCircle2, History, RefreshCw, Trash2 } from 'lucide-react';
 import { call, type WorkbookMeta, type ScanStatus } from '../api';
 import { WorkbookView } from './WorkbookView';
 import { ContactComposer } from './ContactComposer';
 import { ContactGroups } from './ContactGroups';
 import { TableLoading } from './TableLoading';
-import type { Notice } from './ConfirmDialog';
+import { ConfirmDialog, type Confirmation, type Notice } from './ConfirmDialog';
 
 type Run = {id: number; created: string; status: string; count: number; error: string};
 const labels: Record<string, string> = {
@@ -33,6 +33,20 @@ export function ResultsView({status, notify, onDiscover}: {
   // Keep drafts mounted across automatic history/table refreshes.
   const [contactChannel, setContactChannel] = useState<string | null>(null);
   const [view, setView] = useState('history');
+  const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  const [clearing, setClearing] = useState(false);
+  const scanning = status === 'running' || status === 'stopping';
+  async function clearHistory() {
+    setClearing(true);
+    try {
+      await call('clear_scan_history');
+      setRuns([]); setSelected(''); setMeta(null); setOpening(false);
+      setOpenError(''); setListError(''); setContactChannel(null);
+      setRefresh(value => value + 1);
+      notify({text: 'Scan history cleared.'});
+    } catch (error) {notify({text: String(error), error: true});}
+    finally {setClearing(false);}
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -88,6 +102,7 @@ export function ResultsView({status, notify, onDiscover}: {
           {runs.map(item => <option key={item.id} value={item.id}>#{item.id} · {new Date(item.created).toLocaleString(locale)} · {item.count} {t("channels ·")} {t(labels[item.status] || item.status)}</option>)}
         </select></label>
         <button className="button secondary" disabled={loading || opening} onClick={() => setRefresh(value => value + 1)}><RefreshCw size={15} className={loading ? 'spin' : ''}/> {t("Refresh")}</button>
+        <button className="button secondary" disabled={scanning || clearing || loading || opening || !runs.length} onClick={() => setConfirmation({title: 'Clear scan history?', text: 'This permanently deletes all scan results and saved resume progress. Previously found channels may appear again. Keywords and API keys are kept.', action: () => void clearHistory()})}><Trash2 size={15}/>{t('Clear scan history')}</button>
       </div>
       {run && <span className={`history-status ${run.status}`}><CheckCircle2 size={14}/>{t(labels[run.status] || run.status)} · {run.count.toLocaleString(locale)} {t("saved channels")}</span>}
       {run?.error && <p role="alert" className="field-error">{t("Scan failed:")} {run.error}{t(". Previously collected channels are preserved.")}</p>}
@@ -97,5 +112,6 @@ export function ResultsView({status, notify, onDiscover}: {
       : loading || opening || selected ? <section className="panel"><TableLoading label={t("Loading discovery history…")}/></section>
       : <section className="panel empty-state"><div className="empty-illustration"><History size={32}/></div><h3>{t("No discovery scans yet")}</h3><p>{t("Choose a few keywords to start. Discovered channels will be saved here for you to revisit.")}</p><button className="button primary" onClick={onDiscover}>{t("Start your first scan")}</button></section>}
     </div><ContactComposer channelId={contactChannel} onClose={() => setContactChannel(null)} notify={notify}/>
+    <ConfirmDialog request={confirmation} dismiss={() => setConfirmation(null)}/>
   </div>;
 }
