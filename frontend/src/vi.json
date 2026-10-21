@@ -415,5 +415,13 @@
   "Clear scan history?": "Xóa lịch sử quét?",
   "This permanently deletes all scan results and saved resume progress. Previously found channels may appear again. Keywords and API keys are kept.": "Thao tác này xóa vĩnh viễn toàn bộ kết quả quét và tiến độ tiếp tục đã lưu. Các kênh đã tìm thấy có thể xuất hiện lại. Danh sách từ khóa và API key được giữ nguyên.",
   "Scan history cleared.": "Đã xóa lịch sử quét.",
-  "Stop the scan before clearing history.": "Hãy dừng quét trước khi xóa lịch sử."
+  "Stop the scan before clearing history.": "Hãy dừng quét trước khi xóa lịch sử.",
+  "Email contact history": "Lịch sử gửi email",
+  "Search email history": "Tìm lịch sử email",
+  "Loading email history…": "Đang tải lịch sử email…",
+  "No email history found.": "Chưa có lịch sử email phù hợp.",
+  "Email attempt time": "Thời gian gửi yêu cầu",
+  "Email status": "Trạng thái email",
+  "Accepted and uncertain email attempts block another send to this channel, even after clearing scan history.": "Kênh có yêu cầu email đã được Gmail nhận hoặc chưa rõ kết quả sẽ bị chặn gửi lại, kể cả sau khi xóa lịch sử quét.",
+  "This channel already has an accepted or uncertain email attempt. Check email history before further contact.": "Kênh này đã có yêu cầu email được Gmail nhận hoặc chưa rõ kết quả. Hãy kiểm tra lịch sử email trước khi liên hệ tiếp."
 }

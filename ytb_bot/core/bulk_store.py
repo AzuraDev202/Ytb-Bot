@@ -4,6 +4,7 @@ import json
 import sqlite3
 import uuid
 from ytb_bot.core.storage import WorkspaceStore
+from ytb_bot.core.email_history import reserve_channels
 
 
 def now():
@@ -28,7 +29,7 @@ class BulkStore(WorkspaceStore):
                         emails.add(payload.get('recipient', '').casefold())
         return emails
 
-    def claim_contact(self, sender, recipient, source, account_id=''):
+    def claim_contact(self, sender, recipient, source, account_id='', channel_ids=()):
         with self._connection() as db:
             db.execute('BEGIN IMMEDIATE')
             if db.execute("SELECT 1 FROM sqlite_master WHERE name='mail_attempts'").fetchone():
@@ -40,6 +41,9 @@ class BulkStore(WorkspaceStore):
             try:
                 db.execute('INSERT INTO contact_claims VALUES (?,?,?,?)', (sender.casefold(), recipient.casefold(), now(), source))
             except sqlite3.IntegrityError:
+                return False
+            if not reserve_channels(db, channel_ids, source):
+                db.execute('DELETE FROM contact_claims WHERE sender=? AND recipient=?', (sender.casefold(), recipient.casefold()))
                 return False
         return True
 
@@ -66,5 +70,9 @@ class BulkStore(WorkspaceStore):
                 raise ValueError('Batch not found.')
             payload = json.loads(row[0])
             change(payload)
+            for recipient in payload.get('recipients', []):
+                if recipient.get('status') == 'failed':
+                    db.executemany('DELETE FROM email_channel_claims WHERE channel_id=? AND source=?',
+                                   [(channel['id'], batch_id) for channel in recipient.get('channels', [])])
             db.execute('UPDATE bulk_batches SET payload=? WHERE id=?', (json.dumps(payload), batch_id))
         return payload

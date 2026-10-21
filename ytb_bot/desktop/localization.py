@@ -23,6 +23,14 @@ Clear scan history?|Xóa lịch sử quét?|清除扫描历史？
 This permanently deletes all scan results and saved resume progress. Previously found channels may appear again. Keywords and API keys are kept.|Thao tác này xóa vĩnh viễn toàn bộ kết quả quét và tiến độ tiếp tục đã lưu. Các kênh đã tìm thấy có thể xuất hiện lại. Danh sách từ khóa và API key được giữ nguyên.|这将永久删除所有扫描结果和已保存的继续进度。之前发现的频道可能再次出现。关键词和 API 密钥将保留。
 Scan history cleared.|Đã xóa lịch sử quét.|扫描历史已清除。
 Stop the scan before clearing history.|Hãy dừng quét trước khi xóa lịch sử.|请先停止扫描再清除历史。
+Email contact history|Lịch sử gửi email|邮件联系历史
+Search email history|Tìm lịch sử email|搜索邮件历史
+Loading email history…|Đang tải lịch sử email…|正在加载邮件历史…
+No email history found.|Chưa có lịch sử email phù hợp.|未找到邮件历史。
+Email attempt time|Thời gian gửi yêu cầu|邮件请求时间
+Email status|Trạng thái email|邮件状态
+Accepted and uncertain email attempts block another send to this channel, even after clearing scan history.|Kênh có yêu cầu email đã được Gmail nhận hoặc chưa rõ kết quả sẽ bị chặn gửi lại, kể cả sau khi xóa lịch sử quét.|已被 Gmail 接受或结果不确定的邮件请求会阻止再次向此频道发送，即使扫描历史已清除。
+This channel already has an accepted or uncertain email attempt. Check email history before further contact.|Kênh này đã có yêu cầu email được Gmail nhận hoặc chưa rõ kết quả. Hãy kiểm tra lịch sử email trước khi liên hệ tiếp.|此频道已有被接受或结果不确定的邮件请求。请先检查邮件历史。
 Channel age must be at least 1 day, views at least 0, and depth between 1 and 5 pages.|Tuổi kênh phải từ 1 ngày, lượt xem từ 0 và độ sâu từ 1 đến 5 trang.|频道创建天数必须至少为 1 天，观看次数至少为 0，搜索深度为 1 至 5 页。
 A scan is already running.|Một lượt quét đang chạy.|已有扫描正在运行。
 Stopping after the current request; collected results will be saved.|Đang dừng sau yêu cầu hiện tại; kết quả đã thu thập sẽ được lưu.|当前请求完成后将停止；已收集的结果会被保存。

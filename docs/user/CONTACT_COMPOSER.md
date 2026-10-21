@@ -36,7 +36,9 @@ History for each Channel ID appears below the composer and shows up to the 20 mo
 - **Outcome unknown**: a timeout, network error, or indeterminate response. Check **Sent** in Gmail before trying again.
 - **Sending / outcome unknown**: a request is running, or the application closed before recording the response.
 
-Each draft revision permits only one send attempt, even with repeated clicks or after reopening the application. Send requests are not retried automatically. To send again, edit and save the content as a new revision, then review it. Saving unchanged content does not create a new revision.
+Each draft revision permits only one send attempt, even with repeated clicks or after reopening the application. Send requests are not retried automatically. Accepted, sending, and uncertain email attempts block another send to the same Channel ID across individual and bulk workflows, including when the message, sender account, or recipient address changes. Editing a draft does not bypass this protection. A definitively rejected individual request may be edited and reviewed as a new revision. Saving unchanged content does not create a new revision.
+
+Open **Discovery results → Email contact history** to search saved email requests by channel name, Channel ID, or recipient. This list includes provider acceptance, rejection, and uncertain outcomes; acceptance does not confirm delivery. These records and duplicate-send claims survive **Clear scan history** and restarting the app. They also cover existing saved send records from earlier versions. The protection depends on retaining the workspace database; it cannot reconstruct emails sent outside the bot or records from a deleted database.
 
 ## Bulk Gmail across saved channels
 

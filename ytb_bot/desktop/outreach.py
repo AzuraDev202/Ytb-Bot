@@ -63,12 +63,16 @@ class Outreach:
         return self.state()
 
     def context(self, channel_id):
+        from ytb_bot.core.email_history import email_records, BLOCKED
         channel = self.store.channel(channel_id)
+        with self.store._connection() as db:
+            blocked = bool(db.execute('SELECT 1 FROM email_channel_claims WHERE channel_id=?', (channel_id,)).fetchone()) or any(
+                row['channel_id'] == channel_id and row['status'] in BLOCKED for row in email_records(db))
         contacts = extract_contacts('\n'.join(str(channel.get(key) or '') for key in ['Email', 'Facebook', 'Other Contacts']))
         options = [{'kind': 'email' if kind == 'Email' else 'social', 'label': kind, 'value': value}
                    for kind, text in contacts.items() for value in text.splitlines() if value]
         return {'channel_id': channel_id, 'name': channel.get('Channel Name', channel_id), 'contacts': options,
-                'draft': self.store.draft(channel_id), 'history': self.store.history(channel_id)}
+                'draft': self.store.draft(channel_id), 'history': self.store.history(channel_id), 'email_blocked': blocked}
 
     def save(self, channel_id, payload):
         context = self.context(channel_id)

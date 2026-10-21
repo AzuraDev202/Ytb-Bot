@@ -89,7 +89,8 @@ class OutreachTests(unittest.TestCase):
         self.gmail.send.assert_not_called()
 
     def test_timeout_and_rejection_keep_history_and_never_auto_retry(self):
-        for failure, expected in [(TimeoutError('private-token'), 'unknown'), (SendRejected('Gmail rejected request'), 'failed')]:
+        # A rejected request may be edited; an uncertain attempt blocks later revisions.
+        for failure, expected in [(SendRejected('Gmail rejected request'), 'failed'), (TimeoutError('private-token'), 'unknown')]:
             self.payload['body'] += '\nNew version'
             saved = self.outreach.save('channel', self.payload)
             self.gmail.send.side_effect = failure

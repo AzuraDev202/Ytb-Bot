@@ -40,6 +40,7 @@ class CompletionTests(unittest.TestCase):
             with self.subTest(status=status):
                 with self.store._connection() as db:
                     db.execute('DELETE FROM mail_attempts')
+                    db.execute('DELETE FROM email_channel_claims')
                 self.attempt(status)
                 self.assertEqual(len(contact_groups(self.store)), 3)
 

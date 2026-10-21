@@ -6,6 +6,7 @@ import uuid
 
 from ytb_bot.core.storage import WorkspaceStore
 from ytb_bot.core.result_schema import normalize_result_row
+from ytb_bot.core.email_history import reserve_channels
 
 
 class OutreachStore(WorkspaceStore):
@@ -64,6 +65,13 @@ class OutreachStore(WorkspaceStore):
                 payload['sender_email'] = sender
             encoded = json.dumps(payload, ensure_ascii=False)
             attempt = uuid.uuid4().hex
+            if not reserve_channels(db, [channel_id], attempt):
+                raise ValueError('This channel already has an accepted or uncertain email attempt. Check email history before further contact.')
+            channel = db.execute('''SELECT json_extract(item.value, '$."Channel Name"')
+                FROM runs, json_each(runs.rows) AS item
+                WHERE json_extract(item.value, '$."Channel ID"')=? ORDER BY runs.id DESC LIMIT 1''', (channel_id,)).fetchone()
+            payload['channel_name'] = channel[0] if channel else channel_id
+            encoded = json.dumps(payload, ensure_ascii=False)
             try:
                 db.execute('INSERT INTO mail_attempts(id,channel_id,revision,created,status,payload) VALUES (?,?,?,?,?,?)',
                     (attempt, channel_id, revision, dt.datetime.now(dt.timezone.utc).isoformat(), 'sending', encoded))
@@ -74,6 +82,8 @@ class OutreachStore(WorkspaceStore):
     def finish(self, attempt, status, message_id=''):
         with self._connection() as db:
             db.execute('UPDATE mail_attempts SET status=?,message_id=? WHERE id=?', (status, message_id, attempt))
+            if status == 'failed':
+                db.execute('DELETE FROM email_channel_claims WHERE source=?', (attempt,))
 
     def history(self, channel_id):
         with self._connection() as db:
