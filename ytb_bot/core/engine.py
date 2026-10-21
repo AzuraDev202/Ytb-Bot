@@ -47,6 +47,16 @@ class ScanEngine:
                          resume_keyword=checkpoint["keywords"][checkpoint["index"]] if checkpoint and checkpoint["index"] < len(checkpoint["keywords"]) else "")
             return state
 
+    def clear_history(self):
+        with self._lock:
+            if self._state["status"] in ("running", "stopping") or (self._thread is not None and self._thread.is_alive()):
+                raise ValueError("Stop the scan before clearing history.")
+            self._store.clear_history()
+            self._run_id = None
+            self._logs.clear()
+            self._state = {"status": "ready", "completed": 0, "total": 0, "matches": 0,
+                           "rows": [], "error": "", "elapsed": 0, "output": False}
+
     def clear_logs(self):
         with self._lock:
             self._logs.clear()

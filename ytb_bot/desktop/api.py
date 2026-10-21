@@ -126,6 +126,12 @@ class DesktopAPI:
         return [{**run, 'error': self._translate(run['error'])} for run in self._store.runs()]
 
     @reply
+    def clear_scan_history(self):
+        with self._lock:
+            self._scan.clear_history()
+        return True
+
+    @reply
     def get_mail_state(self):
         return self._localized_mail_state(self._outreach.state())
 
