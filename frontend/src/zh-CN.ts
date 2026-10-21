@@ -225,4 +225,12 @@ export const zhCN: Record<string, string> = {
   "Review a Messenger message before sending.": "发送前请检查 Messenger 消息。",
   "Finish the Messenger draft before updating.": "更新前请完成 Messenger 草稿。",
   "Copy the message and open the profile to send manually. To send from a Fanpage, use Grouped contacts.": "复制消息并打开资料手动发送。要使用公共主页发送，请前往分组联系人。",
+"Search calls per scan": "每次扫描的搜索次数",
+"Search budget must be between 1 and 10000 calls.": "搜索预算必须在 1 到 10000 次之间。",
+"Search calls used": "已用搜索次数",
+"Quota resets in": "配额重置倒计时",
+"This budget limits this scan, not your project's remaining Google quota.": "此预算限制本次扫描，不代表项目剩余的 Google 配额。",
+"Saved keyword": "已保存的关键词",
+"Resume saved scan": "继续已保存的扫描",
+"Starting a new scan replaces the saved progress.": "开始新扫描将替换已保存的进度。",
 };

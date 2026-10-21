@@ -322,10 +322,22 @@ class DesktopAPI:
                 raise ValueError("Channel age must be at least 1 day, views at least 0, and depth between 1 and 5 pages.")
             if self._scan.snapshot()["status"] in ("running", "stopping"):
                 raise ValueError("A scan is already running.")
+            budget = int(settings.get("search_budget", 50))
+            if not 1 <= budget <= 10000:
+                raise ValueError("Search budget must be between 1 and 10000 calls.")
             if settings.get("api_key", "").strip():
                 set_key(ENV_FILE, "YOUTUBE_API_KEY", key)
                 self._key = key
-            self._scan.start(key, words, days, views, pages)
+            self._scan.start(key, words, days, views, pages, budget)
+            return True
+
+    @reply
+    def resume_scan(self, settings):
+        with self._lock:
+            if self._update["status"] == "downloading":
+                raise ValueError("Wait for the update to finish before scanning.")
+            self._scan.resume(str(settings.get("api_key", "")).strip() or self._key,
+                              int(settings.get("search_budget", 50)))
             return True
 
     @reply

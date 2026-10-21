@@ -27,6 +27,10 @@ The application does not set `regionCode`, `relevanceLanguage`, or a channel-cou
 
 This is keyword-based discovery across countries, not a complete list of all YouTube channels. Add keywords in multiple languages and increase depth to broaden results; API ranking, page limits, and quota still apply. `regionCode` filters video availability in a country, not the channel owner's nationality. See [YouTube search.list](https://developers.google.com/youtube/data/reference/rest/v3/search/list).
 
+Set **Search calls per scan** before starting (default: 50). Each search page consumes one call from this local budget, including a failed attempt. This setting does not measure remaining project quota in Google Cloud. The discovery screen shows calls used and a countdown to midnight Pacific Time, including daylight saving changes, when [YouTube daily quota resets](https://developers.google.com/youtube/data/determine_quota_cost).
+
+When the budget is reached, the bot saves the current keyword, next page, filters, and pending channel candidates in its workspace database. Use **Resume saved scan** to continue with a fresh per-scan budget; saved progress survives restarting the app. When YouTube reports daily quota exhaustion, this button becomes available after reset. Resuming is manual. Previously accepted results remain in scan history; each resumed segment creates another history entry. Starting a new scan replaces the saved continuation. The countdown is a scheduled reset time, not confirmation from Google that quota is available.
+
 Enter an API key and filters, then select **Start discovery**. The active keyword list is saved before scanning. **Stop** waits for the current network request to finish and retains collected results.
 
 Open **Results** or **View results in the bot** to review scans by time, status, and channel count. The table supports search, sorting, 100-row pagination, and copying checked rows. Full data is retained, including empty or failed scans; discovery shows a preview of only the first 200 channels.
