@@ -146,6 +146,11 @@ class DesktopAPI:
         return self._bulk.groups()
 
     @reply
+    def remove_failed_contacts(self, group_ids):
+        with self._lock:
+            return self._bulk.remove_failed_contacts(group_ids)
+
+    @reply
     def facebook_state(self):
         return self._facebook.state()
 

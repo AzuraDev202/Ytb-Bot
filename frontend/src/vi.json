@@ -423,5 +423,10 @@
   "Email attempt time": "Thời gian gửi yêu cầu",
   "Email status": "Trạng thái email",
   "Accepted and uncertain email attempts block another send to this channel, even after clearing scan history.": "Kênh có yêu cầu email đã được Gmail nhận hoặc chưa rõ kết quả sẽ bị chặn gửi lại, kể cả sau khi xóa lịch sử quét.",
-  "This channel already has an accepted or uncertain email attempt. Check email history before further contact.": "Kênh này đã có yêu cầu email được Gmail nhận hoặc chưa rõ kết quả. Hãy kiểm tra lịch sử email trước khi liên hệ tiếp."
+  "This channel already has an accepted or uncertain email attempt. Check email history before further contact.": "Kênh này đã có yêu cầu email được Gmail nhận hoặc chưa rõ kết quả. Hãy kiểm tra lịch sử email trước khi liên hệ tiếp.",
+  "Remove selected failed emails": "Xóa email lỗi đã chọn",
+  "Remove selected failed emails?": "Xóa email lỗi đã chọn?",
+  "Remove {count} rejected email addresses from the contact queue. Send history and duplicate-send protection are kept. These addresses will stay hidden after rescanning.": "Loại {count} địa chỉ email bị từ chối khỏi hàng chờ liên hệ. Lịch sử gửi và cơ chế chống gửi trùng được giữ nguyên. Các địa chỉ này vẫn được ẩn sau khi quét lại.",
+  "Stop the bulk send before removing failed contacts.": "Hãy dừng gửi hàng loạt trước khi xóa liên hệ lỗi.",
+  "This email was removed from the contact queue.": "Email này đã được loại khỏi hàng chờ liên hệ."
 }

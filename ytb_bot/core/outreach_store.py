@@ -57,6 +57,8 @@ class OutreachStore(WorkspaceStore):
             if not row or row[1] != revision:
                 raise ValueError('The draft has changed. Save and review it before sending.')
             payload = json.loads(row[0])
+            if db.execute('SELECT 1 FROM removed_email_contacts WHERE email=?', (payload['recipient'].strip().casefold(),)).fetchone():
+                raise ValueError('This email was removed from the contact queue.')
             if sender:
                 claimed = db.execute('SELECT 1 FROM contact_claims WHERE sender=? AND recipient=?',
                                      (sender.strip().casefold(), payload['recipient'].strip().casefold())).fetchone()

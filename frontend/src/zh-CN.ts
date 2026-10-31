@@ -246,4 +246,9 @@ export const zhCN: Record<string, string> = {
 "Email status": "邮件状态",
 "Accepted and uncertain email attempts block another send to this channel, even after clearing scan history.": "已被 Gmail 接受或结果不确定的邮件请求会阻止再次向此频道发送，即使扫描历史已清除。",
 "This channel already has an accepted or uncertain email attempt. Check email history before further contact.": "此频道已有被接受或结果不确定的邮件请求。请先检查邮件历史。",
+"Remove selected failed emails": "移除所选失败邮件地址",
+"Remove selected failed emails?": "移除所选失败邮件地址？",
+"Remove {count} rejected email addresses from the contact queue. Send history and duplicate-send protection are kept. These addresses will stay hidden after rescanning.": "从联系队列中移除 {count} 个被拒绝的邮件地址。发送历史和防重复发送保护将保留，重新扫描后这些地址仍会隐藏。",
+"Stop the bulk send before removing failed contacts.": "请先停止批量发送再移除失败联系人。",
+"This email was removed from the contact queue.": "此邮件地址已从联系队列中移除。",
 };

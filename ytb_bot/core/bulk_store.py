@@ -32,6 +32,8 @@ class BulkStore(WorkspaceStore):
     def claim_contact(self, sender, recipient, source, account_id='', channel_ids=()):
         with self._connection() as db:
             db.execute('BEGIN IMMEDIATE')
+            if db.execute('SELECT 1 FROM removed_email_contacts WHERE email=?', (recipient.casefold(),)).fetchone():
+                return False
             if db.execute("SELECT 1 FROM sqlite_master WHERE name='mail_attempts'").fetchone():
                 for row in db.execute('SELECT payload FROM mail_attempts'):
                     value = json.loads(row[0])

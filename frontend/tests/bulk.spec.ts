@@ -42,6 +42,31 @@ test('contact filtering preserves selection and supports clear and reset actions
   await expect(page.getByRole('button', {name: /Compose bulk email/})).toBeDisabled();
 });
 
+test('remove failed email selection confirms and keeps uncertain contacts', async ({page}) => {
+  await page.evaluate(() => {
+    let removed = false;
+    window.pywebview!.api.contact_groups = async () => ({ok: true, data: [
+      ...(!removed ? [{id: 'failed', kind: 'email', value: 'failed@example.com', channels: [{id: 'a', name: 'Failed Creator'}], last_status: 'failed', last_created: ''}] : []),
+      {id: 'uncertain', kind: 'email', value: 'unknown@example.com', channels: [{id: 'b', name: 'Unknown Creator'}], last_status: 'unknown', last_created: ''},
+    ]});
+    window.pywebview!.api.remove_failed_contacts = async (...args: unknown[]) => {
+      if (JSON.stringify(args[0]) !== JSON.stringify(['failed'])) throw new Error('Unexpected removal');
+      removed = true; return {ok: true, data: 1};
+    };
+  });
+  await page.getByRole('button', {name: 'Refresh contacts', exact: true}).click();
+  await page.getByRole('checkbox', {name: 'failed@example.com', exact: true}).check();
+  await page.getByRole('checkbox', {name: 'unknown@example.com', exact: true}).check();
+  await page.getByRole('button', {name: 'Remove selected failed emails', exact: true}).click();
+  await expect(page.getByRole('dialog')).toContainText('Remove 1 rejected email addresses');
+  await page.getByRole('button', {name: 'Cancel', exact: true}).click();
+  await expect(page.getByRole('checkbox', {name: 'failed@example.com', exact: true})).toBeVisible();
+  await page.getByRole('button', {name: 'Remove selected failed emails', exact: true}).click();
+  await page.getByRole('button', {name: 'Confirm', exact: true}).click();
+  await expect(page.getByRole('checkbox', {name: 'failed@example.com', exact: true})).toHaveCount(0);
+  await expect(page.getByRole('checkbox', {name: 'unknown@example.com', exact: true})).toBeVisible();
+});
+
 test('contact controls remain reachable on a narrow light workspace', async ({page}) => {
   await page.setViewportSize({width: 375, height: 812});
   await page.getByRole('button', {name: 'Switch to light theme'}).click();

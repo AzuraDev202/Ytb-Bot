@@ -11,6 +11,7 @@ def contact_groups(store):
     completed = ContactCompletion(store).completed_ids()
     with store._connection() as db:
         rows = db.execute('SELECT rows FROM runs ORDER BY id DESC').fetchall()
+        removed = {row[0] for row in db.execute('SELECT email FROM removed_email_contacts')}
     channels, groups = set(), {}
     for record in rows:
         for raw in json.loads(record[0]):
@@ -25,6 +26,8 @@ def contact_groups(store):
                     kind = 'email' if label == 'Email' else 'social'
                     if kind == 'email':
                         value = value.casefold()
+                        if value in removed:
+                            continue
                     else:
                         parsed = urlsplit(value)
                         host = parsed.hostname.casefold().removeprefix('www.').removeprefix('m.')
