@@ -11,6 +11,32 @@ from urllib.request import Request, urlopen
 
 SCOPES = ['openid', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/gmail.send']
 OAUTH_REQUEST_TIMEOUT = 30
+IDENTITY_CLOCK_SKEW_SECONDS = 10
+
+
+def register_scope_validation(session):
+    """Validate required grants before OAuthLib compares the returned scope set.
+
+    Google can return a superset of previously granted scopes or OIDC aliases.
+    Keep the actual granted scopes without relaxing validation process-wide.
+    """
+    def validate(response):
+        if response.status_code != 200:
+            return response
+        payload = response.json()
+        if 'error' in payload or 'scope' not in payload:
+            return response
+        raw = payload['scope']
+        granted = raw.split() if isinstance(raw, str) else raw
+        if not isinstance(granted, list) or not all(isinstance(scope, str) for scope in granted):
+            raise ValueError('Google did not grant the required Gmail and identity permissions. Reconnect and allow all requested permissions.')
+        aliases = {'email': 'https://www.googleapis.com/auth/userinfo.email'}
+        normalized = {aliases.get(scope, scope) for scope in granted}
+        if not set(SCOPES).issubset(normalized):
+            raise ValueError('Google did not grant the required Gmail and identity permissions. Reconnect and allow all requested permissions.')
+        session.scope = granted
+        return response
+    session.register_compliance_hook('access_token_response', validate)
 
 
 def client_configuration(path):
@@ -36,6 +62,7 @@ class Gmail:
         # The library's INFO request log contains the loopback authorization code.
         logging.getLogger('google_auth_oauthlib.flow').disabled = True
         flow = InstalledAppFlow.from_client_config(client, SCOPES, autogenerate_code_verifier=True)
+        register_scope_validation(flow.oauth2session)
         # run_local_server's timeout only covers the callback, not token exchange.
         flow.fetch_token = partial(flow.fetch_token, timeout=OAUTH_REQUEST_TIMEOUT)
         # Desktop loopback flow: https://developers.google.com/identity/protocols/oauth2/native-app
@@ -43,7 +70,8 @@ class Gmail:
             authorization_prompt_message='', success_message='YTB-BOT: Google response received. Return to the app to check whether account connection completed. You can close this tab.',
             access_type='offline', prompt='consent select_account')
         identity = id_token.verify_oauth2_token(credentials.id_token,
-            partial(GoogleRequest(), timeout=OAUTH_REQUEST_TIMEOUT), client['installed']['client_id'])
+            partial(GoogleRequest(), timeout=OAUTH_REQUEST_TIMEOUT), client['installed']['client_id'],
+            clock_skew_in_seconds=IDENTITY_CLOCK_SKEW_SECONDS)
         if not identity.get('email_verified') or not credentials.refresh_token:
             raise ValueError('The account could not be verified or offline access was not granted.')
         return {'email': identity['email'], 'credentials': json.loads(credentials.to_json())}
