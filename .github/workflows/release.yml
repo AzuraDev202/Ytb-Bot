@@ -46,7 +46,17 @@ jobs:
         run: npm test
       - name: Verify React and Python bridge
         if: steps.version.outputs.publish == 'true'
-        run: python scripts/checks/smoke_react.py
+        timeout-minutes: 5
+        run: |
+          python -u scripts/checks/smoke_react.py 2>&1 | Tee-Object -FilePath native-smoke.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Upload native smoke failure log
+        if: failure() && steps.version.outputs.publish == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-smoke-failure
+          path: native-smoke.log
+          if-no-files-found: ignore
       - name: Verify desktop window appears
         if: steps.version.outputs.publish == 'true'
         run: ./scripts/checks/smoke_desktop.ps1

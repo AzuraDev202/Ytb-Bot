@@ -12,7 +12,7 @@ from ytb_bot.version import APP_VERSION
 from ytb_bot.paths import PROJECT_ROOT
 
 
-def main(on_started=None):
+def main(on_started=None, *, data_dir=None, storage_path=None):
     log_dir = Path(os.getenv("LOCALAPPDATA", str(Path.home()))) / "Ytb-Bot" / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     logging.basicConfig(filename=log_dir / "desktop.log", level=logging.INFO,
@@ -23,7 +23,7 @@ def main(on_started=None):
         document = root / "frontend" / "web-dist" / "index.html"
         if not document.exists():
             raise RuntimeError("React has not been built. Run npm ci --prefix frontend and npm run build --prefix frontend.")
-        api = DesktopAPI()
+        api = DesktopAPI(data_dir=data_dir)
         width, height = 1180, 800
         if os.name == "nt":
             from ctypes import wintypes
@@ -81,7 +81,8 @@ def main(on_started=None):
         window.events.shown += reveal
         logging.info("Starting React desktop build %s", build_id())
         webview.start(on_started, (window,) if on_started else None,
-                      gui="edgechromium" if os.name == "nt" else None, http_server=True)
+                      gui="edgechromium" if os.name == "nt" else None, http_server=True,
+                      storage_path=str(storage_path) if storage_path is not None else None)
     except Exception:
         logging.exception("Desktop startup failed")
         if os.name == "nt":

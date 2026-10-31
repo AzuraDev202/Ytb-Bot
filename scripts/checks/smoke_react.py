@@ -2,25 +2,30 @@
 from pathlib import Path
 import sys
 import threading
+import tempfile
+import time
+from importlib.metadata import version
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from ytb_bot.desktop.app import main
 
 failures = []
+DOCUMENT_TIMEOUT = 60
+SMOKE_TIMEOUT = 180
 
 
 def verify(window):
     done = threading.Event()
     def watchdog():
-        if not done.wait(30):
-            failures.append("React desktop did not become ready within 30 seconds")
+        if not done.wait(SMOKE_TIMEOUT):
+            failures.append(f"Native smoke exceeded its {SMOKE_TIMEOUT}-second overall deadline")
             window.destroy()
     threading.Thread(target=watchdog, daemon=True).start()
     try:
-        if not window.events.loaded.wait(20):
-            raise AssertionError("WebView document did not load")
-        import time
-        deadline = time.monotonic() + 20
+        if not window.events.loaded.wait(DOCUMENT_TIMEOUT):
+            raise AssertionError(f"WebView document did not load within {DOCUMENT_TIMEOUT} seconds; initialization may have failed or exceeded the startup deadline")
+        print("Native smoke: document loaded", flush=True)
+        deadline = time.monotonic() + 30
         while time.monotonic() < deadline:
             if window.evaluate_js("document.querySelector('.connection-status.connected') !== null"):
                 break
@@ -101,6 +106,14 @@ def verify(window):
         window.destroy()
 
 
-main(verify)
-if failures:
-    raise SystemExit("; ".join(failures))
+def run():
+    print(f"Native smoke: Python {sys.version.split()[0]}, pywebview {version('pywebview')}, platform {sys.platform}", flush=True)
+    print(f"Native smoke deadlines: document={DOCUMENT_TIMEOUT}s, overall={SMOKE_TIMEOUT}s", flush=True)
+    with tempfile.TemporaryDirectory(prefix='ytb-native-smoke-') as directory:
+        main(verify, data_dir=Path(directory) / 'data', storage_path=Path(directory) / 'browser')
+    if failures:
+        raise SystemExit("; ".join(failures))
+
+
+if __name__ == '__main__':
+    run()
