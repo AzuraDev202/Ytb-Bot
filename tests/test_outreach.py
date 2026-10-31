@@ -232,7 +232,7 @@ class OutreachTests(unittest.TestCase):
                 patch('google.auth.transport.requests.Request') as request, \
                 patch('google.oauth2.id_token.verify_oauth2_token') as verify:
             factory.return_value.run_local_server.return_value = credentials
-            def identity(token, transport, audience):
+            def identity(token, transport, audience, clock_skew_in_seconds=0):
                 transport('https://www.googleapis.com/oauth2/v1/certs')
                 return {'email': 'sender@example.com', 'email_verified': True}
             verify.side_effect = identity

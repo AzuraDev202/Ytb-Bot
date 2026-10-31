@@ -17,6 +17,8 @@ For a step-by-step Vietnamese setup and token lifecycle guide, see [Cách dùng 
 
 Do not sign into Google inside the application's WebView. OAuth uses Google's library, a localhost callback with a dynamic port, PKCE, state validation, and email identity verification. The callback is not recorded in application logs.
 
+Google may return additional previously granted scopes or the equivalent OpenID `email` scope. The token exchange checks that all required send and identity permissions are present before accepting these differences. Identity verification tolerates up to 10 seconds of clock skew while still verifying signature, audience, issuer, and expiry. If the computer clock is further out of sync, synchronize Windows date and time before reconnecting. A browser callback message alone does not confirm that the account was verified and saved in the bot.
+
 ### Composing and sending
 
 1. Select a saved channel email as the **Recipient contact**.

@@ -36,6 +36,7 @@ Remove selected failed emails?|Xóa email lỗi đã chọn?|移除所选失败�
 Remove {count} rejected email addresses from the contact queue. Send history and duplicate-send protection are kept. These addresses will stay hidden after rescanning.|Loại {count} địa chỉ email bị từ chối khỏi hàng chờ liên hệ. Lịch sử gửi và cơ chế chống gửi trùng được giữ nguyên. Các địa chỉ này vẫn được ẩn sau khi quét lại.|从联系队列中移除 {count} 个被拒绝的邮件地址。发送历史和防重复发送保护将保留，重新扫描后这些地址仍会隐藏。
 Stop the bulk send before removing failed contacts.|Hãy dừng gửi hàng loạt trước khi xóa liên hệ lỗi.|请先停止批量发送再移除失败联系人。
 This email was removed from the contact queue.|Email này đã được loại khỏi hàng chờ liên hệ.|此邮件地址已从联系队列中移除。
+Google did not grant the required Gmail and identity permissions. Reconnect and allow all requested permissions.|Google chưa cấp đủ quyền Gmail và xác minh danh tính. Hãy kết nối lại và cho phép các quyền được yêu cầu.|Google 未授予所需的 Gmail 和身份验证权限。请重新连接并允许所请求的权限。
 Channel age must be at least 1 day, views at least 0, and depth between 1 and 5 pages.|Tuổi kênh phải từ 1 ngày, lượt xem từ 0 và độ sâu từ 1 đến 5 trang.|频道创建天数必须至少为 1 天，观看次数至少为 0，搜索深度为 1 至 5 页。
 A scan is already running.|Một lượt quét đang chạy.|已有扫描正在运行。
 Stopping after the current request; collected results will be saved.|Đang dừng sau yêu cầu hiện tại; kết quả đã thu thập sẽ được lưu.|当前请求完成后将停止；已收集的结果会被保存。
