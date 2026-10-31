@@ -31,6 +31,11 @@ Email attempt time|Thời gian gửi yêu cầu|邮件请求时间
 Email status|Trạng thái email|邮件状态
 Accepted and uncertain email attempts block another send to this channel, even after clearing scan history.|Kênh có yêu cầu email đã được Gmail nhận hoặc chưa rõ kết quả sẽ bị chặn gửi lại, kể cả sau khi xóa lịch sử quét.|已被 Gmail 接受或结果不确定的邮件请求会阻止再次向此频道发送，即使扫描历史已清除。
 This channel already has an accepted or uncertain email attempt. Check email history before further contact.|Kênh này đã có yêu cầu email được Gmail nhận hoặc chưa rõ kết quả. Hãy kiểm tra lịch sử email trước khi liên hệ tiếp.|此频道已有被接受或结果不确定的邮件请求。请先检查邮件历史。
+Remove selected failed emails|Xóa email lỗi đã chọn|移除所选失败邮件地址
+Remove selected failed emails?|Xóa email lỗi đã chọn?|移除所选失败邮件地址？
+Remove {count} rejected email addresses from the contact queue. Send history and duplicate-send protection are kept. These addresses will stay hidden after rescanning.|Loại {count} địa chỉ email bị từ chối khỏi hàng chờ liên hệ. Lịch sử gửi và cơ chế chống gửi trùng được giữ nguyên. Các địa chỉ này vẫn được ẩn sau khi quét lại.|从联系队列中移除 {count} 个被拒绝的邮件地址。发送历史和防重复发送保护将保留，重新扫描后这些地址仍会隐藏。
+Stop the bulk send before removing failed contacts.|Hãy dừng gửi hàng loạt trước khi xóa liên hệ lỗi.|请先停止批量发送再移除失败联系人。
+This email was removed from the contact queue.|Email này đã được loại khỏi hàng chờ liên hệ.|此邮件地址已从联系队列中移除。
 Channel age must be at least 1 day, views at least 0, and depth between 1 and 5 pages.|Tuổi kênh phải từ 1 ngày, lượt xem từ 0 và độ sâu từ 1 đến 5 trang.|频道创建天数必须至少为 1 天，观看次数至少为 0，搜索深度为 1 至 5 页。
 A scan is already running.|Một lượt quét đang chạy.|已有扫描正在运行。
 Stopping after the current request; collected results will be saved.|Đang dừng sau yêu cầu hiện tại; kết quả đã thu thập sẽ được lưu.|当前请求完成后将停止；已收集的结果会被保存。

@@ -104,6 +104,19 @@ class BulkOutreach:
                 group['last_created'], group['last_status'] = max(events)
         return groups
 
+    def remove_failed_contacts(self, group_ids):
+        if not isinstance(group_ids, list) or not 1 <= len(group_ids) <= 100 or not all(isinstance(key, str) for key in group_ids):
+            raise ValueError('Select between 1 and 100 unique email groups.')
+        with self._mutex:
+            if self.is_running:
+                raise ValueError('Stop the bulk send before removing failed contacts.')
+            selected = set(group_ids)
+            emails = {group['value'] for group in self.groups() if group['id'] in selected
+                      and group['kind'] == 'email' and group['last_status'] == 'failed'}
+            with self.store._connection() as db:
+                db.executemany('INSERT OR IGNORE INTO removed_email_contacts VALUES (?)', [(email,) for email in emails])
+            return len(emails)
+
     def prepare(self, payload):
         if not isinstance(payload, dict):
             raise ValueError('Invalid batch draft.')

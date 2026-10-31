@@ -40,6 +40,8 @@ Each draft revision permits only one send attempt, even with repeated clicks or 
 
 Open **Discovery results → Email contact history** to search saved email requests by channel name, Channel ID, or recipient. This list includes provider acceptance, rejection, and uncertain outcomes; acceptance does not confirm delivery. These records and duplicate-send claims survive **Clear scan history** and restarting the app. They also cover existing saved send records from earlier versions. The protection depends on retaining the workspace database; it cannot reconstruct emails sent outside the bot or records from a deleted database.
 
+In **Grouped contacts**, select unwanted email entries marked **Gmail rejected the request**, then choose **Remove selected failed emails** and confirm. Only selected addresses whose latest outcome is `failed` are removed from the queue; uncertain outcomes and other contact links are preserved. Removal persists after rescanning or clearing scan history, and stale reviewed drafts cannot send to those addresses. Send records remain available in email history. A rejected request does not by itself prove an address is invalid; it can also reflect account or permission problems.
+
 ## Bulk Gmail across saved channels
 
 Open **Results > Grouped contacts** beside Scan history. Contact groups cover saved channels across scan history, using the latest saved row for each Channel ID; they are independent of the current table page, search, and sort. Equal normalized email addresses form one group with all matching channels. Normalization ignores case and surrounding whitespace; it does not merge Gmail dot or plus aliases. Social links appear as read-only groups and cannot become email recipients.
